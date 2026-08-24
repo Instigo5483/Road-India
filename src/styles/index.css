@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-ink-50 font-sans text-ink-800 antialiased;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full rounded-lg border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-800 outline-none transition-colors placeholder:text-ink-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
+  }
+
+  /* Trigger button for FilterDropdown -- a custom popover, not a native
+     <select>, so padding is symmetric (its own chevron icon sits inline
+     rather than relying on OS-drawn select-arrow space). */
+  .filter-select {
+    @apply rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-600 outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Small uppercase pill label used above section headings ("eyebrow"
+     copy) -- tinted background at the same color as its text, matching
+     the reference design system's section-kicker treatment. Pair with a
+     bg-{color}-500/10 text-{color}-600 utility pair at the call site. */
+  .eyebrow-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide;
+  }
+}
+
+/* Leaflet map container needs to sit below sticky nav / dropdowns */
+.leaflet-container {
+  font-family: inherit;
+  z-index: 0;
+}
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10;
+}
+
+.road-india-pin__wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.road-india-pin__pulse {
+  position: absolute;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: rgba(30, 64, 175, 0.45);
+  animation: pin-pulse 1.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+}
+
+@keyframes pin-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* Thin, unobtrusive scrollbars for dropdown/menu panels */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(30, 64, 175, 0.2);
+  border-radius: 9999px;
+}

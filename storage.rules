@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Report photos are stored under reports/{uid}/... — only the signed-in
+    // owner can upload into their own folder; anyone can read (photos are
+    // shown on the public Ongoing Reports feed), nobody can delete via the
+    // client (moderation/cleanup happens server-side if you add it later).
+    match /reports/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 8 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if false;
+    }
+  }
+}

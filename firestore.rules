@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each user can only read/write their own profile document.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // Reports are publicly readable (the community feed requires no
+    // account to be transparent about what's already reported), but only
+    // signed-in users may create them, only the author may edit their own
+    // report's content, and upvotes are the only field anyone else may
+    // touch, one vote per user, enforced by requiring their own uid in
+    // upvotedBy.
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.createdBy == request.auth.uid
+                    && (request.resource.data.status == 'submitted'
+                        || (request.resource.data.category == 'emergency'
+                            && request.resource.data.status == 'in_progress'))
+                    && request.resource.data.upvotes == 0;
+
+      allow update: if request.auth != null && (
+        // Report author can edit their own report's fields, but not status
+        // (status is intended to be moved by a moderation/admin flow you
+        // add separately for the hackathon judging demo).
+        (resource.data.createdBy == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['description', 'photoUrls', 'location'])) ||
+        // Any signed-in user may toggle their own upvote.
+        (request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['upvotes', 'upvotedBy']))
+      );
+
+      allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+    }
+  }
+}
