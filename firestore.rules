@@ -27,15 +27,20 @@ service cloud.firestore {
                     && request.resource.data.upvotes == 0;
 
       allow update: if request.auth != null && (
-        // Report author can edit their own report's fields, but not status
-        // (status is intended to be moved by a moderation/admin flow you
-        // add separately for the hackathon judging demo).
+        // Report author can edit their own report's fields, but not status.
         (resource.data.createdBy == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['description', 'photoUrls', 'location'])) ||
         // Any signed-in user may toggle their own upvote.
         (request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['upvotes', 'upvotedBy']))
+            .hasOnly(['upvotes', 'upvotedBy'])) ||
+        // Status is moved by the admin dashboard (src/pages/Admin.jsx).
+        // Admin access there is a client-side passcode gate, not a real
+        // role/permission system (see context/AdminAuthContext.jsx) -- so
+        // this rule can only check "is *some* authenticated Firebase user",
+        // not "is a verified admin". Add a custom claim + rule check here
+        // before handling real citizen data.
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
       );
 
       allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;

@@ -13,6 +13,7 @@ A Blinkit/Zepto-style fast reporting flow: pick a category, add a couple of deta
 - **Dashboard** — every report you've filed, with live status (Submitted → In Review → In Progress → Resolved).
 - **Ongoing Reports feed** — every report from every user, Reddit-style upvoting so the most-supported issues surface first, filters by category and location ("near me" via geolocation, distance shown per report), search, and sort by relevance / recency / distance. Live emergencies are always pinned to the top.
 - **Language selection** — available before login on the landing page and again inside the dashboard. English and Hindi are fully translated; the other major Indian languages are listed in the switcher and fall back to English text until translated (see [i18n](#adding-a-language)).
+- **Admin dashboard** — a separate staff-only view at `/admin` of every report across all users, filterable by category/status, with a dropdown to move each report's status (see [Admin dashboard](#admin-dashboard) below).
 - **Motion throughout** — hover/tap micro-interactions on every card and button, animated step transitions in the report flow, animated route transitions, and a live pulsing map pin, all via Framer Motion.
 
 ## Tech stack
@@ -51,6 +52,14 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 - **Set `OPENAI_API_KEY`** in `.env.local` (see `.env.example`) to enable real triage. This is a **server-only** secret — it is never prefixed with `VITE_` and never shipped to the browser bundle.
 - **Zero setup fallback** — without an API key, triage falls back to a deterministic rule-based mock (`mockTriage` in `api/_triage-core.js`) so the full citizen journey, AI step included, still works end-to-end out of the box.
 
+## Admin dashboard
+
+`/admin/login` → `/admin` — a staff view of every report filed across the app (not just one citizen's own), with category/status filters and a per-report dropdown to move status through Submitted → In Review → In Progress → Resolved. Live emergencies sort to the top.
+
+- **Separate from citizen login** — real municipal staff wouldn't authenticate through a citizen Aadhaar/DigiLocker flow, so `/admin` uses its own passcode gate (`src/context/AdminAuthContext.jsx`), independent of `AuthContext`.
+- **Passcode**: set `VITE_ADMIN_PASSCODE` in `.env.local`, or use the default `roadindia-admin` if unset (see `.env.example`). **This is a client-side convenience gate for the prototype, not real access control** — change the default before sharing a live deployment link publicly.
+- **Not a real role system** — there's no per-admin identity or backend-enforced permission check. In `firestore.rules`, any authenticated Firebase user (not just someone who knows the admin passcode) can update a report's `status` field — a documented prototype limitation. Add a custom-claims-based admin role before handling real citizen data at scale.
+
 ## Deployment
 
 Most of this app is a static Vite build, but **the AI-triage feature requires a Node serverless function** (`api/triage.js`), so the deployment target matters:
@@ -65,12 +74,12 @@ api/
   triage.js          Vercel serverless endpoint -- POST /api/triage
   _triage-core.js     Shared triage logic (real OpenAI call + mock fallback)
 src/
-  components/   Reusable UI: cards, buttons, map picker, AI triage card, icons, nav, etc.
-  context/      AuthContext, LanguageContext, ReportsContext
+  components/   Reusable UI: cards, buttons, map picker, AI triage card, admin report row, icons, nav, etc.
+  context/      AuthContext, LanguageContext, ReportsContext, AdminAuthContext
   data/         Category/type definitions, language list, demo seed reports
   i18n/         en.js, hi.js dictionaries + translate() helper
   lib/          firebase.js, mockBackend.js, triage.js, geo.js, time.js
-  pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed
+  pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, AdminLogin, Admin
   styles/       Tailwind entry + small custom CSS (map pin animation etc.)
 firestore.rules  Security rules for the reports/users collections
 scripts/seed.js  Optional: seed a real Firestore project with demo reports

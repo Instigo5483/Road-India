@@ -308,6 +308,19 @@ export function IconLockCloud(props) {
   )
 }
 
+export function IconListChecks(props) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6.5l1.5 1.5L8 5.5" />
+      <path d="M11 6.5h9" />
+      <path d="M4 12.5l1.5 1.5L8 11.5" />
+      <path d="M11 12.5h9" />
+      <path d="M4 18.5l1.5 1.5L8 17.5" />
+      <path d="M11 18.5h9" />
+    </Svg>
+  )
+}
+
 export function IconSparkle(props) {
   return (
     <Svg {...props}>

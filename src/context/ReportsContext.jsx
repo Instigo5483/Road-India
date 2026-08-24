@@ -126,14 +126,25 @@ export function ReportsProvider({ children }) {
     [reports, user]
   )
 
+  // Admin-only action -- see context/AdminAuthContext.jsx for the (separate
+  // from citizen login) passcode gate in front of the /admin route that
+  // calls this. Doesn't require a citizen `user`, since admins don't sign
+  // in through the citizen flow at all.
+  const updateReportStatus = useCallback(async (reportId, status) => {
+    if (!isFirebaseConfigured) {
+      return mockBackend.updateReportStatus(reportId, status)
+    }
+    await updateDoc(doc(db, 'reports', reportId), { status })
+  }, [])
+
   const myReports = useMemo(
     () => (user ? reports.filter((r) => r.createdBy === user.uid) : []),
     [reports, user]
   )
 
   const value = useMemo(
-    () => ({ reports, myReports, loading, createReport, toggleUpvote }),
-    [reports, myReports, loading, createReport, toggleUpvote]
+    () => ({ reports, myReports, loading, createReport, toggleUpvote, updateReportStatus }),
+    [reports, myReports, loading, createReport, toggleUpvote, updateReportStatus]
   )
 
   return <ReportsContext.Provider value={value}>{children}</ReportsContext.Provider>

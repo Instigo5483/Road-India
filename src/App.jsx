@@ -3,7 +3,9 @@ import { AnimatePresence } from 'framer-motion'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 import { ReportsProvider } from './context/ReportsContext'
+import { AdminAuthProvider } from './context/AdminAuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminProtectedRoute from './components/AdminProtectedRoute'
 
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -12,6 +14,8 @@ import ReportFlow from './pages/ReportFlow'
 import Dashboard from './pages/Dashboard'
 import ReportsFeed from './pages/ReportsFeed'
 import Settings from './pages/Settings'
+import AdminLogin from './pages/AdminLogin'
+import Admin from './pages/Admin'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -61,6 +65,15 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminProtectedRoute>
+              <Admin />
+            </AdminProtectedRoute>
+          }
+        />
         <Route path="*" element={<Landing />} />
       </Routes>
     </AnimatePresence>
@@ -71,11 +84,13 @@ export default function App() {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <ReportsProvider>
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-        </ReportsProvider>
+        <AdminAuthProvider>
+          <ReportsProvider>
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </ReportsProvider>
+        </AdminAuthProvider>
       </AuthProvider>
     </LanguageProvider>
   )
