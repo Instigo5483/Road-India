@@ -50,11 +50,18 @@ export function TeamAuthProvider({ children }) {
 
     const ref = doc(db, 'teams', teamId.trim())
     const snap = await getDoc(ref)
-    if (!snap.exists() || snap.data().passcode !== passcode) return false
+    const data = snap.data()
+    if (!snap.exists() || data.passcode !== passcode) return false
 
-    await updateDoc(ref, { status: 'available' })
+    // Resume as 'busy' if this team still has an active dispatch (e.g. they
+    // logged out and back in mid-job) rather than always resetting to
+    // 'available' -- otherwise re-logging in would silently make an
+    // already-busy team eligible for a second dispatch on top of their
+    // current one.
+    const status = data.currentReportId ? 'busy' : 'available'
+    await updateDoc(ref, { status })
     window.localStorage.setItem(STORAGE_KEY, teamId.trim())
-    setTeam({ id: teamId.trim(), ...snap.data(), status: 'available' })
+    setTeam({ id: teamId.trim(), ...data, status })
     return true
   }, [])
 
