@@ -67,19 +67,21 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 
 **How dispatch works:**
 1. A citizen files an emergency report (`category: 'emergency'`).
-2. `functions/index.js`'s `dispatchEmergencyReport` Cloud Function fires on that report's creation, maps the report's `type` to the response-team type(s) it needs (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
+2. Right after it's saved, the client calls `POST /api/dispatch` (`api/_dispatch-core.js`), which maps the report's `type` to the response-team type(s) it needs (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
 3. That team's Firestore doc is marked `busy` and given `currentReportId`; if the team has a push token, a Firebase Cloud Messaging notification is sent to their device.
 4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener when the app is open, or via the push notification when it isn't — with a "Navigate" button (opens Google Maps) and the same AI-triage summary the citizen sees.
 5. Tapping **Mark completed** sets the report's status to `resolved` (the same `updateReportStatus` the admin dashboard uses — reflected on the citizen's dashboard and the community feed instantly) and frees the team back to `available`.
 
 **Why a PWA instead of a native app:** it keeps the exact same stack — no React Native/separate codebase, same Firebase project, same deploy. Push notifications work on both platforms (Android via Chrome, iOS via Safari 16.4+ once "Added to Home Screen" — there's no programmatic install prompt on iOS, so `/team/login` shows a one-line hint to do this manually). The one real tradeoff versus native: continuous *background* GPS tracking is much more limited on iOS web than in a native app, so a team's location only updates reliably while the app is open in the foreground (`TeamDashboard.jsx`'s `watchPosition`), not while fully backgrounded/closed.
 
-**This entire feature requires a real, paid ("Blaze plan") Firebase project** — there's no mock-backend equivalent for Cloud Functions or Cloud Messaging, so it does nothing on the default zero-setup local demo. To set it up:
+**Why a Vercel function instead of a Firebase Cloud Function:** Cloud Functions of any generation require Firebase's paid **Blaze plan** to deploy at all, regardless of actual usage/cost. Firestore, Auth, Storage, and Cloud Messaging are all free on the **Spark plan** — the only thing a Cloud Function would have added here is a Firestore-triggered invocation, which this replaces with the client calling `/api/dispatch` right after creating the report. Functionally equivalent for a demo, and keeps the whole project on free tiers end to end.
 
-1. Complete [Connecting a real Firebase backend](#connecting-a-real-firebase-backend) above first.
-2. Upgrade the Firebase project to the **Blaze (pay-as-you-go)** plan — required for Cloud Functions to make outbound calls, even at near-zero cost for a demo's traffic.
-3. Enable **Cloud Messaging** (Project settings → Cloud Messaging), then **Web configuration → Generate key pair** for a VAPID key. Set `VITE_FIREBASE_VAPID_KEY` in `.env.local`.
-4. Install the Firebase CLI, then from the project root: `firebase deploy --only functions,firestore:rules` (deploys `functions/index.js` and the updated `teams`/`reports` rules together).
+Requires a real Firebase project (no mock-backend equivalent — Firestore-backed team matching and push notifications can't be simulated locally the way AI triage's mock fallback works). To set it up:
+
+1. Complete [Connecting a real Firebase backend](#connecting-a-real-firebase-backend) above first — **the free Spark plan is enough, no billing required.**
+2. Enable **Cloud Messaging** (Project settings → Cloud Messaging), then **Web configuration → Generate key pair** for a VAPID key. Set `VITE_FIREBASE_VAPID_KEY` in `.env.local`.
+3. Project settings → **Service accounts** → Generate new private key, then base64-encode it into `FIREBASE_SERVICE_ACCOUNT` (see `.env.example` for the exact command) — this lets `api/dispatch.js` read/write Firestore and send pushes server-side.
+4. Deploy the updated Firestore rules: `firebase deploy --only firestore:rules`.
 5. Seed a few demo teams: `npm run seed:teams` (needs the same `scripts/serviceAccountKey.json` as `npm run seed`; see that script's usage comment).
 6. Visit `/team/login` and sign in with any seeded team ID/passcode from `scripts/seedTeams.js` (e.g. `amb-001` / `amb-001-pass`).
 
@@ -87,31 +89,31 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 
 ## Deployment
 
-Most of this app is a static Vite build, but **the AI-triage feature requires a Node serverless function** (`api/triage.js`) and **the response-team dispatch requires a deployed Firebase Cloud Function**, so the deployment target matters:
+Most of this app is a static Vite build, but **AI triage and emergency dispatch both need Node serverless functions** (`api/triage.js`, `api/dispatch.js`), so the deployment target matters:
 
-- **Vercel (recommended)** — import the GitHub repo; Vercel auto-detects the Vite build (`npm run build`, output `dist`) and the `/api` serverless functions with no extra config. Add `VITE_FIREBASE_*` and `OPENAI_API_KEY` as environment variables in the project's dashboard. This is the only option below where AI triage actually runs in production.
-- **Netlify / Firebase Hosting / GitHub Pages** — these serve the static `dist` build fine, but don't run `/api/triage.js` as-is (Netlify would need an equivalent Netlify Function, Firebase would need a Cloud Function). Without it, `triageReport()` fails its fetch and returns `null` gracefully — reports still file successfully, just without an AI assessment attached.
+- **Vercel (recommended, and fully free)** — import the GitHub repo; Vercel auto-detects the Vite build (`npm run build`, output `dist`) and the `/api` serverless functions with no extra config, all on Vercel's free Hobby tier. Add `VITE_FIREBASE_*`, `OPENAI_API_KEY`, and `FIREBASE_SERVICE_ACCOUNT` as environment variables in the project's dashboard. This is the only option below where AI triage and emergency dispatch actually run in production.
+- **Netlify / Firebase Hosting / GitHub Pages** — these serve the static `dist` build fine, but don't run `/api/*.js` as-is (Netlify would need equivalent Netlify Functions; Firebase Hosting would need Cloud Functions, which cost real money to deploy at all — see the note above). Without them, `triageReport()`/`dispatchEmergency()` just fail their fetch and no-op — reports still file successfully, just without an AI assessment or team dispatch attached.
 
 ## Project structure
 
 ```
 api/
-  triage.js          Vercel serverless endpoint -- POST /api/triage
-  _triage-core.js     Shared triage logic (real OpenAI call + mock fallback)
-functions/
-  index.js           Firebase Cloud Function -- nearest-team emergency dispatch
+  triage.js            Vercel serverless endpoint -- POST /api/triage
+  _triage-core.js      Shared triage logic (real OpenAI call + mock fallback)
+  dispatch.js          Vercel serverless endpoint -- POST /api/dispatch
+  _dispatch-core.js    Shared dispatch logic (nearest-team matching + FCM push)
 src/
   components/   Reusable UI: cards, buttons, map picker, AI triage card, admin report row, icons, nav, etc.
   context/      AuthContext, LanguageContext, ReportsContext, AdminAuthContext, TeamAuthContext
   data/         Category/type definitions, language list, demo seed reports, team types
   i18n/         en.js, hi.js dictionaries + translate() helper
-  lib/          firebase.js, mockBackend.js, triage.js, messaging.js, teamPwa.js, geo.js, time.js
+  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, messaging.js, teamPwa.js, geo.js, time.js
   pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, AdminLogin, Admin, TeamLogin, TeamDashboard
   styles/       Tailwind entry + small custom CSS (map pin animation etc.)
 public/
   team-manifest.json          PWA manifest scoped to /team/ (see lib/teamPwa.js)
   firebase-messaging-sw.js    Background push handler for the team PWA
-firebase.json    Firebase CLI config (Firestore rules, Storage rules, Cloud Functions)
+firebase.json    Firebase CLI config (Firestore rules, Storage rules)
 firestore.rules  Security rules for the reports/users/teams collections
 scripts/seed.js       Optional: seed a real Firestore project with demo reports
 scripts/seedTeams.js  Optional: seed a real Firestore project with demo response teams

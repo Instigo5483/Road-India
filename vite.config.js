@@ -1,16 +1,16 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { runTriage } from './api/_triage-core.js'
+import { runDispatch } from './api/_dispatch-core.js'
 
-// Mirrors api/triage.js (the Vercel serverless endpoint) as dev-server
-// middleware, so `npm run dev` exercises the exact same AI-triage code
-// path a production deploy uses -- no `vercel dev` / Vercel CLI required
-// for local development.
-function triageDevApiPlugin(env) {
+/** Mirrors a POST-only Vercel serverless endpoint under api/ as dev-server
+ * middleware, so `npm run dev` exercises the exact same code path a real
+ * deploy uses -- no `vercel dev` / Vercel CLI required for local dev. */
+function apiDevMiddleware(path, handler) {
   return {
-    name: 'triage-dev-api',
+    name: `dev-api${path}`,
     configureServer(server) {
-      server.middlewares.use('/api/triage', (req, res) => {
+      server.middlewares.use(path, (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405
           res.end()
@@ -23,13 +23,13 @@ function triageDevApiPlugin(env) {
         req.on('end', async () => {
           try {
             const payload = body ? JSON.parse(body) : {}
-            const result = await runTriage(payload, env.OPENAI_API_KEY)
+            const result = await handler(payload)
             res.setHeader('Content-Type', 'application/json')
             res.end(JSON.stringify(result))
           } catch {
             res.statusCode = 500
             res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify({ error: 'Triage failed' }))
+            res.end(JSON.stringify({ error: 'Request failed' }))
           }
         })
       })
@@ -41,7 +41,11 @@ function triageDevApiPlugin(env) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-    plugins: [react(), triageDevApiPlugin(env)],
+    plugins: [
+      react(),
+      apiDevMiddleware('/api/triage', (payload) => runTriage(payload, env.OPENAI_API_KEY)),
+      apiDevMiddleware('/api/dispatch', (payload) => runDispatch(payload, env.FIREBASE_SERVICE_ACCOUNT)),
+    ],
     server: {
       port: 5173,
     },

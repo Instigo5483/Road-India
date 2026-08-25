@@ -16,6 +16,7 @@ import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storag
 import { isFirebaseConfigured, db, storage } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { triageReport } from '../lib/triage'
+import { dispatchEmergency } from '../lib/dispatch'
 import { useAuth } from './AuthContext'
 
 /** Uploads each base64 photo data-URL to Firebase Storage and returns the
@@ -102,6 +103,16 @@ export function ReportsProvider({ children }) {
         photoUrls: uploadedPhotoUrls,
         createdAt: serverTimestamp(),
       })
+
+      // Emergency dispatch (nearest available response team + push
+      // notification) -- fired after the report exists so it has a real
+      // id, never awaited-to-block since a flaky dispatch call shouldn't
+      // stop the citizen from having successfully filed. See
+      // lib/dispatch.js / api/_dispatch-core.js.
+      if (category === 'emergency') {
+        dispatchEmergency({ reportId: ref.id, category, type, description, location })
+      }
+
       return { id: ref.id, ...base, photoUrls: uploadedPhotoUrls, createdAt: new Date().toISOString() }
     },
     [user]
