@@ -48,22 +48,35 @@ service cloud.firestore {
     }
 
     // Response teams (src/pages/TeamDashboard.jsx, api/_dispatch-core.js).
-    // Teams are seeded directly in the Firestore console or via
-    // scripts/seedTeams.js, never created/deleted from the client. Team
-    // login (context/TeamAuthContext.jsx) signs in anonymously purely to
-    // satisfy `request.auth != null` here, then checks the passcode field
-    // itself client-side -- same "no real per-team identity" limitation as
-    // the `status` field rule above, documented rather than pretended away.
-    // The dispatch endpoint (a Vercel serverless function, not a Firebase
-    // Cloud Function -- see api/_dispatch-core.js for why) uses the Admin
-    // SDK, which bypasses these rules entirely, so it can always assign
-    // jobs regardless.
+    // Created from the admin dashboard (src/components/AddTeamForm.jsx,
+    // src/lib/teams.js) or seeded directly via scripts/seedTeams.js -- never
+    // created by a citizen or by a team itself. Team login
+    // (context/TeamAuthContext.jsx) signs in anonymously purely to satisfy
+    // `request.auth != null` here, then checks the passcode field itself
+    // client-side -- same "no real per-identity access control" limitation
+    // as the `status` field rule above and the create rule below, documented
+    // rather than pretended away: any authenticated Firebase user (not just
+    // a verified admin) can create or update a team through these rules.
+    // Add custom claims + a real rule check here before handling this beyond
+    // a prototype. The dispatch endpoint (a Vercel serverless function, not
+    // a Firebase Cloud Function -- see api/_dispatch-core.js for why) uses
+    // the Admin SDK, which bypasses these rules entirely, so it can always
+    // assign jobs regardless.
     match /teams/{teamId} {
       allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(
+                         ['name', 'type', 'location', 'passcode', 'status', 'fcmToken', 'currentReportId'])
+                    && request.resource.data.name is string
+                    && request.resource.data.type is string
+                    && request.resource.data.passcode is string
+                    && request.resource.data.status == 'available'
+                    && request.resource.data.fcmToken == null
+                    && request.resource.data.currentReportId == null;
       allow update: if request.auth != null
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['status', 'location', 'fcmToken', 'currentReportId']);
-      allow create, delete: if false;
+      allow delete: if false;
     }
   }
 }

@@ -1,12 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { collection, onSnapshot } from 'firebase/firestore'
 import { useAdminAuth } from '../context/AdminAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CATEGORIES, STATUSES } from '../data/categoryTypes'
+import { getTeamType, getTeamStatus } from '../data/teamTypes'
 import { toDate } from '../lib/time'
+import { db, isFirebaseConfigured } from '../lib/firebase'
 import AdminReportRow from '../components/AdminReportRow'
+import AddTeamForm from '../components/AddTeamForm'
 import EmptyState from '../components/EmptyState'
 import { IconLogOut, IconSiren, IconClock, IconListChecks } from '../components/Icons'
 
@@ -18,6 +22,15 @@ export default function Admin() {
 
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [teams, setTeams] = useState([])
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) return
+    const unsub = onSnapshot(collection(db, 'teams'), (snap) => {
+      setTeams(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    })
+    return unsub
+  }, [])
 
   const stats = useMemo(
     () => ({
@@ -126,6 +139,44 @@ export default function Admin() {
 
           {filtered.length === 0 && <EmptyState title={t('admin.empty.title')} />}
         </div>
+
+        {isFirebaseConfigured && (
+          <section className="mt-14">
+            <h2 className="font-display text-xl font-bold text-ink-900">{t('admin.teams.heading')}</h2>
+            <p className="mt-1 text-sm text-ink-500">{t('admin.teams.subtitle')}</p>
+
+            <div className="mt-5 space-y-2">
+              {teams.length === 0 && <p className="text-sm text-ink-400">{t('admin.teams.rosterEmpty')}</p>}
+              {teams.map((team) => {
+                const type = getTeamType(team.type)
+                const status = getTeamStatus(team.status)
+                return (
+                  <div
+                    key={team.id}
+                    className="flex items-center justify-between rounded-xl border border-ink-200 bg-white px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-ink-900">{team.name}</p>
+                      <p className="text-xs text-ink-400">
+                        {type ? t(type.labelKey) : team.type} · {team.id}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${TEAM_STATUS_BADGE[status.theme]}`}
+                    >
+                      {t(status.labelKey)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mt-5">
+              <p className="mb-2.5 text-sm font-semibold text-ink-700">{t('admin.teams.addNew')}</p>
+              <AddTeamForm />
+            </div>
+          </section>
+        )}
       </main>
     </div>
   )
@@ -135,6 +186,12 @@ const STAT_THEME = {
   brand: 'bg-brand-600/10 text-brand-700',
   emergency: 'bg-emergency-500/10 text-emergency-600',
   accent: 'bg-accent-500/10 text-accent-600',
+}
+
+const TEAM_STATUS_BADGE = {
+  success: 'bg-success-50 text-success-700',
+  warning: 'bg-warning-50 text-warning-600',
+  ink: 'bg-ink-100 text-ink-500',
 }
 
 function StatTile({ icon: Icon, label, value, theme }) {
