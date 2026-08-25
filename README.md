@@ -14,11 +14,12 @@ A Blinkit/Zepto-style fast reporting flow: pick a category, add a couple of deta
 - **Ongoing Reports feed** — every report from every user, Reddit-style upvoting so the most-supported issues surface first, filters by category and location ("near me" via geolocation, distance shown per report), search, and sort by relevance / recency / distance. Live emergencies are always pinned to the top.
 - **Language selection** — available before login on the landing page and again inside the dashboard. English and Hindi are fully translated; the other major Indian languages are listed in the switcher and fall back to English text until translated (see [i18n](#adding-a-language)).
 - **Admin dashboard** — a separate staff-only view at `/admin` of every report across all users, filterable by category/status, with a dropdown to move each report's status (see [Admin dashboard](#admin-dashboard) below).
+- **Emergency response-team dispatch** — a Blinkit/Zepto-style installable app at `/team` for ambulance/doctor/fire/police/tow teams: filing an emergency report automatically finds and pushes a notification to the nearest available team of the right type(s), and the team taps "Mark completed" when done (see [Emergency response-team dispatch](#emergency-response-team-dispatch) below).
 - **Motion throughout** — hover/tap micro-interactions on every card and button, animated step transitions in the report flow, animated route transitions, and a live pulsing map pin, all via Framer Motion.
 
 ## Tech stack
 
-React 18 + Vite + Tailwind CSS + Framer Motion, React Router v6, Leaflet / react-leaflet (OpenStreetMap tiles, no API key required), Firebase (Auth + Firestore) for the backend, an OpenAI model (`gpt-4o-mini`) via a Vercel serverless function for AI-assisted report triage.
+React 18 + Vite + Tailwind CSS + Framer Motion, React Router v6, Leaflet / react-leaflet (OpenStreetMap tiles, no API key required), Firebase (Auth + Firestore + Cloud Functions + Cloud Messaging) for the backend, an OpenAI model (`gpt-4o-mini`) via a Vercel serverless function for AI-assisted report triage.
 
 ## Quick start (works with zero setup)
 
@@ -60,9 +61,33 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 - **Passcode**: set `VITE_ADMIN_PASSCODE` in `.env.local`, or use the default `roadindia-admin` if unset (see `.env.example`). **This is a client-side convenience gate for the prototype, not real access control** — change the default before sharing a live deployment link publicly.
 - **Not a real role system** — there's no per-admin identity or backend-enforced permission check. In `firestore.rules`, any authenticated Firebase user (not just someone who knows the admin passcode) can update a report's `status` field — a documented prototype limitation. Add a custom-claims-based admin role before handling real citizen data at scale.
 
+## Emergency response-team dispatch
+
+`/team/login` → `/team` — an installable PWA (Progressive Web App) for response teams, kept in the same codebase/stack rather than a separate native app: same React/Vite/Firebase project, just scoped to its own routes, manifest, and service worker so it installs on Android and iOS home screens as its own icon, distinct from the citizen site.
+
+**How dispatch works:**
+1. A citizen files an emergency report (`category: 'emergency'`).
+2. `functions/index.js`'s `dispatchEmergencyReport` Cloud Function fires on that report's creation, maps the report's `type` to the response-team type(s) it needs (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
+3. That team's Firestore doc is marked `busy` and given `currentReportId`; if the team has a push token, a Firebase Cloud Messaging notification is sent to their device.
+4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener when the app is open, or via the push notification when it isn't — with a "Navigate" button (opens Google Maps) and the same AI-triage summary the citizen sees.
+5. Tapping **Mark completed** sets the report's status to `resolved` (the same `updateReportStatus` the admin dashboard uses — reflected on the citizen's dashboard and the community feed instantly) and frees the team back to `available`.
+
+**Why a PWA instead of a native app:** it keeps the exact same stack — no React Native/separate codebase, same Firebase project, same deploy. Push notifications work on both platforms (Android via Chrome, iOS via Safari 16.4+ once "Added to Home Screen" — there's no programmatic install prompt on iOS, so `/team/login` shows a one-line hint to do this manually). The one real tradeoff versus native: continuous *background* GPS tracking is much more limited on iOS web than in a native app, so a team's location only updates reliably while the app is open in the foreground (`TeamDashboard.jsx`'s `watchPosition`), not while fully backgrounded/closed.
+
+**This entire feature requires a real, paid ("Blaze plan") Firebase project** — there's no mock-backend equivalent for Cloud Functions or Cloud Messaging, so it does nothing on the default zero-setup local demo. To set it up:
+
+1. Complete [Connecting a real Firebase backend](#connecting-a-real-firebase-backend) above first.
+2. Upgrade the Firebase project to the **Blaze (pay-as-you-go)** plan — required for Cloud Functions to make outbound calls, even at near-zero cost for a demo's traffic.
+3. Enable **Cloud Messaging** (Project settings → Cloud Messaging), then **Web configuration → Generate key pair** for a VAPID key. Set `VITE_FIREBASE_VAPID_KEY` in `.env.local`.
+4. Install the Firebase CLI, then from the project root: `firebase deploy --only functions,firestore:rules` (deploys `functions/index.js` and the updated `teams`/`reports` rules together).
+5. Seed a few demo teams: `npm run seed:teams` (needs the same `scripts/serviceAccountKey.json` as `npm run seed`; see that script's usage comment).
+6. Visit `/team/login` and sign in with any seeded team ID/passcode from `scripts/seedTeams.js` (e.g. `amb-001` / `amb-001-pass`).
+
+**Auth and security note**: like the admin dashboard, `/team` uses a lightweight passcode-per-team gate (`src/context/TeamAuthContext.jsx`), not a real per-team identity/role system — see the comments in `firestore.rules` for exactly what that does and doesn't protect. Replace with real team accounts before handling this beyond a prototype.
+
 ## Deployment
 
-Most of this app is a static Vite build, but **the AI-triage feature requires a Node serverless function** (`api/triage.js`), so the deployment target matters:
+Most of this app is a static Vite build, but **the AI-triage feature requires a Node serverless function** (`api/triage.js`) and **the response-team dispatch requires a deployed Firebase Cloud Function**, so the deployment target matters:
 
 - **Vercel (recommended)** — import the GitHub repo; Vercel auto-detects the Vite build (`npm run build`, output `dist`) and the `/api` serverless functions with no extra config. Add `VITE_FIREBASE_*` and `OPENAI_API_KEY` as environment variables in the project's dashboard. This is the only option below where AI triage actually runs in production.
 - **Netlify / Firebase Hosting / GitHub Pages** — these serve the static `dist` build fine, but don't run `/api/triage.js` as-is (Netlify would need an equivalent Netlify Function, Firebase would need a Cloud Function). Without it, `triageReport()` fails its fetch and returns `null` gracefully — reports still file successfully, just without an AI assessment attached.
@@ -73,16 +98,23 @@ Most of this app is a static Vite build, but **the AI-triage feature requires a 
 api/
   triage.js          Vercel serverless endpoint -- POST /api/triage
   _triage-core.js     Shared triage logic (real OpenAI call + mock fallback)
+functions/
+  index.js           Firebase Cloud Function -- nearest-team emergency dispatch
 src/
   components/   Reusable UI: cards, buttons, map picker, AI triage card, admin report row, icons, nav, etc.
-  context/      AuthContext, LanguageContext, ReportsContext, AdminAuthContext
-  data/         Category/type definitions, language list, demo seed reports
+  context/      AuthContext, LanguageContext, ReportsContext, AdminAuthContext, TeamAuthContext
+  data/         Category/type definitions, language list, demo seed reports, team types
   i18n/         en.js, hi.js dictionaries + translate() helper
-  lib/          firebase.js, mockBackend.js, triage.js, geo.js, time.js
-  pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, AdminLogin, Admin
+  lib/          firebase.js, mockBackend.js, triage.js, messaging.js, teamPwa.js, geo.js, time.js
+  pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, AdminLogin, Admin, TeamLogin, TeamDashboard
   styles/       Tailwind entry + small custom CSS (map pin animation etc.)
-firestore.rules  Security rules for the reports/users collections
-scripts/seed.js  Optional: seed a real Firestore project with demo reports
+public/
+  team-manifest.json          PWA manifest scoped to /team/ (see lib/teamPwa.js)
+  firebase-messaging-sw.js    Background push handler for the team PWA
+firebase.json    Firebase CLI config (Firestore rules, Storage rules, Cloud Functions)
+firestore.rules  Security rules for the reports/users/teams collections
+scripts/seed.js       Optional: seed a real Firestore project with demo reports
+scripts/seedTeams.js  Optional: seed a real Firestore project with demo response teams
 ```
 
 ## Adding a language

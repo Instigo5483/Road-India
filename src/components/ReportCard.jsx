@@ -83,6 +83,13 @@ export default function ReportCard({
               {t('reports.distanceAway', { distance: distanceKm.toFixed(1) })}
             </span>
           )}
+          {report.assignedTeams?.length > 0 && (
+            <span className="font-medium text-emergency-600">
+              {t('reports.dispatched', {
+                teams: report.assignedTeams.map((a) => a.teamName).join(', '),
+              })}
+            </span>
+          )}
         </div>
       </div>
 

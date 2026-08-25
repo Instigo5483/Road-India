@@ -4,8 +4,10 @@ import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 import { ReportsProvider } from './context/ReportsContext'
 import { AdminAuthProvider } from './context/AdminAuthContext'
+import { TeamAuthProvider } from './context/TeamAuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
+import TeamProtectedRoute from './components/TeamProtectedRoute'
 
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -16,6 +18,8 @@ import ReportsFeed from './pages/ReportsFeed'
 import Settings from './pages/Settings'
 import AdminLogin from './pages/AdminLogin'
 import Admin from './pages/Admin'
+import TeamLogin from './pages/TeamLogin'
+import TeamDashboard from './pages/TeamDashboard'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -74,6 +78,15 @@ function AnimatedRoutes() {
             </AdminProtectedRoute>
           }
         />
+        <Route path="/team/login" element={<TeamLogin />} />
+        <Route
+          path="/team"
+          element={
+            <TeamProtectedRoute>
+              <TeamDashboard />
+            </TeamProtectedRoute>
+          }
+        />
         <Route path="*" element={<Landing />} />
       </Routes>
     </AnimatePresence>
@@ -85,11 +98,13 @@ export default function App() {
     <LanguageProvider>
       <AuthProvider>
         <AdminAuthProvider>
-          <ReportsProvider>
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
-          </ReportsProvider>
+          <TeamAuthProvider>
+            <ReportsProvider>
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </ReportsProvider>
+          </TeamAuthProvider>
         </AdminAuthProvider>
       </AuthProvider>
     </LanguageProvider>

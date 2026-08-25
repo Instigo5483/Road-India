@@ -34,16 +34,34 @@ service cloud.firestore {
         // Any signed-in user may toggle their own upvote.
         (request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['upvotes', 'upvotedBy'])) ||
-        // Status is moved by the admin dashboard (src/pages/Admin.jsx).
-        // Admin access there is a client-side passcode gate, not a real
-        // role/permission system (see context/AdminAuthContext.jsx) -- so
-        // this rule can only check "is *some* authenticated Firebase user",
-        // not "is a verified admin". Add a custom claim + rule check here
-        // before handling real citizen data.
+        // Status is moved by the admin dashboard (src/pages/Admin.jsx) or by
+        // a response team marking a job complete (src/pages/TeamDashboard.jsx).
+        // Both are client-side passcode gates, not a real role/permission
+        // system (see context/AdminAuthContext.jsx, TeamAuthContext.jsx) --
+        // so this rule can only check "is *some* authenticated Firebase
+        // user", not "is a verified admin/team". Add custom claims + a real
+        // rule check here before handling real citizen data.
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
       );
 
       allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Response teams (src/pages/TeamDashboard.jsx, functions/index.js).
+    // Teams are seeded directly in the Firestore console or via
+    // scripts/seedTeams.js, never created/deleted from the client. Team
+    // login (context/TeamAuthContext.jsx) signs in anonymously purely to
+    // satisfy `request.auth != null` here, then checks the passcode field
+    // itself client-side -- same "no real per-team identity" limitation as
+    // the `status` field rule above, documented rather than pretended away.
+    // The dispatch Cloud Function uses the Admin SDK, which bypasses these
+    // rules entirely, so it can always assign jobs regardless.
+    match /teams/{teamId} {
+      allow read: if request.auth != null;
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status', 'location', 'fcmToken', 'currentReportId']);
+      allow create, delete: if false;
     }
   }
 }
