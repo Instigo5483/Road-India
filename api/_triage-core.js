@@ -37,7 +37,7 @@ function pickMockSeverity(description) {
   return 'low'
 }
 
-export async function runTriage({ category, type, description }, apiKey) {
+export async function runTriage({ category, types, description }, apiKey) {
   if (!apiKey) return mockTriage({ category, description })
 
   try {
@@ -64,7 +64,7 @@ export async function runTriage({ category, type, description }, apiKey) {
           },
           {
             role: 'user',
-            content: `Category: ${category}\nIssue type: ${type}\nDescription: ${description}`,
+            content: `Category: ${category}\nIssue types: ${(types ?? []).join(', ') || 'unspecified'}\nDescription: ${description}`,
           },
         ],
       }),

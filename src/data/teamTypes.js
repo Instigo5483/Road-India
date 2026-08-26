@@ -5,6 +5,8 @@
 // mapping is duplicated there rather than pulled in through shared tooling.
 // Keep both in sync if you add a team type or emergency type.
 
+import { reportTypeIds } from './categoryTypes'
+
 export const TEAM_TYPES = [
   { id: 'ambulance', labelKey: 'team.type.ambulance' },
   { id: 'doctor', labelKey: 'team.type.doctor' },
@@ -29,6 +31,16 @@ export const REQUIRED_TEAMS_BY_EMERGENCY_TYPE = {
 
 export function getRequiredTeamTypes(emergencyType) {
   return REQUIRED_TEAMS_BY_EMERGENCY_TYPE[emergencyType] ?? ['police']
+}
+
+// A report can now carry multiple emergency types at once (see
+// categoryTypes.js's reportTypeIds) -- this unions the required team
+// types across all of them so e.g. an "accident" + "fire_hazard" report
+// pulls in ambulance, doctor, AND fire teams.
+export function getRequiredTeamTypesForReport(report) {
+  const set = new Set()
+  reportTypeIds(report).forEach((id) => getRequiredTeamTypes(id).forEach((tt) => set.add(tt)))
+  return set.size ? [...set] : ['police']
 }
 
 export const TEAM_STATUSES = [

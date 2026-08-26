@@ -65,17 +65,17 @@ export function ReportsProvider({ children }) {
   }, [])
 
   const createReport = useCallback(
-    async ({ category, type, description, photoUrls, location }) => {
+    async ({ category, types, description, photoUrls, location }) => {
       if (!user) throw new Error('Must be logged in to file a report')
 
       // AI-assisted triage (severity, likely department, caseworker summary)
       // -- a real OpenAI call server-side (see api/_triage-core.js), with a
       // rule-based mock fallback so filing a report never blocks on it.
-      const aiTriage = await triageReport({ category, type, description })
+      const aiTriage = await triageReport({ category, types, description })
 
       const base = {
         category,
-        type,
+        types,
         description,
         photoUrls: photoUrls ?? [],
         location,
@@ -110,7 +110,7 @@ export function ReportsProvider({ children }) {
       // stop the citizen from having successfully filed. See
       // lib/dispatch.js / api/_dispatch-core.js.
       if (category === 'emergency') {
-        dispatchEmergency({ reportId: ref.id, category, type, description, location })
+        dispatchEmergency({ reportId: ref.id, category, types, description, location })
       }
 
       return { id: ref.id, ...base, photoUrls: uploadedPhotoUrls, createdAt: new Date().toISOString() }

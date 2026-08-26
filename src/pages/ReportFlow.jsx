@@ -32,7 +32,7 @@ export default function ReportFlow() {
   const category = getCategory(categoryId)
 
   const [step, setStep] = useState(STEP.DETAILS)
-  const [type, setType] = useState('')
+  const [types, setTypes] = useState([])
   const [description, setDescription] = useState('')
   const [photos, setPhotos] = useState([])
   const [location, setLocation] = useState(null)
@@ -48,9 +48,13 @@ export default function ReportFlow() {
 
   if (!category) return <Navigate to="/home" replace />
 
+  function toggleType(id) {
+    setTypes((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
+  }
+
   function goToLocation() {
     const nextErrors = {}
-    if (!type) nextErrors.type = t('report.step1.error.type')
+    if (types.length === 0) nextErrors.type = t('report.step1.error.type')
     if (!description.trim()) nextErrors.description = t('report.step1.error.details')
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length === 0) setStep(STEP.LOCATION)
@@ -65,7 +69,7 @@ export default function ReportFlow() {
     try {
       const report = await createReport({
         category: category.id,
-        type,
+        types,
         description: description.trim(),
         photoUrls: photos.map((p) => p.src),
         location,
@@ -119,20 +123,27 @@ export default function ReportFlow() {
                 <label className="mb-1.5 block text-sm font-medium text-ink-700">
                   {t('report.step1.typeLabel')}
                 </label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="input-field"
-                >
-                  <option value="" disabled>
-                    {t('report.step1.typePlaceholder')}
-                  </option>
-                  {category.types.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {t(opt.labelKey)}
-                    </option>
-                  ))}
-                </select>
+                <p className="mb-2.5 text-xs text-ink-400">{t('report.step1.typeHint')}</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {category.types.map((opt) => {
+                    const selected = types.includes(opt.id)
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => toggleType(opt.id)}
+                        aria-pressed={selected}
+                        className={`rounded-xl border px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
+                          selected
+                            ? 'border-brand-600 bg-brand-50 text-brand-800'
+                            : 'border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:bg-brand-50/40'
+                        }`}
+                      >
+                        {t(opt.labelKey)}
+                      </button>
+                    )
+                  })}
+                </div>
                 <FieldError message={errors.type} />
               </div>
 

@@ -10,7 +10,7 @@ import { getTeamType, getTeamStatus } from '../data/teamTypes'
 import { toDate } from '../lib/time'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import AdminReportRow from '../components/AdminReportRow'
-import AddTeamForm from '../components/AddTeamForm'
+import Button from '../components/Button'
 import EmptyState from '../components/EmptyState'
 import { IconLogOut, IconSiren, IconClock, IconListChecks } from '../components/Icons'
 
@@ -134,7 +134,13 @@ export default function Admin() {
 
         <div className="mt-6 space-y-3">
           {filtered.map((report, i) => (
-            <AdminReportRow key={report.id} report={report} onStatusChange={updateReportStatus} index={i} />
+            <AdminReportRow
+              key={report.id}
+              report={report}
+              onStatusChange={updateReportStatus}
+              teams={teams}
+              index={i}
+            />
           ))}
 
           {filtered.length === 0 && <EmptyState title={t('admin.empty.title')} />}
@@ -172,8 +178,9 @@ export default function Admin() {
             </div>
 
             <div className="mt-5">
-              <p className="mb-2.5 text-sm font-semibold text-ink-700">{t('admin.teams.addNew')}</p>
-              <AddTeamForm />
+              <Button variant="secondary" onClick={() => navigate('/admin/teams/new')}>
+                {t('admin.teams.addNew')}
+              </Button>
             </div>
           </section>
         )}

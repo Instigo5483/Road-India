@@ -69,6 +69,26 @@ export function getType(categoryId, typeId) {
   return category?.types.find((t) => t.id === typeId)
 }
 
+// Reports moved from a single `type` string to a `types` array so a
+// citizen can pick multiple issues at once (e.g. pothole + waterlogging)
+// in the same report -- see ReportFlow.jsx. Falls back to the old
+// singular `type` field so reports created before this change (including
+// data/seedReports.js) still render correctly.
+export function reportTypeIds(report) {
+  if (Array.isArray(report.types) && report.types.length) return report.types
+  if (report.type) return [report.type]
+  return []
+}
+
+export function getTypeLabel(t, categoryId, typeId) {
+  const type = getType(categoryId, typeId)
+  return type ? t(type.labelKey) : typeId
+}
+
+export function getTypesLabel(t, categoryId, typeIds) {
+  return typeIds.map((id) => getTypeLabel(t, categoryId, id)).filter(Boolean).join(', ')
+}
+
 export const STATUSES = [
   { id: 'submitted', labelKey: 'status.submitted', theme: 'ink' },
   { id: 'in_review', labelKey: 'status.in_review', theme: 'warning' },

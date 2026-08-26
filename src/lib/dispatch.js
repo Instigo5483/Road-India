@@ -6,12 +6,12 @@
 // Fire-and-forget from ReportsContext.createReport right after an
 // emergency report is created: never throws, never blocks report
 // creation on a flaky dispatch call.
-export async function dispatchEmergency({ reportId, category, type, description, location }) {
+export async function dispatchEmergency({ reportId, category, types, description, location }) {
   try {
     await fetch('/api/dispatch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reportId, category, type, description, location }),
+      body: JSON.stringify({ reportId, category, types, description, location }),
     })
   } catch {
     // Ignored -- see file comment.

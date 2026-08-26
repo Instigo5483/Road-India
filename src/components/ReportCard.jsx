@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
-import { getCategory, getType } from '../data/categoryTypes'
+import { getCategory, reportTypeIds, getTypesLabel } from '../data/categoryTypes'
 import { timeAgo } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
@@ -27,7 +27,7 @@ export default function ReportCard({
 }) {
   const { t, lang } = useLanguage()
   const category = getCategory(report.category)
-  const type = getType(report.category, report.type)
+  const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const Icon = category ? ICONS[category.icon] : null
   const [detailOpen, setDetailOpen] = useState(false)
 
@@ -58,7 +58,7 @@ export default function ReportCard({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold text-ink-900">{type ? t(type.labelKey) : report.type}</h3>
+          <h3 className="font-semibold text-ink-900">{typeLabel || report.type}</h3>
           <StatusBadge status={report.status} />
           {report.aiTriage?.severity && (
             <span

@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
-import { getCategory, getType, STATUSES } from '../data/categoryTypes'
+import { getCategory, reportTypeIds, getTypesLabel, STATUSES } from '../data/categoryTypes'
+import { getTeamType, getTeamStatus, getRequiredTeamTypesForReport } from '../data/teamTypes'
 import { timeAgo } from '../lib/time'
+import { isFirebaseConfigured } from '../lib/firebase'
+import { reassignReportTeam } from '../lib/teams'
 import { SEVERITY_THEME } from './AiTriageCard'
 import ReportDetailModal from './ReportDetailModal'
 import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconSparkle, IconThumbsUp } from './Icons'
@@ -15,13 +18,17 @@ const THEME_STYLES = {
   emergency: 'bg-emergency-500/10 text-emergency-600',
 }
 
-export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
+export default function AdminReportRow({ report, onStatusChange, teams = [], index = 0 }) {
   const { t, lang } = useLanguage()
   const [updating, setUpdating] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [reassigningType, setReassigningType] = useState('')
   const category = getCategory(report.category)
-  const type = getType(report.category, report.type)
+  const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const Icon = category ? ICONS[category.icon] : null
+
+  const isEmergency = report.category === 'emergency'
+  const requiredTeamTypes = isEmergency ? getRequiredTeamTypesForReport(report) : []
 
   async function handleStatusChange(e) {
     const status = e.target.value
@@ -30,6 +37,15 @@ export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
       await onStatusChange(report.id, status)
     } finally {
       setUpdating(false)
+    }
+  }
+
+  async function handleReassign(teamType, newTeamId) {
+    setReassigningType(teamType)
+    try {
+      await reassignReportTeam(report, teamType, newTeamId || null)
+    } finally {
+      setReassigningType('')
     }
   }
 
@@ -61,7 +77,7 @@ export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-ink-900">{type ? t(type.labelKey) : report.type}</h3>
+            <h3 className="font-semibold text-ink-900">{typeLabel || report.type}</h3>
             {category && (
               <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">
                 {t(category.labelKey)}
@@ -117,6 +133,40 @@ export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
           </select>
         </label>
       </div>
+
+      {isEmergency && isFirebaseConfigured && requiredTeamTypes.length > 0 && (
+        <div
+          className="mt-3 space-y-2 border-t border-ink-100 pt-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-xs font-semibold text-ink-500">{t('admin.assignedTeams.heading')}</p>
+          {requiredTeamTypes.map((teamType) => {
+            const assigned = report.assignedTeams?.find((a) => a.teamType === teamType)
+            const options = teams.filter((tm) => tm.type === teamType)
+            const teamTypeMeta = getTeamType(teamType)
+            return (
+              <div key={teamType} className="flex items-center justify-between gap-3">
+                <span className="text-xs text-ink-500">
+                  {teamTypeMeta ? t(teamTypeMeta.labelKey) : teamType}
+                </span>
+                <select
+                  value={assigned?.teamId ?? ''}
+                  disabled={reassigningType === teamType}
+                  onChange={(e) => handleReassign(teamType, e.target.value)}
+                  className="input-field w-auto min-w-[11rem] py-1.5 text-xs disabled:opacity-60"
+                >
+                  <option value="">{t('admin.assignedTeams.unassigned')}</option>
+                  {options.map((tm) => (
+                    <option key={tm.id} value={tm.id}>
+                      {tm.name} · {t(getTeamStatus(tm.status).labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {detailOpen && (
         <ReportDetailModal report={report} onClose={() => setDetailOpen(false)} showUpvote={false} />

@@ -75,7 +75,7 @@ async function findNearestAvailableTeam(db, teamType, reportLocation) {
  * report. Returns { assignedTeams } always -- never throws, so a flaky
  * push or missing credential never blocks the citizen's report from
  * having already been filed successfully before this was called. */
-export async function runDispatch({ reportId, category, type, description, location }, serviceAccountBase64) {
+export async function runDispatch({ reportId, category, types, description, location }, serviceAccountBase64) {
   if (category !== 'emergency' || !location || !reportId) return { assignedTeams: [] }
 
   try {
@@ -85,7 +85,14 @@ export async function runDispatch({ reportId, category, type, description, locat
     const db = getFirestore(app)
     const messaging = getMessaging(app)
 
-    const requiredTypes = REQUIRED_TEAMS_BY_EMERGENCY_TYPE[type] ?? ['police']
+    // A report can carry multiple emergency types at once (e.g. accident +
+    // fire_hazard) -- union the required team types across all of them so
+    // every relevant team gets dispatched, not just the first type's.
+    const requiredTypesSet = new Set()
+    ;(Array.isArray(types) ? types : []).forEach((t) =>
+      (REQUIRED_TEAMS_BY_EMERGENCY_TYPE[t] ?? ['police']).forEach((tt) => requiredTypesSet.add(tt))
+    )
+    const requiredTypes = requiredTypesSet.size ? [...requiredTypesSet] : ['police']
     const assignedTeams = []
 
     for (const teamType of requiredTypes) {
@@ -101,7 +108,7 @@ export async function runDispatch({ reportId, category, type, description, locat
           .send({
             token: team.fcmToken,
             notification: {
-              title: `New ${teamType} dispatch: ${type.replace(/_/g, ' ')}`,
+              title: `New ${teamType} dispatch: ${(types ?? []).map((t) => t.replace(/_/g, ' ')).join(', ')}`,
               body: (description ?? '').slice(0, 120) || 'Tap to view details',
             },
             data: { reportId, type: 'emergency-dispatch' },

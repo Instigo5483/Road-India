@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
-import { getCategory, getType } from '../data/categoryTypes'
+import { getCategory, reportTypeIds, getTypesLabel } from '../data/categoryTypes'
 import { timeAgo, formatTimestamp } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
@@ -39,7 +39,7 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
   }, [onClose])
 
   const category = getCategory(report.category)
-  const type = getType(report.category, report.type)
+  const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const Icon = category ? ICONS[category.icon] : null
 
   // Even though this renders through a portal (physically outside
@@ -74,7 +74,7 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
             {Icon && <Icon className="h-5.5 w-5.5" />}
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-bold text-ink-900">{type ? t(type.labelKey) : report.type}</h2>
+            <h2 className="text-lg font-bold text-ink-900">{typeLabel || report.type}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <StatusBadge status={report.status} />
               {report.category === 'emergency' && (

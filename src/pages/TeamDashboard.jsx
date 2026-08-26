@@ -5,7 +5,7 @@ import { useTeamAuth } from '../context/TeamAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import { requestFcmToken } from '../lib/messaging'
-import { getCategory, getType } from '../data/categoryTypes'
+import { getCategory, reportTypeIds, getTypesLabel } from '../data/categoryTypes'
 import { getTeamType, getTeamStatus } from '../data/teamTypes'
 import { distanceKm } from '../lib/geo'
 import Button from '../components/Button'
@@ -96,7 +96,9 @@ export default function TeamDashboard() {
   }
 
   const category = currentReport ? getCategory(currentReport.category) : null
-  const type = currentReport ? getType(currentReport.category, currentReport.type) : null
+  const typeLabel = currentReport
+    ? getTypesLabel(t, currentReport.category, reportTypeIds(currentReport))
+    : ''
 
   const mapsUrl = currentReport?.location
     ? `https://www.google.com/maps/dir/?api=1&destination=${currentReport.location.lat},${currentReport.location.lng}`
@@ -178,7 +180,7 @@ export default function TeamDashboard() {
 
               <div>
                 <h2 className="text-lg font-bold text-ink-900">
-                  {type ? t(type.labelKey) : currentReport.type}
+                  {typeLabel || currentReport.type}
                 </h2>
                 {category && <p className="text-xs text-ink-400">{t(category.labelKey)}</p>}
               </div>
