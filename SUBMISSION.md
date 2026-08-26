@@ -1,6 +1,6 @@
 # Road India — Build What Moves India submission
 
-## Project summary (for the submission form, <250 words)
+## Project summary
 
 Road India lets any citizen report a pothole, an unfinished road-work site, or
 a live road emergency in under a minute — and shows them exactly what happens
