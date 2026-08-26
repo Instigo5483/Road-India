@@ -6,6 +6,7 @@ import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import LanguageSelector from '../components/LanguageSelector'
 import Button from '../components/Button'
+import Logo from '../components/Logo'
 import { CATEGORIES } from '../data/categoryTypes'
 import {
   IconArrowRight,
@@ -85,9 +86,7 @@ export default function Landing() {
       <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-800 text-sm text-white">
-              RI
-            </span>
+            <Logo className="h-9 w-9" />
             {t('common.appName')}
           </div>
 
@@ -274,9 +273,7 @@ export default function Landing() {
       <footer className="border-t border-ink-100 bg-white py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-4 text-center sm:px-6">
           <div className="flex items-center gap-2 text-sm font-extrabold tracking-tight text-brand-900">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-800 text-xs text-white">
-              RI
-            </span>
+            <Logo className="h-7 w-7" />
             {t('common.appName')}
           </div>
           <p className="text-xs text-ink-400">{t('landing.footer.builtFor')}</p>

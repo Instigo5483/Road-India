@@ -6,12 +6,12 @@ import { useAdminAuth } from '../context/AdminAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CATEGORIES, STATUSES } from '../data/categoryTypes'
-import { getTeamType, getTeamStatus } from '../data/teamTypes'
 import { toDate } from '../lib/time'
 import { db, isFirebaseConfigured } from '../lib/firebase'
 import AdminReportRow from '../components/AdminReportRow'
 import Button from '../components/Button'
 import EmptyState from '../components/EmptyState'
+import Logo from '../components/Logo'
 import { IconLogOut, IconSiren, IconClock, IconListChecks } from '../components/Icons'
 
 export default function Admin() {
@@ -65,9 +65,7 @@ export default function Admin() {
       <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-800 text-sm text-white">
-              RI
-            </span>
+            <Logo className="h-9 w-9" />
             {t('common.appName')}
             <span className="rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
               Admin
@@ -92,7 +90,12 @@ export default function Admin() {
         >
           {t('admin.title')}
         </motion.h1>
-        <p className="mt-1.5 text-ink-500">{t('admin.subtitle')}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="mt-1.5 text-ink-500">{t('admin.subtitle')}</p>
+          <Button variant="secondary" size="sm" onClick={() => navigate('/admin/teams')}>
+            {t('admin.teams.heading')}
+          </Button>
+        </div>
 
         <div className="mt-6 grid grid-cols-3 gap-3">
           <StatTile icon={IconListChecks} label={t('admin.stats.total')} value={stats.total} theme="brand" />
@@ -145,45 +148,6 @@ export default function Admin() {
 
           {filtered.length === 0 && <EmptyState title={t('admin.empty.title')} />}
         </div>
-
-        {isFirebaseConfigured && (
-          <section className="mt-14">
-            <h2 className="font-display text-xl font-bold text-ink-900">{t('admin.teams.heading')}</h2>
-            <p className="mt-1 text-sm text-ink-500">{t('admin.teams.subtitle')}</p>
-
-            <div className="mt-5 space-y-2">
-              {teams.length === 0 && <p className="text-sm text-ink-400">{t('admin.teams.rosterEmpty')}</p>}
-              {teams.map((team) => {
-                const type = getTeamType(team.type)
-                const status = getTeamStatus(team.status)
-                return (
-                  <div
-                    key={team.id}
-                    className="flex items-center justify-between rounded-xl border border-ink-200 bg-white px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-ink-900">{team.name}</p>
-                      <p className="text-xs text-ink-400">
-                        {type ? t(type.labelKey) : team.type} · {team.id}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${TEAM_STATUS_BADGE[status.theme]}`}
-                    >
-                      {t(status.labelKey)}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-5">
-              <Button variant="secondary" onClick={() => navigate('/admin/teams/new')}>
-                {t('admin.teams.addNew')}
-              </Button>
-            </div>
-          </section>
-        )}
       </main>
     </div>
   )
@@ -193,12 +157,6 @@ const STAT_THEME = {
   brand: 'bg-brand-600/10 text-brand-700',
   emergency: 'bg-emergency-500/10 text-emergency-600',
   accent: 'bg-accent-500/10 text-accent-600',
-}
-
-const TEAM_STATUS_BADGE = {
-  success: 'bg-success-50 text-success-700',
-  warning: 'bg-warning-50 text-warning-600',
-  ink: 'bg-ink-100 text-ink-500',
 }
 
 function StatTile({ icon: Icon, label, value, theme }) {

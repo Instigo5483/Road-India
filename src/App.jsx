@@ -17,6 +17,7 @@ import ReportsFeed from './pages/ReportsFeed'
 import Settings from './pages/Settings'
 import AdminLogin from './pages/AdminLogin'
 import Admin from './pages/Admin'
+import AdminTeams from './pages/AdminTeams'
 import AdminAddTeam from './pages/AdminAddTeam'
 import TeamLogin from './pages/TeamLogin'
 import TeamDashboard from './pages/TeamDashboard'
@@ -82,6 +83,14 @@ function AnimatedRoutes() {
         element={
           <AdminProtectedRoute>
             <Admin />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/teams"
+        element={
+          <AdminProtectedRoute>
+            <AdminTeams />
           </AdminProtectedRoute>
         }
       />

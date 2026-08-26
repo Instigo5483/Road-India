@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
 import UserMenu from './UserMenu'
+import Logo from './Logo'
 
 const links = [
   { to: '/home', key: 'nav.home' },
@@ -21,9 +22,7 @@ export default function Navbar() {
           onClick={() => navigate('/home')}
           className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-800 text-sm text-white">
-            RI
-          </span>
+          <Logo className="h-8 w-8" />
           {t('common.appName')}
         </button>
 

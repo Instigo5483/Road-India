@@ -12,6 +12,7 @@ import Button from '../components/Button'
 import AiTriageCard from '../components/AiTriageCard'
 import ReportLocationMap from '../components/ReportLocationMap'
 import EmptyState from '../components/EmptyState'
+import Logo from '../components/Logo'
 import {
   IconLogOut,
   IconMapPin,
@@ -109,9 +110,7 @@ export default function TeamDashboard() {
       <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-emergency-600 text-sm text-white">
-              RI
-            </span>
+            <Logo className="h-9 w-9" />
             {team ? team.name : t('team.dashboard.title')}
           </div>
           <button
