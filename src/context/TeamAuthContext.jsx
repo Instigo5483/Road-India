@@ -86,6 +86,15 @@ export function TeamAuthProvider({ children }) {
     const status = data.currentReportId ? 'busy' : 'available'
     await updateDoc(ref, { status })
     window.localStorage.setItem(STORAGE_KEY, trimmedId)
+    // Set loading true in the same tick as teamId, not just inside the
+    // effect below -- otherwise there's a render where teamId is already
+    // set but loading is still whatever it was before (false, on a fresh
+    // page), so TeamProtectedRoute sees "no team, not loading" and bounces
+    // straight back to /team/login before the effect even runs. That's
+    // what made the very first login attempt after a fresh page load
+    // silently fail, requiring a second attempt (by which point the effect
+    // had already flipped loading to true from the first attempt).
+    setLoading(true)
     setTeamId(trimmedId)
     return true
   }, [])
