@@ -10,6 +10,7 @@ import { getTeamType, getTeamStatus } from '../data/teamTypes'
 import { distanceKm } from '../lib/geo'
 import Button from '../components/Button'
 import AiTriageCard from '../components/AiTriageCard'
+import ReportLocationMap from '../components/ReportLocationMap'
 import EmptyState from '../components/EmptyState'
 import {
   IconLogOut,
@@ -188,6 +189,8 @@ export default function TeamDashboard() {
                 <IconMapPin className="mt-0.5 h-4 w-4 shrink-0 text-emergency-600" />
                 {currentReport.location?.address ?? t('report.step2.coordinates')}
               </p>
+
+              <ReportLocationMap location={currentReport.location} />
 
               <AiTriageCard triage={currentReport.aiTriage} />
 

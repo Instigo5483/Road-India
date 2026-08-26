@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { getCategory, getType, STATUSES } from '../data/categoryTypes'
 import { timeAgo } from '../lib/time'
 import { SEVERITY_THEME } from './AiTriageCard'
+import ReportDetailModal from './ReportDetailModal'
 import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconSparkle, IconThumbsUp } from './Icons'
 
 const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
@@ -17,6 +18,7 @@ const THEME_STYLES = {
 export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
   const { t, lang } = useLanguage()
   const [updating, setUpdating] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
   const category = getCategory(report.category)
   const type = getType(report.category, report.type)
   const Icon = category ? ICONS[category.icon] : null
@@ -37,7 +39,16 @@ export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3), duration: 0.3 }}
-      className="rounded-2xl border border-ink-200 bg-white p-4 shadow-card sm:p-5"
+      onClick={() => setDetailOpen(true)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          setDetailOpen(true)
+        }
+      }}
+      className="cursor-pointer rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-5"
     >
       <div className="flex flex-wrap items-start gap-3">
         <span
@@ -90,7 +101,7 @@ export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
           </div>
         </div>
 
-        <label className="flex shrink-0 flex-col gap-1">
+        <label className="flex shrink-0 flex-col gap-1" onClick={(e) => e.stopPropagation()}>
           <span className="text-[11px] font-medium text-ink-400">{t('admin.status.updateLabel')}</span>
           <select
             value={report.status}
@@ -106,6 +117,10 @@ export default function AdminReportRow({ report, onStatusChange, index = 0 }) {
           </select>
         </label>
       </div>
+
+      {detailOpen && (
+        <ReportDetailModal report={report} onClose={() => setDetailOpen(false)} showUpvote={false} />
+      )}
     </motion.div>
   )
 }
