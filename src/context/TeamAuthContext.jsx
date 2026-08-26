@@ -22,18 +22,25 @@ const STORAGE_KEY = 'road_india_team_id'
 const TeamAuthContext = createContext(null)
 
 export function TeamAuthProvider({ children }) {
+  // `teamId` (not just localStorage) is the thing that drives the
+  // subscription effect below -- login/logout update this state directly
+  // so the onSnapshot listener restarts immediately, instead of only being
+  // established once on mount (which meant a fresh login showed a static
+  // one-time snapshot that never updated again until a full page reload).
+  const [teamId, setTeamId] = useState(() =>
+    typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
+  )
   const [team, setTeam] = useState(null)
-  const [loading, setLoading] = useState(isFirebaseConfigured)
+  const [loading, setLoading] = useState(isFirebaseConfigured && !!teamId)
 
   useEffect(() => {
-    if (!isFirebaseConfigured) return
-
-    const teamId = window.localStorage.getItem(STORAGE_KEY)
-    if (!teamId) {
+    if (!isFirebaseConfigured || !teamId) {
+      setTeam(null)
       setLoading(false)
       return
     }
 
+    setLoading(true)
     const unsub = onSnapshot(
       doc(db, 'teams', teamId),
       (snap) => {
@@ -43,12 +50,13 @@ export function TeamAuthProvider({ children }) {
       () => setLoading(false)
     )
     return unsub
-  }, [])
+  }, [teamId])
 
-  const loginTeam = useCallback(async (teamId, passcode) => {
+  const loginTeam = useCallback(async (id, passcode) => {
+    const trimmedId = id.trim()
     if (!auth.currentUser) await signInAnonymously(auth)
 
-    const ref = doc(db, 'teams', teamId.trim())
+    const ref = doc(db, 'teams', trimmedId)
     const snap = await getDoc(ref)
     const data = snap.data()
     if (!snap.exists() || data.passcode !== passcode) return false
@@ -60,8 +68,8 @@ export function TeamAuthProvider({ children }) {
     // current one.
     const status = data.currentReportId ? 'busy' : 'available'
     await updateDoc(ref, { status })
-    window.localStorage.setItem(STORAGE_KEY, teamId.trim())
-    setTeam({ id: teamId.trim(), ...data, status })
+    window.localStorage.setItem(STORAGE_KEY, trimmedId)
+    setTeamId(trimmedId)
     return true
   }, [])
 
@@ -70,7 +78,7 @@ export function TeamAuthProvider({ children }) {
       await updateDoc(doc(db, 'teams', team.id), { status: 'offline', fcmToken: null }).catch(() => {})
     }
     window.localStorage.removeItem(STORAGE_KEY)
-    setTeam(null)
+    setTeamId(null)
     await firebaseSignOut(auth).catch(() => {})
   }, [team])
 
