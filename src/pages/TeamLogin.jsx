@@ -43,6 +43,8 @@ export default function TeamLogin() {
       } else {
         setError(t('team.login.error'))
       }
+    } catch {
+      setError(t('team.login.error'))
     } finally {
       setBusy(false)
     }

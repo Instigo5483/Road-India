@@ -54,10 +54,27 @@ export function TeamAuthProvider({ children }) {
 
   const loginTeam = useCallback(async (id, passcode) => {
     const trimmedId = id.trim()
-    if (!auth.currentUser) await signInAnonymously(auth)
+    const justSignedIn = !auth.currentUser
+    if (justSignedIn) await signInAnonymously(auth)
 
     const ref = doc(db, 'teams', trimmedId)
-    const snap = await getDoc(ref)
+
+    let snap
+    try {
+      snap = await getDoc(ref)
+    } catch (err) {
+      // Right after signInAnonymously resolves, Firestore's own internal
+      // auth-token listener can lag a beat behind it, so this very first
+      // read can fail with a permission error even though the sign-in
+      // itself succeeded -- without this retry, that shows up as "the
+      // first login attempt does nothing, the second one works" (the
+      // second attempt has no sign-in race to hit). Only retry when we
+      // just signed in; a wrong ID/passcode should still fail immediately.
+      if (!justSignedIn) throw err
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      snap = await getDoc(ref)
+    }
+
     const data = snap.data()
     if (!snap.exists() || data.passcode !== passcode) return false
 

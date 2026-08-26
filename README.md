@@ -1,25 +1,28 @@
-# Road India
+<p align="center">
+  <img src="public/logo.svg" alt="Road India" width="420" />
+</p>
 
 Report road problems, infrastructure grievances, and live emergencies in under a minute — built for the **Build What Moves India** hackathon.
 
-A Blinkit/Zepto-style fast reporting flow: pick a category, add a couple of details and a photo, drop a pin on the map, done. Every report is trackable in a personal dashboard, and visible on a public feed where the community can upvote existing reports instead of filing duplicates.
+A Blinkit/Zepto-style fast reporting flow: pick a category, select every issue type that applies, add a photo, drop a pin on the map, done. Every report is trackable in a personal dashboard, visible on a public feed where the community can upvote existing reports instead of filing duplicates, and openable as a full detail popup (map included) from any account type — citizen, admin, or response team.
 
 ## Features
 
-- **Three report categories** — Road Problem (potholes, waterlogging…), Road Corruption (bad roads, missing footpaths, incomplete work, missing signs…), Road Emergency (accidents, road clashes, breakdowns…), each with its own category-specific issue-type dropdown.
-- **Two-step report flow** — Step 1: issue type, photos, situation details. Step 2: precise map-based location picker (drag/tap to place a pin, "use my current location", reverse-geocoded address) with an automatically recorded timestamp.
+- **Three report categories, multi-select issue types** — Road Problem (potholes, waterlogging…), Road Corruption (bad roads, missing footpaths, incomplete work, missing signs…), Road Emergency (accidents, road clashes, breakdowns…). Within a category, a citizen can select more than one issue at once (e.g. "Accident" + "Fire hazard" on the same report) instead of being limited to a single type.
+- **Two-step report flow** — Step 1: issue type(s), photos, situation details. Step 2: precise map-based location picker (drag/tap to place a pin, "use my current location", reverse-geocoded address) with an automatically recorded timestamp.
+- **Report detail popup** — clicking any report (citizen feed, dashboard, admin dashboard, or response-team job) opens a full-detail modal: photos, description, AI triage, and a read-only map pinned to the exact reported location, so there's never ambiguity about where an issue actually is.
 - **AI-assisted triage** — every report is triaged in real time by an OpenAI model: severity, a suggested department, and a caseworker-ready summary, shown to the citizen right after submitting (see [AI-assisted triage](#ai-assisted-triage) below).
 - **Account system** — the main "Log in" entry point first asks which of three roles you're signing in as (User, Admin, Response Team), each with its own separate auth. The citizen ("User") path is a choice between an Aadhaar (12-digit ID + OTP) or DigiLocker (simulated redirect) verification flow, with a profile stored per user (see [Demo auth](#demo-auth-not-real-aadhardigilocker) below).
-- **Dashboard** — every report you've filed, with live status (Submitted → In Review → In Progress → Resolved).
+- **Dashboard** — every report you've filed, with live status (Submitted → In Review → In Progress → Resolved), and dynamic homepage stats (reports filed / resolved / cities covered) computed live from the actual database rather than hardcoded numbers.
 - **Ongoing Reports feed** — every report from every user, Reddit-style upvoting so the most-supported issues surface first, filters by category and location ("near me" via geolocation, distance shown per report), search, and sort by relevance / recency / distance. Live emergencies are always pinned to the top.
 - **Language selection** — available before login on the landing page and again inside the dashboard. English and Hindi are fully translated; only complete languages are listed in the switcher (see [Adding a language](#adding-a-language) below to add more).
-- **Admin dashboard** — a separate staff-only view at `/admin` of every report across all users, filterable by category/status, with a dropdown to move each report's status (see [Admin dashboard](#admin-dashboard) below).
-- **Emergency response-team dispatch** — a Blinkit/Zepto-style web dashboard at `/team` for ambulance/doctor/fire/police/tow teams: filing an emergency report automatically finds and pushes a notification to the nearest available team of the right type(s), and the team taps "Mark completed" when done (see [Emergency response-team dispatch](#emergency-response-team-dispatch) below).
+- **Admin dashboard** — a separate staff-only view at `/admin` of every report across all users: search by report ID/description/address/reporter, filter by category/status/time-range/state/district/city, a dropdown to move each report's status, and — for emergencies — a control to see and change which response team is assigned to which report (see [Admin dashboard](#admin-dashboard) below).
+- **Emergency response-team dispatch** — a Blinkit/Zepto-style web dashboard at `/team` for ambulance/doctor/fire/police/tow teams: filing an emergency report automatically finds and pushes a notification to the nearest available team of the right type(s) — a report with multiple emergency types dispatches every relevant team type at once — and the team taps "Mark completed" when done (see [Emergency response-team dispatch](#emergency-response-team-dispatch) below).
 - **Motion throughout** — hover/tap micro-interactions on every card and button, animated step transitions in the report flow, animated route transitions, and a live pulsing map pin, all via Framer Motion.
 
 ## Tech stack
 
-React 18 + Vite + Tailwind CSS + Framer Motion, React Router v6, Leaflet / react-leaflet (OpenStreetMap tiles, no API key required), Firebase (Auth + Firestore + Cloud Functions + Cloud Messaging) for the backend, an OpenAI model (`gpt-4o-mini`) via a Vercel serverless function for AI-assisted report triage.
+React 18 + Vite + Tailwind CSS + Framer Motion, React Router v6, Leaflet / react-leaflet (OpenStreetMap tiles, no API key required), Firebase (Auth + Firestore + Cloud Messaging) for the backend, an OpenAI model (`gpt-4o-mini`) via a Vercel serverless function for AI-assisted report triage, and a second Vercel serverless function for emergency dispatch (deliberately not Firebase Cloud Functions — see [Emergency response-team dispatch](#emergency-response-team-dispatch) for why — so the whole project stays on free tiers end to end).
 
 ## Quick start (works with zero setup)
 
@@ -28,7 +31,7 @@ npm install
 npm run dev
 ```
 
-The app runs immediately with **no Firebase project required** — it falls back to an in-memory + `localStorage` mock backend (see `src/lib/mockBackend.js`) seeded with demo reports, so you can click through the entire flow (sign up, file a report, upvote, filter) right away. This is intentional: it's what makes the app instantly demoable for hackathon judging.
+The app runs immediately with **no Firebase project required** — it falls back to an in-memory + `localStorage` mock backend (see `src/lib/mockBackend.js`) seeded with demo reports, so you can click through the entire flow (sign up, file a report, upvote, filter) right away. This is intentional: it's what makes the app instantly demoable for hackathon judging. (Admin dashboard filtering, status updates, and search all work on the mock backend too; the response-team dashboard and admin team management need a real Firebase project — see below.)
 
 ## Connecting a real Firebase backend
 
@@ -49,7 +52,7 @@ Real Aadhaar/DigiLocker integration requires UIDAI/DigiLocker API partner access
 
 ## AI-assisted triage
 
-Every filed report is triaged by an OpenAI model in real time: severity (`low`/`medium`/`high`/`critical`), a suggested responsible department, and a one-line caseworker-ready summary — shown to the citizen immediately on the success screen, and as a small badge on the report in the feed/dashboard (`src/components/AiTriageCard.jsx`).
+Every filed report is triaged by an OpenAI model in real time: severity (`low`/`medium`/`high`/`critical`), a suggested responsible department, and a one-line caseworker-ready summary — shown to the citizen immediately on the success screen, and as a small badge on the report in the feed/dashboard/admin view (`src/components/AiTriageCard.jsx`). Since a report can carry multiple issue types, all of them are passed to the model as context.
 
 - **Server-side only** — the actual OpenAI call happens in `api/_triage-core.js`, invoked by `api/triage.js` (the Vercel serverless endpoint used in production) and mirrored by a Vite dev-server middleware (`vite.config.js`) so `npm run dev` exercises the identical code path locally, no Vercel CLI required.
 - **Set `OPENAI_API_KEY`** in `.env.local` (see `.env.example`) to enable real triage. This is a **server-only** secret — it is never prefixed with `VITE_` and never shipped to the browser bundle.
@@ -57,24 +60,29 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 
 ## Admin dashboard
 
-`/admin/login` → `/admin` — a staff view of every report filed across the app (not just one citizen's own), with category/status filters and a per-report dropdown to move status through Submitted → In Review → In Progress → Resolved. Live emergencies sort to the top.
+`/admin/login` → `/admin` — a staff view of every report filed across the app (not just one citizen's own).
 
+- **Search and filters** — search by report ID, description, address, or reporter name; filter chips for category and status; a collapsible filter panel for time range and cascading state/district/city (mirroring the citizen Ongoing Reports feed's filters, sharing the same logic via `src/lib/reportFilters.js`). A per-report dropdown moves status through Submitted → In Review → In Progress → Resolved. Live emergencies sort to the top.
+- **Report detail popup** — click any report row to open the same detail modal (with map) the citizen feed uses, without leaving the dashboard.
+- **Response team management, on its own page** — `/admin/teams` shows the full roster (name, type, ID, live status); `/admin/teams/new` provisions a new team. The admin chooses the team's own **ID and passcode** directly (rather than one being auto-generated) and picks a **base area** from a city dropdown (`src/data/cities.js`) rather than dropping an exact map pin — a team's coverage is naturally city-level, and a city center is precise enough for the nearest-team dispatch match.
+- **See and change team assignment** — each emergency report row shows a dropdown per required team type (ambulance, doctor, fire, police, tow — derived from the report's issue type(s)) with the currently assigned team, or "Unassigned". Changing it (`src/lib/teams.js`'s `reassignReportTeam`) frees the previous team back to `available` and marks the new one `busy` on that report.
 - **Separate from citizen login** — real municipal staff wouldn't authenticate through a citizen Aadhaar/DigiLocker flow, so `/admin` uses its own passcode gate (`src/context/AdminAuthContext.jsx`), independent of `AuthContext`.
 - **Passcode**: set `VITE_ADMIN_PASSCODE` in `.env.local`, or use the default `roadindia-admin` if unset (see `.env.example`). **This is a client-side convenience gate for the prototype, not real access control** — change the default before sharing a live deployment link publicly.
-- **Not a real role system** — there's no per-admin identity or backend-enforced permission check. In `firestore.rules`, any authenticated Firebase user (not just someone who knows the admin passcode) can update a report's `status` field — a documented prototype limitation. Add a custom-claims-based admin role before handling real citizen data at scale.
-- **Add new response teams** directly from this dashboard (`src/components/AddTeamForm.jsx`) — pick a name/type/base location and the app auto-generates a unique team ID and passcode, shown once so you can hand them to the team. See [Emergency response-team dispatch](#emergency-response-team-dispatch) below for how those credentials get used.
+- **Not a real role system** — there's no per-admin identity or backend-enforced permission check. In `firestore.rules`, any authenticated Firebase user (not just someone who knows the admin passcode) can update a report's `status`/`assignedTeams` fields or a team's fields — a documented prototype limitation. Add a custom-claims-based admin role before handling real citizen data at scale.
 - **`/admin/login` shows its passcode directly on the page** (labeled "for evaluation only") so hackathon judges/reviewers can sign in without needing credentials passed along separately.
+- **Team management requires a real Firebase project** — on the local mock backend, `/admin/teams` and `/admin/teams/new` show an explanatory message instead of the roster/form, same as the response-team dashboard below.
 
 ## Emergency response-team dispatch
 
 `/team/login` → `/team` — a plain web dashboard for response teams (**this is a website, not a mobile/installable app** — it lives at a normal URL, works in any browser, and needs nothing installed), kept in the same React/Vite/Firebase codebase rather than a separate project.
 
 **How dispatch works:**
-1. A citizen files an emergency report (`category: 'emergency'`).
-2. Right after it's saved, the client calls `POST /api/dispatch` (`api/_dispatch-core.js`), which maps the report's `type` to the response-team type(s) it needs (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
+1. A citizen files an emergency report (`category: 'emergency'`), possibly with more than one issue type selected (e.g. "Accident" + "Fire hazard").
+2. Right after it's saved, the client calls `POST /api/dispatch` (`api/_dispatch-core.js`), which unions every selected type's required response-team type(s) (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`, so an accident-and-fire report pulls in all three), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
 3. That team's Firestore doc is marked `busy` and given `currentReportId`; if the team has a push token, a Firebase Cloud Messaging notification is sent to their device.
-4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener while the page is open, or via a browser push notification when it isn't — with a "Navigate" button (opens Google Maps) and the same AI-triage summary the citizen sees.
+4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener while the page is open, or via a browser push notification when it isn't — with an embedded map of the exact location, a "Navigate" button (opens Google Maps), and the same AI-triage summary the citizen sees.
 5. Tapping **Mark completed** sets the report's status to `resolved` (the same `updateReportStatus` the admin dashboard uses — reflected on the citizen's dashboard and the community feed instantly) and frees the team back to `available`.
+6. An admin can also see which team is assigned and reassign it at any point from `/admin` — see [Admin dashboard](#admin-dashboard) above.
 
 **Browser push notifications, not an installed app:** teams get notified via Cloud Messaging in a normal browser tab — no "Add to Home Screen" step, no app store, nothing to install. The tradeoff: push reliability while the tab is fully closed (rather than just backgrounded) varies by browser, and continuous location tracking only happens while a team actually has the dashboard open (`TeamDashboard.jsx`'s `watchPosition`) — there's no background tracking once the page is closed, same as any website.
 
@@ -86,7 +94,7 @@ Requires a real Firebase project (no mock-backend equivalent — Firestore-backe
 2. Enable **Cloud Messaging** (Project settings → Cloud Messaging), then **Web configuration → Generate key pair** for a VAPID key. Set `VITE_FIREBASE_VAPID_KEY` in `.env.local`.
 3. Project settings → **Service accounts** → Generate new private key, then base64-encode it into `FIREBASE_SERVICE_ACCOUNT` (see `.env.example` for the exact command) — this lets `api/dispatch.js` read/write Firestore and send pushes server-side.
 4. Deploy the updated Firestore rules: `firebase deploy --only firestore:rules`.
-5. Seed a few demo teams: `npm run seed:teams` (needs the same `scripts/serviceAccountKey.json` as `npm run seed`; see that script's usage comment) — or add more anytime from the admin dashboard's "Add new team" form.
+5. Seed a few demo teams: `npm run seed:teams` (needs the same `scripts/serviceAccountKey.json` as `npm run seed`; see that script's usage comment) — or add more anytime from `/admin/teams/new`.
 6. Visit `/team/login` and sign in with any seeded team ID/passcode from `scripts/seedTeams.js` (e.g. `amb-001` / `amb-001-pass`) — the same six are also listed directly on the `/team/login` page for evaluators.
 
 **Auth and security note**: like the admin dashboard, `/team` uses a lightweight passcode-per-team gate (`src/context/TeamAuthContext.jsx`), not a real per-team identity/role system — see the comments in `firestore.rules` for exactly what that does and doesn't protect. Replace with real team accounts before handling this beyond a prototype.
@@ -95,7 +103,7 @@ Requires a real Firebase project (no mock-backend equivalent — Firestore-backe
 
 Most of this app is a static Vite build, but **AI triage and emergency dispatch both need Node serverless functions** (`api/triage.js`, `api/dispatch.js`), so the deployment target matters:
 
-- **Vercel (recommended, and fully free)** — import the GitHub repo; Vercel auto-detects the Vite build (`npm run build`, output `dist`) and the `/api` serverless functions with no extra config, all on Vercel's free Hobby tier. Add `VITE_FIREBASE_*`, `OPENAI_API_KEY`, and `FIREBASE_SERVICE_ACCOUNT` as environment variables in the project's dashboard. This is the only option below where AI triage and emergency dispatch actually run in production.
+- **Vercel (recommended, and fully free)** — import the GitHub repo; Vercel auto-detects the Vite build (`npm run build`, output `dist`) and the `/api` serverless functions with no extra config, all on Vercel's free Hobby tier. Add `VITE_FIREBASE_*`, `OPENAI_API_KEY`, and `FIREBASE_SERVICE_ACCOUNT` as environment variables in the project's dashboard. `vercel.json` includes the SPA rewrite needed for direct navigation to client-side routes (e.g. `/login`) to work. This is the only option below where AI triage and emergency dispatch actually run in production.
 - **Netlify / Firebase Hosting / GitHub Pages** — these serve the static `dist` build fine, but don't run `/api/*.js` as-is (Netlify would need equivalent Netlify Functions; Firebase Hosting would need Cloud Functions, which cost real money to deploy at all — see the note above). Without them, `triageReport()`/`dispatchEmergency()` just fail their fetch and no-op — reports still file successfully, just without an AI assessment or team dispatch attached.
 
 ## Project structure
@@ -107,14 +115,19 @@ api/
   dispatch.js          Vercel serverless endpoint -- POST /api/dispatch
   _dispatch-core.js    Shared dispatch logic (nearest-team matching + FCM push)
 src/
-  components/   Reusable UI: cards, buttons, map picker, AI triage card, admin report row, add-team form, icons, nav, etc.
+  components/   Reusable UI: cards, buttons, map picker/viewer, report detail modal, AI triage card,
+                admin report row, filter dropdown, logo, icons, nav, etc.
   context/      AuthContext, LanguageContext, ReportsContext, AdminAuthContext, TeamAuthContext
-  data/         Category/type definitions, language list, demo seed reports, team types
+  data/         Category/type definitions, language list, demo seed reports, team types, cities
   i18n/         en.js, hi.js dictionaries + translate() helper
-  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, messaging.js, teams.js, geo.js, time.js
-  pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, AdminLogin, Admin, TeamLogin, TeamDashboard
+  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, messaging.js, teams.js,
+                reportFilters.js, geo.js, mapPin.js, time.js
+  pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, Settings,
+                AdminLogin, Admin, AdminTeams, AdminAddTeam, TeamLogin, TeamDashboard
   styles/       Tailwind entry + small custom CSS (map pin animation etc.)
 public/
+  logo.svg                    Full Road India logo (mark + wordmark), used in this README
+  favicon.svg                 Browser tab icon -- just the logo mark, no wordmark
   firebase-messaging-sw.js    Browser push notification handler for /team
 firebase.json    Firebase CLI config (Firestore rules, Storage rules)
 firestore.rules  Security rules for the reports/users/teams collections
