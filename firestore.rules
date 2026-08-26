@@ -41,7 +41,14 @@ service cloud.firestore {
         // so this rule can only check "is *some* authenticated Firebase
         // user", not "is a verified admin/team". Add custom claims + a real
         // rule check here before handling real citizen data.
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+        // assignedTeams is changed by the admin dashboard's team-reassignment
+        // control (src/components/AdminReportRow.jsx via reassignReportTeam
+        // in src/lib/teams.js) -- same "any authenticated Firebase user, not
+        // a verified admin" caveat as the status rule above. (The initial
+        // auto-dispatch write to this same field comes from api/_dispatch-core.js
+        // via the Admin SDK, which bypasses these rules entirely.)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedTeams']))
       );
 
       allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;

@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { CATEGORIES } from '../data/categoryTypes'
 import { distanceKm } from '../lib/geo'
 import { toDate } from '../lib/time'
+import { TIME_RANGES, uniqueValues } from '../lib/reportFilters'
 import { IconSearch, IconFilter, IconSiren, IconChevronDown } from '../components/Icons'
 
 const SORTS = [
@@ -18,23 +19,6 @@ const SORTS = [
   { id: 'recent', key: 'reports.sort.recent' },
   { id: 'nearest', key: 'reports.sort.nearest' },
 ]
-
-const TIME_RANGES = [
-  { id: 'all', key: 'reports.time.all', ms: null },
-  { id: '24h', key: 'reports.time.24h', ms: 1000 * 60 * 60 * 24 },
-  { id: '7d', key: 'reports.time.7d', ms: 1000 * 60 * 60 * 24 * 7 },
-  { id: '30d', key: 'reports.time.30d', ms: 1000 * 60 * 60 * 24 * 30 },
-]
-
-/** Unique, sorted, non-empty values for `field` among reports matching `predicate`. */
-function uniqueValues(reports, field, predicate = () => true) {
-  const values = new Set()
-  reports.forEach((r) => {
-    const v = r.location?.[field]
-    if (v && predicate(r)) values.add(v)
-  })
-  return [...values].sort((a, b) => a.localeCompare(b))
-}
 
 export default function ReportsFeed() {
   const { reports, toggleUpvote } = useReports()

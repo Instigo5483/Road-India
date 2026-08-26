@@ -243,6 +243,8 @@ export default {
   'admin.stats.unresolved': 'Unresolved',
   'admin.filter.all': 'All categories',
   'admin.filter.status.all': 'All statuses',
+  'admin.searchPlaceholder': 'Search by report ID, description, address, or reporter…',
+  'admin.reportId': 'ID: {id}',
   'admin.status.updateLabel': 'Update status',
   'admin.reporter': 'Reported by {name}',
   'admin.empty.title': 'No reports match these filters',

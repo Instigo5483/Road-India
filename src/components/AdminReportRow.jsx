@@ -104,6 +104,7 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-400">
+            <span className="font-mono text-ink-400">{t('admin.reportId', { id: report.id })}</span>
             <span className="inline-flex items-center gap-1">
               <IconMapPin className="h-3.5 w-3.5" />
               {report.location?.address ?? t('report.step2.coordinates')}

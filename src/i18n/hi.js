@@ -243,6 +243,8 @@ export default {
   'admin.stats.unresolved': 'अनसुलझी',
   'admin.filter.all': 'सभी श्रेणियां',
   'admin.filter.status.all': 'सभी स्थितियां',
+  'admin.searchPlaceholder': 'रिपोर्ट ID, विवरण, पता, या रिपोर्टर से खोजें…',
+  'admin.reportId': 'ID: {id}',
   'admin.status.updateLabel': 'स्थिति अपडेट करें',
   'admin.reporter': '{name} द्वारा दर्ज',
   'admin.empty.title': 'इन फ़िल्टर से कोई रिपोर्ट मेल नहीं खाती',
