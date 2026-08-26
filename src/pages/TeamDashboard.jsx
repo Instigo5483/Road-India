@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { useTeamAuth } from '../context/TeamAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
-import { useTeamPwaMeta } from '../lib/teamPwa'
 import { requestFcmToken } from '../lib/messaging'
 import { getCategory, getType } from '../data/categoryTypes'
 import { getTeamType, getTeamStatus } from '../data/teamTypes'
@@ -28,17 +27,16 @@ export default function TeamDashboard() {
   const { t } = useLanguage()
   const navigate = useNavigate()
 
-  useTeamPwaMeta()
-
   const [locationError, setLocationError] = useState(false)
   const [completing, setCompleting] = useState(false)
   const lastWriteRef = useRef(0)
 
   // Requests a push-notification token once on mount (no-op if unsupported
   // -- see lib/messaging.js) and keeps the team's location fresh in
-  // Firestore while this tab is open, throttled to avoid write spam. Real
-  // background tracking while the app is closed needs a native app; see
-  // the PWA background-location caveat this feature was scoped around.
+  // Firestore while this tab is open, throttled to avoid write spam. This
+  // is a plain web page, not an installed app, so there's no background
+  // tracking once the tab is closed -- location only updates while a team
+  // has this dashboard open.
   useEffect(() => {
     requestFcmToken().then((fcmToken) => {
       if (fcmToken) updateTeam({ fcmToken })

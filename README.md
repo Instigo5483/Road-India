@@ -9,12 +9,12 @@ A Blinkit/Zepto-style fast reporting flow: pick a category, add a couple of deta
 - **Three report categories** — Road Problem (potholes, waterlogging…), Road Corruption (bad roads, missing footpaths, incomplete work, missing signs…), Road Emergency (accidents, road clashes, breakdowns…), each with its own category-specific issue-type dropdown.
 - **Two-step report flow** — Step 1: issue type, photos, situation details. Step 2: precise map-based location picker (drag/tap to place a pin, "use my current location", reverse-geocoded address) with an automatically recorded timestamp.
 - **AI-assisted triage** — every report is triaged in real time by an OpenAI model: severity, a suggested department, and a caseworker-ready summary, shown to the citizen right after submitting (see [AI-assisted triage](#ai-assisted-triage) below).
-- **Account system** — a choice between an Aadhaar (12-digit ID + OTP) or DigiLocker (simulated redirect) verification flow, with a profile stored per user (see [Demo auth](#demo-auth-not-real-aadhardigilocker) below).
+- **Account system** — the main "Log in" entry point first asks which of three roles you're signing in as (User, Admin, Response Team), each with its own separate auth. The citizen ("User") path is a choice between an Aadhaar (12-digit ID + OTP) or DigiLocker (simulated redirect) verification flow, with a profile stored per user (see [Demo auth](#demo-auth-not-real-aadhardigilocker) below).
 - **Dashboard** — every report you've filed, with live status (Submitted → In Review → In Progress → Resolved).
 - **Ongoing Reports feed** — every report from every user, Reddit-style upvoting so the most-supported issues surface first, filters by category and location ("near me" via geolocation, distance shown per report), search, and sort by relevance / recency / distance. Live emergencies are always pinned to the top.
 - **Language selection** — available before login on the landing page and again inside the dashboard. English and Hindi are fully translated; the other major Indian languages are listed in the switcher and fall back to English text until translated (see [i18n](#adding-a-language)).
 - **Admin dashboard** — a separate staff-only view at `/admin` of every report across all users, filterable by category/status, with a dropdown to move each report's status (see [Admin dashboard](#admin-dashboard) below).
-- **Emergency response-team dispatch** — a Blinkit/Zepto-style installable app at `/team` for ambulance/doctor/fire/police/tow teams: filing an emergency report automatically finds and pushes a notification to the nearest available team of the right type(s), and the team taps "Mark completed" when done (see [Emergency response-team dispatch](#emergency-response-team-dispatch) below).
+- **Emergency response-team dispatch** — a Blinkit/Zepto-style web dashboard at `/team` for ambulance/doctor/fire/police/tow teams: filing an emergency report automatically finds and pushes a notification to the nearest available team of the right type(s), and the team taps "Mark completed" when done (see [Emergency response-team dispatch](#emergency-response-team-dispatch) below).
 - **Motion throughout** — hover/tap micro-interactions on every card and button, animated step transitions in the report flow, animated route transitions, and a live pulsing map pin, all via Framer Motion.
 
 ## Tech stack
@@ -43,7 +43,9 @@ Once real Firebase env vars are present, the app automatically switches from the
 
 ### Demo auth (not real Aadhaar/DigiLocker)
 
-Real Aadhaar/DigiLocker integration requires UIDAI/DigiLocker API partner access that isn't obtainable for a hackathon prototype. The login screen (`src/pages/Login.jsx`) instead offers a choice of two simulated flows: **Aadhaar** (enter a 12-digit Aadhaar-linked ID, receive an on-screen OTP — no real SMS is sent — verify, then confirm a name and language) or **DigiLocker** (a brief simulated "Connecting to DigiLocker…" redirect that skips straight to the name/language step, mirroring how a real DigiLocker OAuth hand-off never asks you to retype your Aadhaar number). No real Aadhaar, DigiLocker, or government data is requested, transmitted, or stored anywhere in this codebase. Swap this out for a real OAuth/identity provider before using this beyond a prototype.
+`/login` first asks which of three roles you're signing in as — **User**, **Admin**, or **Response Team** — since a real deployment would have three genuinely separate audiences who wouldn't otherwise know to look for `/admin/login` or `/team/login`. Choosing **Admin** or **Response Team** navigates straight to their own login pages (see [Admin dashboard](#admin-dashboard) / [Emergency response-team dispatch](#emergency-response-team-dispatch) below); choosing **User** continues into the flow described here.
+
+Real Aadhaar/DigiLocker integration requires UIDAI/DigiLocker API partner access that isn't obtainable for a hackathon prototype. The citizen login screen (`src/pages/Login.jsx`) instead offers a choice of two simulated flows: **Aadhaar** (enter a 12-digit Aadhaar-linked ID, receive an on-screen OTP — no real SMS is sent — verify, then confirm a name and language) or **DigiLocker** (a brief simulated "Connecting to DigiLocker…" redirect that skips straight to the name/language step, mirroring how a real DigiLocker OAuth hand-off never asks you to retype your Aadhaar number). No real Aadhaar, DigiLocker, or government data is requested, transmitted, or stored anywhere in this codebase. Swap this out for a real OAuth/identity provider before using this beyond a prototype.
 
 ## AI-assisted triage
 
@@ -60,19 +62,21 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 - **Separate from citizen login** — real municipal staff wouldn't authenticate through a citizen Aadhaar/DigiLocker flow, so `/admin` uses its own passcode gate (`src/context/AdminAuthContext.jsx`), independent of `AuthContext`.
 - **Passcode**: set `VITE_ADMIN_PASSCODE` in `.env.local`, or use the default `roadindia-admin` if unset (see `.env.example`). **This is a client-side convenience gate for the prototype, not real access control** — change the default before sharing a live deployment link publicly.
 - **Not a real role system** — there's no per-admin identity or backend-enforced permission check. In `firestore.rules`, any authenticated Firebase user (not just someone who knows the admin passcode) can update a report's `status` field — a documented prototype limitation. Add a custom-claims-based admin role before handling real citizen data at scale.
+- **Add new response teams** directly from this dashboard (`src/components/AddTeamForm.jsx`) — pick a name/type/base location and the app auto-generates a unique team ID and passcode, shown once so you can hand them to the team. See [Emergency response-team dispatch](#emergency-response-team-dispatch) below for how those credentials get used.
+- **`/admin/login` shows its passcode directly on the page** (labeled "for evaluation only") so hackathon judges/reviewers can sign in without needing credentials passed along separately.
 
 ## Emergency response-team dispatch
 
-`/team/login` → `/team` — an installable PWA (Progressive Web App) for response teams, kept in the same codebase/stack rather than a separate native app: same React/Vite/Firebase project, just scoped to its own routes, manifest, and service worker so it installs on Android and iOS home screens as its own icon, distinct from the citizen site.
+`/team/login` → `/team` — a plain web dashboard for response teams (**this is a website, not a mobile/installable app** — it lives at a normal URL, works in any browser, and needs nothing installed), kept in the same React/Vite/Firebase codebase rather than a separate project.
 
 **How dispatch works:**
 1. A citizen files an emergency report (`category: 'emergency'`).
 2. Right after it's saved, the client calls `POST /api/dispatch` (`api/_dispatch-core.js`), which maps the report's `type` to the response-team type(s) it needs (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
 3. That team's Firestore doc is marked `busy` and given `currentReportId`; if the team has a push token, a Firebase Cloud Messaging notification is sent to their device.
-4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener when the app is open, or via the push notification when it isn't — with a "Navigate" button (opens Google Maps) and the same AI-triage summary the citizen sees.
+4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener while the page is open, or via a browser push notification when it isn't — with a "Navigate" button (opens Google Maps) and the same AI-triage summary the citizen sees.
 5. Tapping **Mark completed** sets the report's status to `resolved` (the same `updateReportStatus` the admin dashboard uses — reflected on the citizen's dashboard and the community feed instantly) and frees the team back to `available`.
 
-**Why a PWA instead of a native app:** it keeps the exact same stack — no React Native/separate codebase, same Firebase project, same deploy. Push notifications work on both platforms (Android via Chrome, iOS via Safari 16.4+ once "Added to Home Screen" — there's no programmatic install prompt on iOS, so `/team/login` shows a one-line hint to do this manually). The one real tradeoff versus native: continuous *background* GPS tracking is much more limited on iOS web than in a native app, so a team's location only updates reliably while the app is open in the foreground (`TeamDashboard.jsx`'s `watchPosition`), not while fully backgrounded/closed.
+**Browser push notifications, not an installed app:** teams get notified via Cloud Messaging in a normal browser tab — no "Add to Home Screen" step, no app store, nothing to install. The tradeoff: push reliability while the tab is fully closed (rather than just backgrounded) varies by browser, and continuous location tracking only happens while a team actually has the dashboard open (`TeamDashboard.jsx`'s `watchPosition`) — there's no background tracking once the page is closed, same as any website.
 
 **Why a Vercel function instead of a Firebase Cloud Function:** Cloud Functions of any generation require Firebase's paid **Blaze plan** to deploy at all, regardless of actual usage/cost. Firestore, Auth, Storage, and Cloud Messaging are all free on the **Spark plan** — the only thing a Cloud Function would have added here is a Firestore-triggered invocation, which this replaces with the client calling `/api/dispatch` right after creating the report. Functionally equivalent for a demo, and keeps the whole project on free tiers end to end.
 
@@ -82,8 +86,8 @@ Requires a real Firebase project (no mock-backend equivalent — Firestore-backe
 2. Enable **Cloud Messaging** (Project settings → Cloud Messaging), then **Web configuration → Generate key pair** for a VAPID key. Set `VITE_FIREBASE_VAPID_KEY` in `.env.local`.
 3. Project settings → **Service accounts** → Generate new private key, then base64-encode it into `FIREBASE_SERVICE_ACCOUNT` (see `.env.example` for the exact command) — this lets `api/dispatch.js` read/write Firestore and send pushes server-side.
 4. Deploy the updated Firestore rules: `firebase deploy --only firestore:rules`.
-5. Seed a few demo teams: `npm run seed:teams` (needs the same `scripts/serviceAccountKey.json` as `npm run seed`; see that script's usage comment).
-6. Visit `/team/login` and sign in with any seeded team ID/passcode from `scripts/seedTeams.js` (e.g. `amb-001` / `amb-001-pass`).
+5. Seed a few demo teams: `npm run seed:teams` (needs the same `scripts/serviceAccountKey.json` as `npm run seed`; see that script's usage comment) — or add more anytime from the admin dashboard's "Add new team" form.
+6. Visit `/team/login` and sign in with any seeded team ID/passcode from `scripts/seedTeams.js` (e.g. `amb-001` / `amb-001-pass`) — the same six are also listed directly on the `/team/login` page for evaluators.
 
 **Auth and security note**: like the admin dashboard, `/team` uses a lightweight passcode-per-team gate (`src/context/TeamAuthContext.jsx`), not a real per-team identity/role system — see the comments in `firestore.rules` for exactly what that does and doesn't protect. Replace with real team accounts before handling this beyond a prototype.
 
@@ -103,16 +107,15 @@ api/
   dispatch.js          Vercel serverless endpoint -- POST /api/dispatch
   _dispatch-core.js    Shared dispatch logic (nearest-team matching + FCM push)
 src/
-  components/   Reusable UI: cards, buttons, map picker, AI triage card, admin report row, icons, nav, etc.
+  components/   Reusable UI: cards, buttons, map picker, AI triage card, admin report row, add-team form, icons, nav, etc.
   context/      AuthContext, LanguageContext, ReportsContext, AdminAuthContext, TeamAuthContext
   data/         Category/type definitions, language list, demo seed reports, team types
   i18n/         en.js, hi.js dictionaries + translate() helper
-  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, messaging.js, teamPwa.js, geo.js, time.js
+  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, messaging.js, teams.js, geo.js, time.js
   pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, AdminLogin, Admin, TeamLogin, TeamDashboard
   styles/       Tailwind entry + small custom CSS (map pin animation etc.)
 public/
-  team-manifest.json          PWA manifest scoped to /team/ (see lib/teamPwa.js)
-  firebase-messaging-sw.js    Background push handler for the team PWA
+  firebase-messaging-sw.js    Browser push notification handler for /team
 firebase.json    Firebase CLI config (Firestore rules, Storage rules)
 firestore.rules  Security rules for the reports/users/teams collections
 scripts/seed.js       Optional: seed a real Firestore project with demo reports

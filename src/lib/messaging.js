@@ -1,12 +1,13 @@
-// Firebase Cloud Messaging (push notifications) for the response-team PWA
-// at /team. Kept separate from lib/firebase.js and only touched by team
-// pages -- citizens never load this module, so an unsupported browser
-// (Safari without the PWA installed, SSR, etc.) never breaks the main app.
+// Firebase Cloud Messaging (browser push notifications) for the
+// response-team dashboard at /team -- a normal website, not an installed
+// app. Kept separate from lib/firebase.js and only touched by team pages
+// -- citizens never load this module, so an unsupported browser (older
+// Safari, SSR, etc.) never breaks the main app.
 //
 // Requires: a real Firebase project with Cloud Messaging enabled, a VAPID
 // key (Firebase Console -> Project settings -> Cloud Messaging -> Web
 // configuration -> Generate key pair) set as VITE_FIREBASE_VAPID_KEY, and
-// public/firebase-messaging-sw.js registered (see lib/teamPwa.js).
+// public/firebase-messaging-sw.js (registered below).
 import { isSupported, getMessaging, getToken } from 'firebase/messaging'
 import { app, isFirebaseConfigured } from './firebase'
 
@@ -30,7 +31,7 @@ function buildServiceWorkerUrl() {
 
 /** Requests notification permission and returns an FCM registration token,
  * or null if unsupported/denied/misconfigured. Never throws -- push is a
- * nice-to-have for the team app, not something that should block sign-in. */
+ * nice-to-have for the team dashboard, not something that should block sign-in. */
 export async function requestFcmToken() {
   if (!isFirebaseConfigured) return null
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY

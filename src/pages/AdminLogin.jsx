@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useAdminAuth } from '../context/AdminAuthContext'
+import { useAdminAuth, ADMIN_PASSCODE } from '../context/AdminAuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import Button from '../components/Button'
-import { IconChevronLeft, IconAlertCircle, IconLockCloud } from '../components/Icons'
+import { IconChevronLeft, IconAlertCircle, IconLockCloud, IconShieldCheck } from '../components/Icons'
 
 export default function AdminLogin() {
   const { loginAdmin } = useAdminAuth()
@@ -35,7 +35,7 @@ export default function AdminLogin() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-2xl">
         <button
           type="button"
           onClick={() => navigate('/')}
@@ -45,44 +45,64 @@ export default function AdminLogin() {
           {t('admin.back')}
         </button>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-card-hover sm:p-8"
-        >
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
-            <IconLockCloud className="h-5.5 w-5.5" />
-          </span>
-          <h1 className="mt-4 text-lg font-bold text-ink-900">{t('admin.login.title')}</h1>
-          <p className="mt-1 text-sm text-ink-500">{t('admin.login.subtitle')}</p>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-card-hover sm:p-8"
+          >
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
+              <IconLockCloud className="h-5.5 w-5.5" />
+            </span>
+            <h1 className="mt-4 text-lg font-bold text-ink-900">{t('admin.login.title')}</h1>
+            <p className="mt-1 text-sm text-ink-500">{t('admin.login.subtitle')}</p>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-ink-700">
-                {t('admin.login.passcodeLabel')}
-              </span>
-              <input
-                type="password"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder={t('admin.login.placeholder')}
-                className="input-field"
-                autoFocus
-              />
-            </label>
+            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-ink-700">
+                  {t('admin.login.passcodeLabel')}
+                </span>
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder={t('admin.login.placeholder')}
+                  className="input-field"
+                  autoFocus
+                />
+              </label>
 
-            {error && (
-              <p className="flex items-center gap-1.5 text-xs font-medium text-emergency-600">
-                <IconAlertCircle className="h-3.5 w-3.5" />
-                {error}
-              </p>
-            )}
+              {error && (
+                <p className="flex items-center gap-1.5 text-xs font-medium text-emergency-600">
+                  <IconAlertCircle className="h-3.5 w-3.5" />
+                  {error}
+                </p>
+              )}
 
-            <Button type="submit" className="w-full" loading={busy} disabled={!passcode}>
-              {t('admin.login.submit')}
-            </Button>
-          </form>
-        </motion.div>
+              <Button type="submit" className="w-full" loading={busy} disabled={!passcode}>
+                {t('admin.login.submit')}
+              </Button>
+            </form>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="w-full rounded-2xl border border-warning-200 bg-warning-50 p-5"
+          >
+            <p className="flex items-center gap-1.5 text-sm font-bold text-warning-700">
+              <IconShieldCheck className="h-4 w-4" />
+              {t('admin.testCredentials.heading')}
+            </p>
+            <p className="mt-1 text-xs text-warning-600">{t('admin.testCredentials.note')}</p>
+
+            <div className="mt-3.5 rounded-lg bg-white px-3 py-2 text-xs">
+              <span className="font-medium text-ink-500">{t('admin.login.passcodeLabel')}: </span>
+              <span className="font-mono text-ink-900">{ADMIN_PASSCODE}</span>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   )

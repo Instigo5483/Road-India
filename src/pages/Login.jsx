@@ -13,6 +13,8 @@ import {
   IconFingerprint,
   IconLockCloud,
   IconLoader,
+  IconUser,
+  IconSiren,
 } from '../components/Icons'
 
 function formatId(raw) {
@@ -45,6 +47,18 @@ const METHODS = [
   },
 ]
 
+// The generic "Log in" entry point offers all three sign-in types up
+// front, since real municipal staff/response teams wouldn't know to look
+// for a separate /admin or /team URL -- only "user" continues into this
+// same page's Aadhaar/DigiLocker flow; the other two are entirely
+// separate auth systems (see AdminAuthContext.jsx, TeamAuthContext.jsx)
+// with their own routes.
+const ROLES = [
+  { id: 'user', icon: IconUser, labelKey: 'auth.role.user.label', descKey: 'auth.role.user.desc' },
+  { id: 'admin', icon: IconLockCloud, labelKey: 'auth.role.admin.label', descKey: 'auth.role.admin.desc' },
+  { id: 'team', icon: IconSiren, labelKey: 'auth.role.team.label', descKey: 'auth.role.team.desc' },
+]
+
 export default function Login() {
   const { completeLogin } = useAuth()
   const { t, lang } = useLanguage()
@@ -52,7 +66,7 @@ export default function Login() {
   const location = useLocation()
   const from = location.state?.from?.pathname ?? '/home'
 
-  const [stage, setStage] = useState('method') // 'method' | 'id' | 'otp' | 'digilocker' | 'profile'
+  const [stage, setStage] = useState('role') // 'role' | 'method' | 'id' | 'otp' | 'digilocker' | 'profile'
   const [digilockerId, setDigilockerId] = useState('')
   const [otp, setOtp] = useState('')
   const [name, setName] = useState('')
@@ -122,6 +136,16 @@ export default function Login() {
     }
   }
 
+  function selectRole(roleId) {
+    if (roleId === 'admin') {
+      navigate('/admin/login')
+    } else if (roleId === 'team') {
+      navigate('/team/login')
+    } else {
+      setStage('method')
+    }
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
       <div className="w-full max-w-md">
@@ -153,6 +177,30 @@ export default function Login() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.22 }}
             >
+              {stage === 'role' && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-ink-700">{t('auth.role.title')}</p>
+                  {ROLES.map((role) => (
+                    <button
+                      key={role.id}
+                      type="button"
+                      onClick={() => selectRole(role.id)}
+                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
+                    >
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
+                        <role.icon className="h-5.5 w-5.5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-ink-900">
+                          {t(role.labelKey)}
+                        </span>
+                        <span className="block text-xs text-ink-500">{t(role.descKey)}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {stage === 'method' && (
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-ink-700">{t('auth.method.title')}</p>
@@ -174,6 +222,13 @@ export default function Login() {
                       </span>
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => setStage('role')}
+                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
+                  >
+                    {t('auth.role.chooseDifferent')}
+                  </button>
                 </div>
               )}
 

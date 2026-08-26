@@ -1,8 +1,9 @@
-// Firebase Cloud Messaging background handler for the response-team PWA.
-// Static file (service workers can't be built by Vite / read import.meta.env),
-// so the Firebase config is read from this registration URL's query string
-// -- see lib/messaging.js's buildServiceWorkerUrl(). Only ever registered
-// for team routes (scope: "/team/"), never for the citizen-facing site.
+// Firebase Cloud Messaging background handler for the response-team
+// dashboard (a normal website, not an installed app). Static file (service
+// workers can't be built by Vite / read import.meta.env), so the Firebase
+// config is read from this registration URL's query string -- see
+// lib/messaging.js's buildServiceWorkerUrl(). Only ever registered for
+// team routes (scope: "/team/"), never for the citizen-facing site.
 
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js')

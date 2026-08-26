@@ -11,7 +11,10 @@ const STORAGE_KEY = 'road_india_admin_session'
 // passcode or doesn't". See firestore.rules for the matching caveat on the
 // `status` field (any authenticated Firebase user can move it, not just
 // verified admins -- a real deployment needs custom claims here).
-const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'roadindia-admin'
+// Exported so AdminLogin.jsx can display it next to the form for
+// evaluators/judges who need a working passcode without it being emailed
+// around separately -- see that page's "test credentials" panel.
+export const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'roadindia-admin'
 
 const AdminAuthContext = createContext(null)
 
