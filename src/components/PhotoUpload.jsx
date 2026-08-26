@@ -4,6 +4,48 @@ import { useLanguage } from '../context/LanguageContext'
 import { IconCamera, IconX } from './Icons'
 
 const MAX_PHOTOS = 3
+const MAX_DIMENSION = 1280
+const JPEG_QUALITY = 0.72
+
+/** Downscales/re-encodes an image file to a JPEG data URL capped at
+ * MAX_DIMENSION on its longest side. Report photos are stored inline as
+ * base64 in Firestore (no Firebase Storage -- see ReportsContext.jsx),
+ * which caps a whole document at 1 MiB, so an uncompressed phone photo
+ * (often 3-10 MB) would blow past that on its own. */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = reject
+      img.onload = () => {
+        let { width, height } = img
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          const scale = MAX_DIMENSION / Math.max(width, height)
+          width = Math.round(width * scale)
+          height = Math.round(height * scale)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY))
+      }
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = () => resolve(reader.result)
+    reader.readAsDataURL(file)
+  })
+}
 
 export default function PhotoUpload({ photos, onChange }) {
   const { t } = useLanguage()
@@ -11,12 +53,12 @@ export default function PhotoUpload({ photos, onChange }) {
 
   function handleFiles(fileList) {
     const files = Array.from(fileList).slice(0, MAX_PHOTOS - photos.length)
-    files.forEach((file) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src: reader.result }])
-      }
-      reader.readAsDataURL(file)
+    files.forEach(async (file) => {
+      // Falls back to the uncompressed file if compression fails for any
+      // reason (e.g. a format the canvas can't decode) -- a bigger photo
+      // is still better than silently dropping it.
+      const src = await compressImage(file).catch(() => readAsDataUrl(file))
+      onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src }])
     })
   }
 

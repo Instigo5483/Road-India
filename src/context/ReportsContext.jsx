@@ -12,29 +12,11 @@ import {
   arrayRemove,
   increment,
 } from 'firebase/firestore'
-import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage'
-import { isFirebaseConfigured, db, storage } from '../lib/firebase'
+import { isFirebaseConfigured, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { triageReport } from '../lib/triage'
 import { dispatchEmergency } from '../lib/dispatch'
 import { useAuth } from './AuthContext'
-
-/** Uploads each base64 photo data-URL to Firebase Storage and returns the
- * public download URLs. Falls back to keeping the base64 strings as-is if
- * any individual upload fails, so a flaky photo never blocks the report. */
-async function uploadPhotos(photoDataUrls, uid) {
-  const uploads = photoDataUrls.map(async (dataUrl, i) => {
-    try {
-      const path = `reports/${uid}/${Date.now()}-${i}.jpg`
-      const fileRef = storageRef(storage, path)
-      await uploadString(fileRef, dataUrl, 'data_url')
-      return getDownloadURL(fileRef)
-    } catch {
-      return dataUrl
-    }
-  })
-  return Promise.all(uploads)
-}
 
 const ReportsContext = createContext(null)
 
@@ -94,13 +76,14 @@ export function ReportsProvider({ children }) {
         return mockBackend.createReport(base)
       }
 
-      const uploadedPhotoUrls = base.photoUrls.length
-        ? await uploadPhotos(base.photoUrls, user.uid)
-        : []
-
+      // Photos stay inline as base64 data URLs rather than uploading to
+      // Firebase Storage -- Storage requires the paid Blaze plan to use at
+      // all, which this project intentionally stays off of (see README).
+      // PhotoUpload.jsx downsizes/compresses each photo client-side before
+      // it ever reaches here, keeping the whole report comfortably under
+      // Firestore's 1 MiB document size limit.
       const ref = await addDoc(collection(db, 'reports'), {
         ...base,
-        photoUrls: uploadedPhotoUrls,
         createdAt: serverTimestamp(),
       })
 
@@ -113,7 +96,7 @@ export function ReportsProvider({ children }) {
         dispatchEmergency({ reportId: ref.id, category, types, description, location })
       }
 
-      return { id: ref.id, ...base, photoUrls: uploadedPhotoUrls, createdAt: new Date().toISOString() }
+      return { id: ref.id, ...base, createdAt: new Date().toISOString() }
     },
     [user]
   )
