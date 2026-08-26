@@ -177,6 +177,7 @@ export default {
   'reports.sort.recent': 'Most recent',
   'reports.sort.nearest': 'Nearest first',
   'reports.filter.heading': 'Filters',
+  'reports.filter.clearAll': 'Clear all',
   'reports.filter.sortBy': 'Sort by',
   'reports.filter.category': 'Category',
   'reports.filter.location': 'Location',

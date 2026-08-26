@@ -177,6 +177,7 @@ export default {
   'reports.sort.recent': 'सबसे नई',
   'reports.sort.nearest': 'सबसे नज़दीक',
   'reports.filter.heading': 'फ़िल्टर',
+  'reports.filter.clearAll': 'सभी हटाएं',
   'reports.filter.sortBy': 'इस अनुसार क्रमबद्ध करें',
   'reports.filter.category': 'श्रेणी',
   'reports.filter.location': 'स्थान',

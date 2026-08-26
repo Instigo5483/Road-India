@@ -22,6 +22,7 @@ import {
   IconSearch,
   IconFilter,
   IconChevronDown,
+  IconX,
 } from '../components/Icons'
 
 export default function Admin() {
@@ -106,6 +107,19 @@ export default function Admin() {
   )
 
   const activeFilterCount = [timeFilter, stateFilter, districtFilter, cityFilter].filter((v) => v !== 'all').length
+
+  const hasAnyFilter =
+    activeFilterCount > 0 || categoryFilter !== 'all' || statusFilter !== 'all' || search.trim() !== ''
+
+  function clearAllFilters() {
+    setSearch('')
+    setCategoryFilter('all')
+    setStatusFilter('all')
+    setTimeFilter('all')
+    setStateFilter('all')
+    setDistrictFilter('all')
+    setCityFilter('all')
+  }
 
   const filtered = useMemo(() => {
     let list = reports
@@ -233,21 +247,34 @@ export default function Admin() {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setFiltersOpen((o) => !o)}
-          aria-expanded={filtersOpen}
-          className="mt-5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
-        >
-          <IconFilter className="h-3.5 w-3.5" />
-          {t('reports.filter.heading')}
-          {activeFilterCount > 0 && (
-            <span className="grid h-4 w-4 place-items-center rounded-full bg-brand-800 text-[10px] font-bold normal-case text-white">
-              {activeFilterCount}
-            </span>
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
+          >
+            <IconFilter className="h-3.5 w-3.5" />
+            {t('reports.filter.heading')}
+            {activeFilterCount > 0 && (
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-brand-800 text-[10px] font-bold normal-case text-white">
+                {activeFilterCount}
+              </span>
+            )}
+            <IconChevronDown className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {hasAnyFilter && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="flex items-center gap-1 text-xs font-medium text-brand-700 underline-offset-2 hover:underline"
+            >
+              <IconX className="h-3 w-3" />
+              {t('reports.filter.clearAll')}
+            </button>
           )}
-          <IconChevronDown className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
-        </button>
+        </div>
 
         <AnimatePresence initial={false}>
           {filtersOpen && (
