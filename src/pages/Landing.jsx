@@ -1,6 +1,8 @@
+import { useMemo } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import LanguageSelector from '../components/LanguageSelector'
 import Button from '../components/Button'
@@ -36,11 +38,11 @@ const HOW_STEPS = [
   },
 ]
 
-const STATS = [
-  { key: 'landing.stats.reported', value: '12,400+', color: 'text-brand-600' },
-  { key: 'landing.stats.resolved', value: '6,150+', color: 'text-success-600' },
-  { key: 'landing.stats.cities', value: '38', color: 'text-accent-600' },
-]
+const STAT_COLORS = {
+  reported: 'text-brand-600',
+  resolved: 'text-success-600',
+  cities: 'text-accent-600',
+}
 
 const CATEGORY_ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
 const CATEGORY_BADGE = {
@@ -56,8 +58,25 @@ const CATEGORY_CTA = {
 
 export default function Landing() {
   const { user, loading } = useAuth()
+  const { reports } = useReports()
   const { t } = useLanguage()
   const navigate = useNavigate()
+
+  // Real counts from the reports collection (publicly readable, see
+  // firestore.rules) -- no login required to compute these, so the
+  // landing page never shows made-up numbers.
+  const stats = useMemo(() => {
+    const cities = new Set(reports.map((r) => r.location?.city).filter(Boolean))
+    return [
+      { key: 'landing.stats.reported', value: reports.length, color: STAT_COLORS.reported },
+      {
+        key: 'landing.stats.resolved',
+        value: reports.filter((r) => r.status === 'resolved').length,
+        color: STAT_COLORS.resolved,
+      },
+      { key: 'landing.stats.cities', value: cities.size, color: STAT_COLORS.cities },
+    ]
+  }, [reports])
 
   if (!loading && user) return <Navigate to="/home" replace />
 
@@ -148,9 +167,11 @@ export default function Landing() {
             transition={{ delay: 0.35 }}
             className="mx-auto mt-14 grid max-w-lg grid-cols-3 gap-4 border-t border-ink-200 pt-8"
           >
-            {STATS.map((stat) => (
+            {stats.map((stat) => (
               <div key={stat.key}>
-                <p className={`font-display text-2xl font-bold sm:text-4xl ${stat.color}`}>{stat.value}</p>
+                <p className={`font-display text-2xl font-bold sm:text-4xl ${stat.color}`}>
+                  {stat.value.toLocaleString()}
+                </p>
                 <p className="mt-1 text-xs text-ink-500 sm:text-sm">{t(stat.key)}</p>
               </div>
             ))}

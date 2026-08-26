@@ -1,26 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
-import L from 'leaflet'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
 import { INDIA_CENTER, DEFAULT_ZOOM, PICKER_ZOOM, formatCoords } from '../lib/geo'
+import { createPinIcon } from '../lib/mapPin'
 import { IconLocate, IconLoader } from './Icons'
 
-// A custom pin drawn as an inline SVG data URI, so the map never depends
-// on Leaflet's default marker image assets (a common bundler footgun).
-const pinIcon = L.divIcon({
-  className: 'road-india-pin',
-  html: `
-    <div class="road-india-pin__wrap">
-      <div class="road-india-pin__pulse"></div>
-      <svg width="38" height="46" viewBox="0 0 24 30" fill="none">
-        <path d="M12 29S1 17.7 1 10.5A11 11 0 1 1 23 10.5C23 17.7 12 29 12 29Z" fill="#1e40af"/>
-        <circle cx="12" cy="10.5" r="4.2" fill="white"/>
-      </svg>
-    </div>`,
-  iconSize: [38, 46],
-  iconAnchor: [19, 44],
-})
+const pinIcon = createPinIcon()
 
 function ClickHandler({ onPick }) {
   useMapEvents({

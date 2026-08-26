@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
 import { getCategory, getType } from '../data/categoryTypes'
 import { timeAgo } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
+import ReportDetailModal from './ReportDetailModal'
 import { SEVERITY_THEME } from './AiTriageCard'
 import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconThumbsUp, IconSparkle } from './Icons'
 
@@ -27,6 +29,7 @@ export default function ReportCard({
   const category = getCategory(report.category)
   const type = getType(report.category, report.type)
   const Icon = category ? ICONS[category.icon] : null
+  const [detailOpen, setDetailOpen] = useState(false)
 
   return (
     <motion.div
@@ -34,7 +37,16 @@ export default function ReportCard({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.3), duration: 0.35 }}
-      className="group flex flex-col gap-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-start sm:gap-4 sm:p-5"
+      onClick={() => setDetailOpen(true)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          setDetailOpen(true)
+        }
+      }}
+      className="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-start sm:gap-4 sm:p-5"
     >
       <div
         className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-105 ${
@@ -96,7 +108,10 @@ export default function ReportCard({
       {showUpvote && (
         <motion.button
           type="button"
-          onClick={onUpvote}
+          onClick={(e) => {
+            e.stopPropagation()
+            onUpvote()
+          }}
           whileTap={{ scale: 0.9 }}
           aria-label={t('reports.upvoteCount', { count: report.upvotes ?? 0 })}
           aria-pressed={upvoted}
@@ -119,6 +134,16 @@ export default function ReportCard({
             {upvoted ? t('reports.upvoted') : t('reports.upvote')}
           </span>
         </motion.button>
+      )}
+
+      {detailOpen && (
+        <ReportDetailModal
+          report={report}
+          onClose={() => setDetailOpen(false)}
+          onUpvote={onUpvote}
+          upvoted={upvoted}
+          showUpvote={showUpvote}
+        />
       )}
     </motion.div>
   )
