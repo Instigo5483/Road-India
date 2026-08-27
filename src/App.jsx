@@ -1,7 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
-import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { ReportsProvider } from './context/ReportsContext'
 import { AdminAuthProvider } from './context/AdminAuthContext'
@@ -11,7 +10,6 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import TeamProtectedRoute from './components/TeamProtectedRoute'
 import LoadingScreen from './components/LoadingScreen'
-import ThemeToggle from './components/ThemeToggle'
 
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -141,22 +139,19 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <LanguageProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <AdminAuthProvider>
-              <TeamAuthProvider>
-                <ReportsProvider>
-                  <BrowserRouter>
-                    <AnimatedRoutes />
-                    <ThemeToggle />
-                  </BrowserRouter>
-                </ReportsProvider>
-              </TeamAuthProvider>
-            </AdminAuthProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AdminAuthProvider>
+            <TeamAuthProvider>
+              <ReportsProvider>
+                <BrowserRouter>
+                  <AnimatedRoutes />
+                </BrowserRouter>
+              </ReportsProvider>
+            </TeamAuthProvider>
+          </AdminAuthProvider>
+        </AuthProvider>
+      </ToastProvider>
     </LanguageProvider>
   )
 }

@@ -42,10 +42,12 @@ export default function ReportEditForm({ report, onSave, onCancel }) {
       onClick={(e) => e.stopPropagation()}
       className="space-y-4 rounded-2xl border border-brand-200 bg-brand-50/40 p-4"
     >
-      <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">{t('reportEdit.title')}</p>
+      <p className="text-sm font-semibold text-ink-900">
+        {t('reportEdit.title')}
+      </p>
 
       <label className="block">
-        <span className="mb-1.5 block text-xs font-medium text-ink-700 dark:text-ink-200">
+        <span className="mb-1.5 block text-xs font-medium text-ink-700">
           {t('report.step1.details.label')}
         </span>
         <textarea
@@ -57,19 +59,27 @@ export default function ReportEditForm({ report, onSave, onCancel }) {
       </label>
 
       <div>
-        <span className="mb-1.5 block text-xs font-medium text-ink-700 dark:text-ink-200">
+        <span className="mb-1.5 block text-xs font-medium text-ink-700">
           {t('report.step1.photos.label')}
         </span>
         <PhotoUpload photos={photos} onChange={setPhotos} />
       </div>
 
       <div>
-        <span className="mb-1.5 block text-xs font-medium text-ink-700 dark:text-ink-200">{t('report.step2.title')}</span>
+        <span className="mb-1.5 block text-xs font-medium text-ink-700">
+          {t('report.step2.title')}
+        </span>
         <MapPicker value={location} onChange={setLocation} />
       </div>
 
       <div className="flex gap-2">
-        <Button type="button" variant="secondary" size="sm" onClick={onCancel} disabled={saving}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onCancel}
+          disabled={saving}
+        >
           {t('common.cancel')}
         </Button>
         <Button type="submit" size="sm" loading={saving} disabled={!canSave}>

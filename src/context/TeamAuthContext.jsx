@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { signInAnonymously, signOut as firebaseSignOut } from 'firebase/auth'
 import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore'
 import { auth, db, isFirebaseConfigured } from '../lib/firebase'
@@ -29,7 +36,9 @@ export function TeamAuthProvider({ children }) {
   // established once on mount (which meant a fresh login showed a static
   // one-time snapshot that never updated again until a full page reload).
   const [teamId, setTeamId] = useState(() =>
-    typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
+    typeof window !== 'undefined'
+      ? window.localStorage.getItem(STORAGE_KEY)
+      : null
   )
   const [team, setTeam] = useState(null)
   const [loading, setLoading] = useState(isFirebaseConfigured && !!teamId)
@@ -102,7 +111,10 @@ export function TeamAuthProvider({ children }) {
 
   const logoutTeam = useCallback(async () => {
     if (team) {
-      await updateDoc(doc(db, 'teams', team.id), { status: 'offline', fcmToken: null }).catch(() => {})
+      await updateDoc(doc(db, 'teams', team.id), {
+        status: 'offline',
+        fcmToken: null,
+      }).catch(() => {})
     }
     window.localStorage.removeItem(STORAGE_KEY)
     setTeamId(null)
@@ -129,11 +141,16 @@ export function TeamAuthProvider({ children }) {
     [team, loading, loginTeam, logoutTeam, updateTeam]
   )
 
-  return <TeamAuthContext.Provider value={value}>{children}</TeamAuthContext.Provider>
+  return (
+    <TeamAuthContext.Provider value={value}>
+      {children}
+    </TeamAuthContext.Provider>
+  )
 }
 
 export function useTeamAuth() {
   const ctx = useContext(TeamAuthContext)
-  if (!ctx) throw new Error('useTeamAuth must be used inside <TeamAuthProvider>')
+  if (!ctx)
+    throw new Error('useTeamAuth must be used inside <TeamAuthProvider>')
   return ctx
 }

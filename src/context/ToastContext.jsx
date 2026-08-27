@@ -5,7 +5,11 @@ import { IconCheckCircle, IconAlertCircle, IconX } from '../components/Icons'
 const ToastContext = createContext(null)
 let idCounter = 0
 
-const ICONS = { success: IconCheckCircle, error: IconAlertCircle, info: IconAlertCircle }
+const ICONS = {
+  success: IconCheckCircle,
+  error: IconAlertCircle,
+  info: IconAlertCircle,
+}
 const STYLES = {
   success: 'border-success-200 bg-success-50 text-success-700',
   error: 'border-emergency-200 bg-emergency-50 text-emergency-700',

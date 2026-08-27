@@ -4,7 +4,12 @@ import { motion } from 'framer-motion'
 import { useAdminAuth, ADMIN_PASSCODE } from '../context/AdminAuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import Button from '../components/Button'
-import { IconChevronLeft, IconAlertCircle, IconLockCloud, IconShieldCheck } from '../components/Icons'
+import {
+  IconChevronLeft,
+  IconAlertCircle,
+  IconLockCloud,
+  IconShieldCheck,
+} from '../components/Icons'
 
 export default function AdminLogin() {
   const { loginAdmin } = useAdminAuth()
@@ -34,12 +39,12 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink-50 dark:bg-ink-950 px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
       <div className="w-full max-w-2xl">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 dark:text-ink-400 hover:text-brand-700"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
         >
           <IconChevronLeft className="h-4 w-4" />
           {t('admin.back')}
@@ -49,17 +54,21 @@ export default function AdminLogin() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-6 shadow-card-hover sm:p-8"
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-card-hover sm:p-8"
           >
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
               <IconLockCloud className="h-5.5 w-5.5" />
             </span>
-            <h1 className="mt-4 text-lg font-bold text-ink-900 dark:text-ink-50">{t('admin.login.title')}</h1>
-            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">{t('admin.login.subtitle')}</p>
+            <h1 className="mt-4 text-lg font-bold text-ink-900">
+              {t('admin.login.title')}
+            </h1>
+            <p className="mt-1 text-sm text-ink-500">
+              {t('admin.login.subtitle')}
+            </p>
 
             <form onSubmit={handleSubmit} className="mt-5 space-y-4">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+                <span className="mb-1.5 block text-sm font-medium text-ink-700">
                   {t('admin.login.passcodeLabel')}
                 </span>
                 <input
@@ -79,7 +88,12 @@ export default function AdminLogin() {
                 </p>
               )}
 
-              <Button type="submit" className="w-full" loading={busy} disabled={!passcode}>
+              <Button
+                type="submit"
+                className="w-full"
+                loading={busy}
+                disabled={!passcode}
+              >
                 {t('admin.login.submit')}
               </Button>
             </form>
@@ -95,11 +109,15 @@ export default function AdminLogin() {
               <IconShieldCheck className="h-4 w-4" />
               {t('admin.testCredentials.heading')}
             </p>
-            <p className="mt-1 text-xs text-warning-600">{t('admin.testCredentials.note')}</p>
+            <p className="mt-1 text-xs text-warning-600">
+              {t('admin.testCredentials.note')}
+            </p>
 
-            <div className="mt-3.5 rounded-lg bg-white dark:bg-ink-900 px-3 py-2 text-xs">
-              <span className="font-medium text-ink-500 dark:text-ink-400">{t('admin.login.passcodeLabel')}: </span>
-              <span className="font-mono text-ink-900 dark:text-ink-50">{ADMIN_PASSCODE}</span>
+            <div className="mt-3.5 rounded-lg bg-white px-3 py-2 text-xs">
+              <span className="font-medium text-ink-500">
+                {t('admin.login.passcodeLabel')}:{' '}
+              </span>
+              <span className="font-mono text-ink-900">{ADMIN_PASSCODE}</span>
             </div>
           </motion.div>
         </div>

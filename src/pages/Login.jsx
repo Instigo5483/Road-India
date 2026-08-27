@@ -55,9 +55,24 @@ const METHODS = [
 // separate auth systems (see AdminAuthContext.jsx, TeamAuthContext.jsx)
 // with their own routes.
 const ROLES = [
-  { id: 'user', icon: IconUser, labelKey: 'auth.role.user.label', descKey: 'auth.role.user.desc' },
-  { id: 'admin', icon: IconLockCloud, labelKey: 'auth.role.admin.label', descKey: 'auth.role.admin.desc' },
-  { id: 'team', icon: IconSiren, labelKey: 'auth.role.team.label', descKey: 'auth.role.team.desc' },
+  {
+    id: 'user',
+    icon: IconUser,
+    labelKey: 'auth.role.user.label',
+    descKey: 'auth.role.user.desc',
+  },
+  {
+    id: 'admin',
+    icon: IconLockCloud,
+    labelKey: 'auth.role.admin.label',
+    descKey: 'auth.role.admin.desc',
+  },
+  {
+    id: 'team',
+    icon: IconSiren,
+    labelKey: 'auth.role.team.label',
+    descKey: 'auth.role.team.desc',
+  },
 ]
 
 export default function Login() {
@@ -76,7 +91,10 @@ export default function Login() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const demoOtp = useMemo(() => String(Math.floor(100000 + Math.random() * 900000)), [stage])
+  const demoOtp = useMemo(
+    () => String(Math.floor(100000 + Math.random() * 900000)),
+    [stage]
+  )
 
   // DigiLocker path skips manual ID entry entirely -- a real DigiLocker
   // OAuth redirect already knows the user's verified identity, so this
@@ -157,12 +175,12 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink-50 dark:bg-ink-950 px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
       <div className="w-full max-w-md">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 dark:text-ink-400 hover:text-brand-700"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
         >
           <IconChevronLeft className="h-4 w-4" />
           {t('auth.back')}
@@ -171,7 +189,7 @@ export default function Login() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 shadow-card-hover"
+          className="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card-hover"
         >
           <div className="flex items-center justify-between bg-brand-900 px-6 py-5 text-white">
             <h1 className="text-lg font-bold">{t('auth.title')}</h1>
@@ -179,7 +197,7 @@ export default function Login() {
           </div>
 
           <div className="px-6 py-6">
-            <p className="mb-5 text-sm text-ink-500 dark:text-ink-400">{t('auth.subtitle')}</p>
+            <p className="mb-5 text-sm text-ink-500">{t('auth.subtitle')}</p>
 
             <motion.div
               key={stage}
@@ -189,22 +207,26 @@ export default function Login() {
             >
               {stage === 'role' && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-ink-700 dark:text-ink-200">{t('auth.role.title')}</p>
+                  <p className="text-sm font-medium text-ink-700">
+                    {t('auth.role.title')}
+                  </p>
                   {ROLES.map((role) => (
                     <button
                       key={role.id}
                       type="button"
                       onClick={() => selectRole(role.id)}
-                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
+                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
                     >
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
                         <role.icon className="h-5.5 w-5.5" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink-900 dark:text-ink-50">
+                        <span className="block text-sm font-semibold text-ink-900">
                           {t(role.labelKey)}
                         </span>
-                        <span className="block text-xs text-ink-500 dark:text-ink-400">{t(role.descKey)}</span>
+                        <span className="block text-xs text-ink-500">
+                          {t(role.descKey)}
+                        </span>
                       </span>
                     </button>
                   ))}
@@ -213,29 +235,33 @@ export default function Login() {
 
               {stage === 'method' && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-ink-700 dark:text-ink-200">{t('auth.method.title')}</p>
+                  <p className="text-sm font-medium text-ink-700">
+                    {t('auth.method.title')}
+                  </p>
                   {METHODS.map((method) => (
                     <button
                       key={method.id}
                       type="button"
                       onClick={() => selectMethod(method.id)}
-                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
+                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
                     >
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
                         <method.icon className="h-5.5 w-5.5" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink-900 dark:text-ink-50">
+                        <span className="block text-sm font-semibold text-ink-900">
                           {t(method.labelKey)}
                         </span>
-                        <span className="block text-xs text-ink-500 dark:text-ink-400">{t(method.descKey)}</span>
+                        <span className="block text-xs text-ink-500">
+                          {t(method.descKey)}
+                        </span>
                       </span>
                     </button>
                   ))}
                   <button
                     type="button"
                     onClick={() => setStage('role')}
-                    className="w-full text-center text-xs font-medium text-ink-400 dark:text-ink-500 hover:text-brand-700"
+                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
                   >
                     {t('auth.role.chooseDifferent')}
                   </button>
@@ -247,7 +273,9 @@ export default function Login() {
                   <Field label={t('auth.digilockerId.label')}>
                     <input
                       value={digilockerId}
-                      onChange={(e) => setDigilockerId(formatId(e.target.value))}
+                      onChange={(e) =>
+                        setDigilockerId(formatId(e.target.value))
+                      }
                       placeholder={t('auth.digilockerId.placeholder')}
                       inputMode="numeric"
                       className="input-field"
@@ -258,11 +286,13 @@ export default function Login() {
                   <Button type="submit" className="w-full" loading={busy}>
                     {busy ? t('auth.sendingOtp') : t('auth.sendOtp')}
                   </Button>
-                  <p className="text-center text-xs text-ink-400 dark:text-ink-500">{t('auth.consent.text')}</p>
+                  <p className="text-center text-xs text-ink-400">
+                    {t('auth.consent.text')}
+                  </p>
                   <button
                     type="button"
                     onClick={() => setStage('method')}
-                    className="w-full text-center text-xs font-medium text-ink-400 dark:text-ink-500 hover:text-brand-700"
+                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
                   >
                     {t('auth.method.chooseDifferent')}
                   </button>
@@ -274,7 +304,9 @@ export default function Login() {
                   <Field label={t('auth.otp.label')}>
                     <input
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                      }
                       placeholder="••••••"
                       inputMode="numeric"
                       className="input-field tracking-[0.5em]"
@@ -291,7 +323,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setStage('id')}
-                    className="w-full text-center text-xs font-medium text-ink-400 dark:text-ink-500 hover:text-brand-700"
+                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
                   >
                     {t('auth.switchAccount')}
                   </button>
@@ -304,10 +336,12 @@ export default function Login() {
                     <IconLoader className="h-6 w-6" />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">
+                    <p className="text-sm font-semibold text-ink-900">
                       {t('auth.digilocker.connecting')}
                     </p>
-                    <p className="mt-1 text-xs text-ink-500 dark:text-ink-400">{t('auth.digilocker.subtitle')}</p>
+                    <p className="mt-1 text-xs text-ink-500">
+                      {t('auth.digilocker.subtitle')}
+                    </p>
                   </div>
                 </div>
               )}
@@ -319,12 +353,12 @@ export default function Login() {
                     {t('auth.profile.title')}
                   </p>
                   <div>
-                    <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+                    <span className="mb-1.5 block text-sm font-medium text-ink-700">
                       {method === 'digilocker'
                         ? t('auth.profile.name.fromDigilocker')
                         : t('auth.profile.name.fromAadhaar')}
                     </span>
-                    <p className="rounded-xl bg-ink-50 dark:bg-ink-950 px-3.5 py-2.5 text-sm font-semibold text-ink-900 dark:text-ink-50">
+                    <p className="rounded-xl bg-ink-50 px-3.5 py-2.5 text-sm font-semibold text-ink-900">
                       {name}
                     </p>
                   </div>
@@ -357,7 +391,9 @@ export default function Login() {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-ink-700">
+        {label}
+      </span>
       {children}
     </label>
   )

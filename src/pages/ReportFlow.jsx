@@ -81,13 +81,16 @@ export default function ReportFlow() {
   if (!category) return <Navigate to="/home" replace />
 
   function toggleType(id) {
-    setTypes((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
+    setTypes((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    )
   }
 
   function goToLocation() {
     const nextErrors = {}
     if (types.length === 0) nextErrors.type = t('report.step1.error.type')
-    if (!description.trim()) nextErrors.description = t('report.step1.error.details')
+    if (!description.trim())
+      nextErrors.description = t('report.step1.error.details')
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length === 0) setStep(STEP.LOCATION)
   }
@@ -147,7 +150,11 @@ export default function ReportFlow() {
       try {
         localStorage.setItem(
           LAST_REPORT_KEY,
-          JSON.stringify({ at: Date.now(), category: category.id, description: description.trim() })
+          JSON.stringify({
+            at: Date.now(),
+            category: category.id,
+            description: description.trim(),
+          })
         )
       } catch {
         // Non-fatal -- just means the guard won't catch the next submit.
@@ -160,22 +167,26 @@ export default function ReportFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
+    <div className="min-h-screen bg-ink-50">
       <Navbar />
       <PageTransition className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
         {step !== STEP.SUCCESS && (
           <>
             <button
               type="button"
-              onClick={() => (step === STEP.DETAILS ? navigate('/home') : setStep(STEP.DETAILS))}
-              className="mb-5 inline-flex items-center gap-1 text-sm font-medium text-ink-500 dark:text-ink-400 hover:text-brand-700"
+              onClick={() =>
+                step === STEP.DETAILS
+                  ? navigate('/home')
+                  : setStep(STEP.DETAILS)
+              }
+              className="mb-5 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
             >
               <IconChevronLeft className="h-4 w-4" />
               {t('common.back')}
             </button>
 
             <div className="mb-6 flex items-center gap-2">
-              <h1 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50 sm:text-2xl">
+              <h1 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
                 {t(category.labelKey)}
               </h1>
             </div>
@@ -193,15 +204,19 @@ export default function ReportFlow() {
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25 }}
-              className="space-y-6 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-6 shadow-card sm:p-8"
+              className="space-y-6 rounded-2xl border border-ink-200 bg-white p-6 shadow-card sm:p-8"
             >
-              <h2 className="text-base font-bold text-ink-900 dark:text-ink-50">{t('report.step1.title')}</h2>
+              <h2 className="text-base font-bold text-ink-900">
+                {t('report.step1.title')}
+              </h2>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+                <label className="mb-1.5 block text-sm font-medium text-ink-700">
                   {t('report.step1.typeLabel')}
                 </label>
-                <p className="mb-2.5 text-xs text-ink-400 dark:text-ink-500">{t('report.step1.typeHint')}</p>
+                <p className="mb-2.5 text-xs text-ink-400">
+                  {t('report.step1.typeHint')}
+                </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {category.types.map((opt) => {
                     const selected = types.includes(opt.id)
@@ -214,7 +229,7 @@ export default function ReportFlow() {
                         className={`rounded-xl border px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                           selected
                             ? 'border-brand-600 bg-brand-50 text-brand-800'
-                            : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:border-brand-300 hover:bg-brand-50/40'
+                            : 'border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:bg-brand-50/40'
                         }`}
                       >
                         {t(opt.labelKey)}
@@ -226,16 +241,20 @@ export default function ReportFlow() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+                <label className="mb-1.5 block text-sm font-medium text-ink-700">
                   {t('report.step1.photos.label')}{' '}
-                  <span className="font-normal text-ink-400 dark:text-ink-500">({t('common.optional')})</span>
+                  <span className="font-normal text-ink-400">
+                    ({t('common.optional')})
+                  </span>
                 </label>
-                <p className="mb-2.5 text-xs text-ink-400 dark:text-ink-500">{t('report.step1.photos.hint')}</p>
+                <p className="mb-2.5 text-xs text-ink-400">
+                  {t('report.step1.photos.hint')}
+                </p>
                 <PhotoUpload photos={photos} onChange={setPhotos} />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
+                <label className="mb-1.5 block text-sm font-medium text-ink-700">
                   {t('report.step1.details.label')}
                 </label>
                 <textarea
@@ -260,29 +279,39 @@ export default function ReportFlow() {
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25 }}
-              className="space-y-5 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-6 shadow-card sm:p-8"
+              className="space-y-5 rounded-2xl border border-ink-200 bg-white p-6 shadow-card sm:p-8"
             >
               <div>
-                <h2 className="text-base font-bold text-ink-900 dark:text-ink-50">{t('report.step2.title')}</h2>
-                <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">{t('report.step2.subtitle')}</p>
+                <h2 className="text-base font-bold text-ink-900">
+                  {t('report.step2.title')}
+                </h2>
+                <p className="mt-1 text-sm text-ink-500">
+                  {t('report.step2.subtitle')}
+                </p>
               </div>
 
               <MapPicker value={location} onChange={setLocation} />
               <FieldError message={errors.location} />
 
-              <div className="grid gap-3 rounded-xl bg-ink-50 dark:bg-ink-950 p-4 text-sm sm:grid-cols-2">
+              <div className="grid gap-3 rounded-xl bg-ink-50 p-4 text-sm sm:grid-cols-2">
                 <div className="flex items-start gap-2">
                   <IconMapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
                   <div>
-                    <p className="font-medium text-ink-700 dark:text-ink-200">{t('report.step2.address')}</p>
-                    <p className="text-ink-500 dark:text-ink-400">{location?.address ?? '—'}</p>
+                    <p className="font-medium text-ink-700">
+                      {t('report.step2.address')}
+                    </p>
+                    <p className="text-ink-500">{location?.address ?? '—'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <IconClock className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
                   <div>
-                    <p className="font-medium text-ink-700 dark:text-ink-200">{t('report.step2.timestamp')}</p>
-                    <p className="text-ink-500 dark:text-ink-400">{formatTimestamp(now.toISOString())}</p>
+                    <p className="font-medium text-ink-700">
+                      {t('report.step2.timestamp')}
+                    </p>
+                    <p className="text-ink-500">
+                      {formatTimestamp(now.toISOString())}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -296,7 +325,7 @@ export default function ReportFlow() {
                     <button
                       type="button"
                       onClick={() => setNudgeDismissed(true)}
-                      className="shrink-0 text-xs font-medium text-ink-400 dark:text-ink-500 hover:text-ink-600 dark:hover:text-ink-300"
+                      className="shrink-0 text-xs font-medium text-ink-400 hover:text-ink-600"
                     >
                       {t('report.nearby.dismiss')}
                     </button>
@@ -305,14 +334,16 @@ export default function ReportFlow() {
                     {nearbyReports.map((nearby) => (
                       <div
                         key={nearby.id}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-white dark:bg-ink-900 px-3 py-2.5"
+                        className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2.5"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-ink-900 dark:text-ink-50">
+                          <p className="truncate text-sm font-medium text-ink-900">
                             {nearby.description}
                           </p>
-                          <p className="text-xs text-ink-400 dark:text-ink-500">
-                            {t('reports.distanceAway', { distance: nearby._distance.toFixed(2) })}
+                          <p className="text-xs text-ink-400">
+                            {t('reports.distanceAway', {
+                              distance: nearby._distance.toFixed(2),
+                            })}
                           </p>
                         </div>
                         <Button
@@ -323,7 +354,9 @@ export default function ReportFlow() {
                           onClick={() => handleNearbyUpvote(nearby.id)}
                           icon={<IconThumbsUp className="h-3.5 w-3.5" />}
                         >
-                          {upvotedIds.includes(nearby.id) ? t('reports.upvoted') : t('report.nearby.support')}
+                          {upvotedIds.includes(nearby.id)
+                            ? t('reports.upvoted')
+                            : t('report.nearby.support')}
                         </Button>
                       </div>
                     ))}
@@ -338,47 +371,58 @@ export default function ReportFlow() {
                 loading={submitting}
                 disabled={!location?.lat}
               >
-                {submitting ? t('report.step2.submitting') : t('report.step2.submit')}
+                {submitting
+                  ? t('report.step2.submitting')
+                  : t('report.step2.submit')}
               </Button>
             </motion.div>
           )}
 
-          {step === STEP.SUCCESS && category.id === 'emergency' && submittedReport && (
-            <motion.div
-              key="success-emergency"
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="flex flex-col items-center"
-            >
-              <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50 sm:text-2xl">
-                {t('emergency.tracker.title')}
-              </h2>
-              <p className="mt-1.5 max-w-sm text-center text-sm text-ink-500 dark:text-ink-400">
-                {t('emergency.tracker.subtitle')}
-              </p>
+          {step === STEP.SUCCESS &&
+            category.id === 'emergency' &&
+            submittedReport && (
+              <motion.div
+                key="success-emergency"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+                className="flex flex-col items-center"
+              >
+                <h2 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
+                  {t('emergency.tracker.title')}
+                </h2>
+                <p className="mt-1.5 max-w-sm text-center text-sm text-ink-500">
+                  {t('emergency.tracker.subtitle')}
+                </p>
 
-              <div className="mt-6 w-full">
-                <EmergencyTracker
-                  createdAt={submittedReport.createdAt}
-                  etaMinutes={category.etaMinutes}
-                />
-              </div>
+                <div className="mt-6 w-full">
+                  <EmergencyTracker
+                    createdAt={submittedReport.createdAt}
+                    etaMinutes={category.etaMinutes}
+                  />
+                </div>
 
-              <div className="mt-4 w-full">
-                <AiTriageCard triage={submittedReport.aiTriage} />
-              </div>
+                <div className="mt-4 w-full">
+                  <AiTriageCard triage={submittedReport.aiTriage} />
+                </div>
 
-              <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row">
-                <Button variant="secondary" className="w-full" onClick={() => navigate('/home')}>
-                  {t('report.success.reportAnother')}
-                </Button>
-                <Button className="w-full" onClick={() => navigate('/dashboard')}>
-                  {t('report.success.viewDashboard')}
-                </Button>
-              </div>
-            </motion.div>
-          )}
+                <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row">
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => navigate('/home')}
+                  >
+                    {t('report.success.reportAnother')}
+                  </Button>
+                  <Button
+                    className="w-full"
+                    onClick={() => navigate('/dashboard')}
+                  >
+                    {t('report.success.viewDashboard')}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
 
           {step === STEP.SUCCESS && category.id !== 'emergency' && (
             <motion.div
@@ -386,18 +430,27 @@ export default function ReportFlow() {
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="flex flex-col items-center rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-10 text-center shadow-card"
+              className="flex flex-col items-center rounded-2xl border border-ink-200 bg-white p-10 text-center shadow-card"
             >
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.1, type: 'spring', stiffness: 300, damping: 14 }}
+                transition={{
+                  delay: 0.1,
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 14,
+                }}
                 className="grid h-16 w-16 place-items-center rounded-full bg-success-50 text-success-600"
               >
                 <IconCheckCircle className="h-8 w-8" />
               </motion.span>
-              <h2 className="mt-5 font-display text-xl font-bold text-ink-900 dark:text-ink-50">{t('report.success.title')}</h2>
-              <p className="mt-1.5 max-w-sm text-sm text-ink-500 dark:text-ink-400">{t('report.success.subtitle')}</p>
+              <h2 className="mt-5 font-display text-xl font-bold text-ink-900">
+                {t('report.success.title')}
+              </h2>
+              <p className="mt-1.5 max-w-sm text-sm text-ink-500">
+                {t('report.success.subtitle')}
+              </p>
 
               <div className="mt-5 w-full">
                 <AiTriageCard triage={submittedReport?.aiTriage} />
@@ -411,7 +464,10 @@ export default function ReportFlow() {
                 >
                   {t('report.success.reportAnother')}
                 </Button>
-                <Button className="w-full" onClick={() => navigate('/dashboard')}>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate('/dashboard')}
+                >
                   {t('report.success.viewDashboard')}
                 </Button>
               </div>

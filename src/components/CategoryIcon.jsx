@@ -14,7 +14,11 @@ import { useId } from 'react'
 function RoadProblemIcon({ className }) {
   const gradId = `road-problem-bg-${useId()}`
   return (
-    <svg viewBox="0 0 72 72" className={className} xmlns="http://www.w3.org/2000/svg">
+    <svg
+      viewBox="0 0 72 72"
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#FFFBEB" />
@@ -38,20 +42,57 @@ function RoadProblemIcon({ className }) {
 
 function RoadCorruptionIcon({ className }) {
   return (
-    <svg viewBox="0 0 64 64" className={className} xmlns="http://www.w3.org/2000/svg" fill="none">
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+    >
       <rect width="64" height="64" rx="16" fill="#EEF2FF" />
 
-      <rect x="18" y="16" width="28" height="36" rx="4" fill="#E0E7FF" stroke="#3730A3" strokeWidth="2" />
+      <rect
+        x="18"
+        y="16"
+        width="28"
+        height="36"
+        rx="4"
+        fill="#E0E7FF"
+        stroke="#3730A3"
+        strokeWidth="2"
+      />
       <rect x="25" y="12" width="14" height="6" rx="2" fill="#4F46E5" />
-      <line x1="24" y1="26" x2="32" y2="26" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" />
+      <line
+        x1="24"
+        y1="26"
+        x2="32"
+        y2="26"
+        stroke="#818CF8"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
 
-      <path d="M22 36C26 31 38 31 42 36C38 41 26 41 22 36Z" fill="#FFFFFF" stroke="#3730A3" strokeWidth="1.8" />
+      <path
+        d="M22 36C26 31 38 31 42 36C38 41 26 41 22 36Z"
+        fill="#FFFFFF"
+        stroke="#3730A3"
+        strokeWidth="1.8"
+      />
       <circle cx="32" cy="36" r="3" fill="#4F46E5" />
       <circle cx="33" cy="35" r="1" fill="#FFFFFF" />
 
       <circle cx="44" cy="44" r="8" fill="#4338CA" />
-      <path d="M41 47L47 41" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-      <path d="M47 47L41 41" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M41 47L47 41"
+        stroke="#FFFFFF"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M47 47L41 41"
+        stroke="#FFFFFF"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }
@@ -59,7 +100,11 @@ function RoadCorruptionIcon({ className }) {
 function RoadEmergencyIcon({ className }) {
   const gradId = `road-emergency-bg-${useId()}`
   return (
-    <svg viewBox="0 0 72 72" className={className} xmlns="http://www.w3.org/2000/svg">
+    <svg
+      viewBox="0 0 72 72"
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#FFF1F2" />
@@ -69,13 +114,42 @@ function RoadEmergencyIcon({ className }) {
 
       <rect width="72" height="72" rx="20" fill={`url(#${gradId})`} />
 
-      <path d="M19 23C13 29 13 41 19 47" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M53 23C59 29 59 41 53 47" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M24 28C21 32 21 38 24 42" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M48 28C51 32 51 38 48 42" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" />
+      <path
+        d="M19 23C13 29 13 41 19 47"
+        fill="none"
+        stroke="#E11D48"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M53 23C59 29 59 41 53 47"
+        fill="none"
+        stroke="#E11D48"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M24 28C21 32 21 38 24 42"
+        fill="none"
+        stroke="#E11D48"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M48 28C51 32 51 38 48 42"
+        fill="none"
+        stroke="#E11D48"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
 
       <circle cx="36" cy="35" r="10" fill="#E11D48" />
-      <path d="M36 29V41M30 35H42" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+      <path
+        d="M36 29V41M30 35H42"
+        stroke="#FFFFFF"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }

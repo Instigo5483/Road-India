@@ -5,7 +5,11 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useToast } from '../context/ToastContext'
-import { getCategory, reportTypeIds, getTypesLabel } from '../data/categoryTypes'
+import {
+  getCategory,
+  reportTypeIds,
+  getTypesLabel,
+} from '../data/categoryTypes'
 import { timeAgo, formatTimestamp } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
@@ -29,7 +33,13 @@ const EDITABLE_STATUSES = ['submitted', 'in_review']
  * animation, instant close) -- see the AnimatePresence+exit-tracking bug
  * class already fixed elsewhere in this app (Login.jsx, ReportFlow.jsx,
  * App.jsx) for why that combination is avoided here too. */
-export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, showUpvote = true }) {
+export default function ReportDetailModal({
+  report,
+  onClose,
+  onUpvote,
+  upvoted,
+  showUpvote = true,
+}) {
   const { t, lang } = useLanguage()
   const { user } = useAuth()
   const { submitReportFeedback, updateReport } = useReports()
@@ -40,7 +50,8 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
   // it's resolved and they haven't already left feedback -- see
   // firestore.rules for the matching write restriction.
   const isOwner = Boolean(user && report.createdBy === user.uid)
-  const needsFeedback = isOwner && report.status === 'resolved' && !report.citizenFeedback
+  const needsFeedback =
+    isOwner && report.status === 'resolved' && !report.citizenFeedback
   const canEdit = isOwner && EDITABLE_STATUSES.includes(report.status)
 
   async function handleFeedbackSubmit(feedback) {
@@ -99,18 +110,23 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.2 }}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 shadow-card-hover"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-ink-200 bg-white shadow-card-hover"
       >
-        <div className="flex items-start gap-3 border-b border-ink-100 dark:border-ink-800 p-5">
+        <div className="flex items-start gap-3 border-b border-ink-100 p-5">
           <div className="shrink-0 overflow-hidden rounded-xl">
             <CategoryIcon category={report.category} className="h-11 w-11" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-bold text-ink-900 dark:text-ink-50">{typeLabel || report.type}</h2>
+            <h2 className="text-lg font-bold text-ink-900">
+              {typeLabel || report.type}
+            </h2>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <StatusBadge status={report.status} />
               {report.category === 'emergency' && (
-                <EmergencyEtaBadge createdAt={report.createdAt} etaMinutes={category?.etaMinutes} />
+                <EmergencyEtaBadge
+                  createdAt={report.createdAt}
+                  etaMinutes={category?.etaMinutes}
+                />
               )}
             </div>
           </div>
@@ -119,7 +135,7 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
               type="button"
               onClick={() => setEditing(true)}
               aria-label={t('reportEdit.button')}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-400 dark:text-ink-500 transition-colors hover:bg-ink-100 dark:hover:bg-ink-800 hover:text-brand-700"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-400 transition-colors hover:bg-ink-100 hover:text-brand-700"
             >
               <IconEdit className="h-4 w-4" />
             </button>
@@ -128,7 +144,7 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
             type="button"
             onClick={onClose}
             aria-label={t('common.close')}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-400 dark:text-ink-500 transition-colors hover:bg-ink-100 dark:hover:bg-ink-800 hover:text-ink-600 dark:hover:text-ink-300"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-600"
           >
             <IconX className="h-4 w-4" />
           </button>
@@ -136,7 +152,11 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
 
         <div className="space-y-4 p-5">
           {editing ? (
-            <ReportEditForm report={report} onSave={handleEditSave} onCancel={() => setEditing(false)} />
+            <ReportEditForm
+              report={report}
+              onSave={handleEditSave}
+              onCancel={() => setEditing(false)}
+            />
           ) : (
             <>
               {report.photoUrls?.length > 0 && (
@@ -146,13 +166,15 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
                       key={i}
                       src={url}
                       alt=""
-                      className="h-28 w-28 shrink-0 rounded-xl border border-ink-200 dark:border-ink-700 object-cover"
+                      className="h-28 w-28 shrink-0 rounded-xl border border-ink-200 object-cover"
                     />
                   ))}
                 </div>
               )}
 
-              <p className="text-sm leading-relaxed text-ink-700 dark:text-ink-200">{report.description}</p>
+              <p className="text-sm leading-relaxed text-ink-700">
+                {report.description}
+              </p>
             </>
           )}
 
@@ -160,7 +182,7 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
 
           {!editing && (
             <div>
-              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink-700 dark:text-ink-200">
+              <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink-700">
                 <IconMapPin className="h-4 w-4 text-brand-700" />
                 {report.location?.address ?? t('report.step2.coordinates')}
               </p>
@@ -168,27 +190,38 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
             </div>
           )}
 
-          {needsFeedback && <ReportFeedbackForm onSubmit={handleFeedbackSubmit} />}
+          {needsFeedback && (
+            <ReportFeedbackForm onSubmit={handleFeedbackSubmit} />
+          )}
 
           {report.citizenFeedback && (
-            <div className="rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4">
+            <div className="rounded-xl border border-ink-200 bg-white p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
                   {t('feedback.summary.heading')}
                 </p>
                 <FeedbackBadge feedback={report.citizenFeedback} />
               </div>
               {report.citizenFeedback.review && (
-                <p className="mt-2 text-sm italic text-ink-600 dark:text-ink-300">“{report.citizenFeedback.review}”</p>
+                <p className="mt-2 text-sm italic text-ink-600">
+                  “{report.citizenFeedback.review}”
+                </p>
               )}
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 dark:border-ink-800 pt-4 text-xs text-ink-400 dark:text-ink-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-4 text-xs text-ink-400">
             <div>
-              <p className="font-mono">{t('admin.reportId', { id: report.id })}</p>
-              {report.createdByName && <p>{t('admin.reporter', { name: report.createdByName })}</p>}
-              <p>{formatTimestamp(report.createdAt)} · {timeAgo(report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}</p>
+              <p className="font-mono">
+                {t('admin.reportId', { id: report.id })}
+              </p>
+              {report.createdByName && (
+                <p>{t('admin.reporter', { name: report.createdByName })}</p>
+              )}
+              <p>
+                {formatTimestamp(report.createdAt)} ·{' '}
+                {timeAgo(report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}
+              </p>
             </div>
 
             {showUpvote && (
@@ -199,7 +232,7 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
                 className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors ${
                   upvoted
                     ? 'border-brand-600 bg-brand-800 text-white'
-                    : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:border-brand-300 hover:text-brand-700'
+                    : 'border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
                 }`}
               >
                 <IconThumbsUp className="h-3.5 w-3.5" />

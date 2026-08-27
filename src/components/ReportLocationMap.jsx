@@ -11,7 +11,7 @@ export default function ReportLocationMap({ location }) {
   if (!location?.lat) return null
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700">
+    <div className="overflow-hidden rounded-2xl border border-ink-200">
       <MapContainer
         center={[location.lat, location.lng]}
         zoom={PICKER_ZOOM}

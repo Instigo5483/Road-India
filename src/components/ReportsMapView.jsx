@@ -21,8 +21,13 @@ export default function ReportsMapView({ reports, user, onUpvote }) {
   const zoom = withLocation.length ? 5 : DEFAULT_ZOOM
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 shadow-card">
-      <MapContainer center={center} zoom={zoom} scrollWheelZoom className="h-[28rem] w-full sm:h-[32rem]">
+    <div className="overflow-hidden rounded-2xl border border-ink-200 shadow-card">
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        scrollWheelZoom
+        className="h-[28rem] w-full sm:h-[32rem]"
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

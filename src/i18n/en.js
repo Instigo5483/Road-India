@@ -249,9 +249,6 @@ export default {
   'settings.account.memberSince': 'Member since',
   'settings.account.privacyNote': 'Your ID is used only to verify you and is never shared with third parties.',
 
-  'theme.switchToDark': 'Switch to dark mode',
-  'theme.switchToLight': 'Switch to light mode',
-
   'admin.login.title': 'Admin sign-in',
   'admin.login.subtitle': 'Staff access for managing filed reports and their status.',
   'admin.login.passcodeLabel': 'Passcode',

@@ -249,9 +249,6 @@ export default {
   'settings.account.memberSince': 'सदस्य बने',
   'settings.account.privacyNote': 'आपकी ID का उपयोग केवल आपकी पहचान सत्यापित करने के लिए किया जाता है और इसे कभी भी किसी तीसरे पक्ष के साथ साझा नहीं किया जाता।',
 
-  'theme.switchToDark': 'डार्क मोड में बदलें',
-  'theme.switchToLight': 'लाइट मोड में बदलें',
-
   'admin.login.title': 'एडमिन साइन-इन',
   'admin.login.subtitle': 'दर्ज रिपोर्ट्स और उनकी स्थिति प्रबंधित करने के लिए स्टाफ एक्सेस।',
   'admin.login.passcodeLabel': 'पासकोड',

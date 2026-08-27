@@ -19,8 +19,8 @@ export default function LanguageSelector({ variant = 'light' }) {
 
   const chipClass =
     variant === 'light'
-      ? 'bg-white/90 dark:bg-ink-900/90 text-ink-800 dark:text-ink-100 border border-white/60 hover:bg-white dark:hover:bg-ink-900'
-      : 'bg-ink-100 dark:bg-ink-800 text-ink-700 dark:text-ink-200 border border-ink-200 dark:border-ink-700 hover:bg-ink-200'
+      ? 'bg-white/90 text-ink-800 border border-white/60 hover:bg-white'
+      : 'bg-ink-100 text-ink-700 border border-ink-200 hover:bg-ink-200'
 
   return (
     <div className="relative" ref={ref}>
@@ -33,7 +33,9 @@ export default function LanguageSelector({ variant = 'light' }) {
       >
         <IconGlobe className="h-4 w-4" />
         <span>{current?.nativeLabel ?? 'English'}</span>
-        <IconChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <IconChevronDown
+          className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
 
       <AnimatePresence>
@@ -44,9 +46,9 @@ export default function LanguageSelector({ variant = 'light' }) {
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
             role="listbox"
-            className="absolute right-0 z-30 mt-2 max-h-80 w-56 overflow-y-auto rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-1.5 shadow-card-hover"
+            className="absolute right-0 z-30 mt-2 max-h-80 w-56 overflow-y-auto rounded-2xl border border-ink-200 bg-white p-1.5 shadow-card-hover"
           >
-            <p className="px-3 pb-1.5 pt-1 text-xs font-medium text-ink-400 dark:text-ink-500">
+            <p className="px-3 pb-1.5 pt-1 text-xs font-medium text-ink-400">
               {t('landing.chooseLanguage')}
             </p>
             {languages.map((l) => (
@@ -60,7 +62,9 @@ export default function LanguageSelector({ variant = 'light' }) {
                   setOpen(false)
                 }}
                 className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors ${
-                  l.code === lang ? 'bg-brand-50 text-brand-800' : 'text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-800'
+                  l.code === lang
+                    ? 'bg-brand-50 text-brand-800'
+                    : 'text-ink-700 hover:bg-ink-50'
                 }`}
               >
                 <span className="flex items-center gap-2">

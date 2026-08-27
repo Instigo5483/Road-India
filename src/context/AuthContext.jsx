@@ -4,7 +4,13 @@ import {
   signInAnonymously,
   signOut as firebaseSignOut,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
+import {
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot,
+  serverTimestamp,
+} from 'firebase/firestore'
 import { isFirebaseConfigured, auth, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 
@@ -21,12 +27,16 @@ const AuthContext = createContext(null)
  * (see Login.jsx) and isn't user-editable (see Settings.jsx).
  */
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => (isFirebaseConfigured ? null : mockBackend.getSession()))
+  const [user, setUser] = useState(() =>
+    isFirebaseConfigured ? null : mockBackend.getSession()
+  )
   const [loading, setLoading] = useState(isFirebaseConfigured)
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
-      const unsub = mockBackend.subscribe(() => setUser(mockBackend.getSession()))
+      const unsub = mockBackend.subscribe(() =>
+        setUser(mockBackend.getSession())
+      )
       setLoading(false)
       return unsub
     }
@@ -61,7 +71,11 @@ export function AuthProvider({ children }) {
 
       async completeLogin({ digilockerId, name, preferredLanguage }) {
         if (!isFirebaseConfigured) {
-          return mockBackend.findOrCreateUser({ digilockerId, name, preferredLanguage })
+          return mockBackend.findOrCreateUser({
+            digilockerId,
+            name,
+            preferredLanguage,
+          })
         }
 
         const cred = await signInAnonymously(auth)

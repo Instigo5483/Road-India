@@ -58,7 +58,10 @@ export default function PhotoUpload({ photos, onChange }) {
       // reason (e.g. a format the canvas can't decode) -- a bigger photo
       // is still better than silently dropping it.
       const src = await compressImage(file).catch(() => readAsDataUrl(file))
-      onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src }])
+      onChange((prev) => [
+        ...prev,
+        { id: `${Date.now()}-${Math.random()}`, src },
+      ])
     })
   }
 
@@ -77,9 +80,13 @@ export default function PhotoUpload({ photos, onChange }) {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="relative h-20 w-20 overflow-hidden rounded-xl border border-ink-100 dark:border-ink-800 shadow-card"
+              className="relative h-20 w-20 overflow-hidden rounded-xl border border-ink-100 shadow-card"
             >
-              <img src={photo.src} alt="" className="h-full w-full object-cover" />
+              <img
+                src={photo.src}
+                alt=""
+                className="h-full w-full object-cover"
+              />
               <button
                 type="button"
                 onClick={() => removePhoto(photo.id)}
@@ -97,10 +104,12 @@ export default function PhotoUpload({ photos, onChange }) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => inputRef.current?.click()}
-            className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-ink-200 dark:border-ink-700 text-ink-400 dark:text-ink-500 transition-colors hover:border-brand-300 hover:text-brand-600"
+            className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-ink-200 text-ink-400 transition-colors hover:border-brand-300 hover:text-brand-600"
           >
             <IconCamera className="h-5 w-5" />
-            <span className="text-[11px] font-medium">{t('report.step1.photos.add')}</span>
+            <span className="text-[11px] font-medium">
+              {t('report.step1.photos.add')}
+            </span>
           </motion.button>
         )}
       </div>

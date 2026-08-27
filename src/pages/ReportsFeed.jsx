@@ -85,7 +85,8 @@ export default function ReportsFeed() {
   }
 
   const timeOptions = useMemo(
-    () => TIME_RANGES.map((range) => ({ value: range.id, label: t(range.key) })),
+    () =>
+      TIME_RANGES.map((range) => ({ value: range.id, label: t(range.key) })),
     [t]
   )
   const stateDropdownOptions = useMemo(
@@ -98,7 +99,10 @@ export default function ReportsFeed() {
   const districtDropdownOptions = useMemo(
     () => [
       { value: 'all', label: t('reports.filter.allDistricts') },
-      ...districtOptions.map((district) => ({ value: district, label: district })),
+      ...districtOptions.map((district) => ({
+        value: district,
+        label: district,
+      })),
     ],
     [districtOptions, t]
   )
@@ -110,11 +114,15 @@ export default function ReportsFeed() {
     [cityOptions, t]
   )
 
-  const activeFilterCount = [timeFilter, stateFilter, districtFilter, cityFilter].filter(
-    (v) => v !== 'all'
-  ).length
+  const activeFilterCount = [
+    timeFilter,
+    stateFilter,
+    districtFilter,
+    cityFilter,
+  ].filter((v) => v !== 'all').length
 
-  const hasAnyFilter = activeFilterCount > 0 || categoryFilter !== 'all' || search.trim() !== ''
+  const hasAnyFilter =
+    activeFilterCount > 0 || categoryFilter !== 'all' || search.trim() !== ''
 
   function clearAllFilters() {
     setSearch('')
@@ -149,14 +157,17 @@ export default function ReportsFeed() {
     () =>
       reports.map((r) => ({
         ...r,
-        _distance: userLocation ? distanceKm(userLocation, r.location) : undefined,
+        _distance: userLocation
+          ? distanceKm(userLocation, r.location)
+          : undefined,
       })),
     [reports, userLocation]
   )
 
   const filtered = useMemo(() => {
     let list = withDistance
-    if (categoryFilter !== 'all') list = list.filter((r) => r.category === categoryFilter)
+    if (categoryFilter !== 'all')
+      list = list.filter((r) => r.category === categoryFilter)
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       list = list.filter(
@@ -166,9 +177,12 @@ export default function ReportsFeed() {
           r.location?.address?.toLowerCase().includes(q)
       )
     }
-    if (stateFilter !== 'all') list = list.filter((r) => r.location?.state === stateFilter)
-    if (districtFilter !== 'all') list = list.filter((r) => r.location?.district === districtFilter)
-    if (cityFilter !== 'all') list = list.filter((r) => r.location?.city === cityFilter)
+    if (stateFilter !== 'all')
+      list = list.filter((r) => r.location?.state === stateFilter)
+    if (districtFilter !== 'all')
+      list = list.filter((r) => r.location?.district === districtFilter)
+    if (cityFilter !== 'all')
+      list = list.filter((r) => r.location?.city === cityFilter)
 
     const range = TIME_RANGES.find((r) => r.id === timeFilter)
     if (range?.ms) {
@@ -177,7 +191,15 @@ export default function ReportsFeed() {
     }
 
     return list
-  }, [withDistance, categoryFilter, search, stateFilter, districtFilter, cityFilter, timeFilter])
+  }, [
+    withDistance,
+    categoryFilter,
+    search,
+    stateFilter,
+    districtFilter,
+    cityFilter,
+    timeFilter,
+  ])
 
   const sorted = useMemo(() => {
     const list = [...filtered]
@@ -188,7 +210,8 @@ export default function ReportsFeed() {
     } else {
       // relevance: live emergencies first, then by community support
       list.sort((a, b) => {
-        const emergencyDelta = (b.category === 'emergency') - (a.category === 'emergency')
+        const emergencyDelta =
+          (b.category === 'emergency') - (a.category === 'emergency')
         if (emergencyDelta !== 0) return emergencyDelta
         return (b.upvotes ?? 0) - (a.upvotes ?? 0)
       })
@@ -196,27 +219,32 @@ export default function ReportsFeed() {
     return list
   }, [filtered, sort, userLocation])
 
-  const categoryChips = [{ id: 'all', labelKey: 'reports.filter.all' }, ...CATEGORIES]
+  const categoryChips = [
+    { id: 'all', labelKey: 'reports.filter.all' },
+    ...CATEGORIES,
+  ]
 
   return (
-    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
+    <div className="min-h-screen bg-ink-50">
       <Navbar />
       <PageTransition className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="flex items-center gap-2">
-          <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50 sm:text-3xl">{t('reports.title')}</h1>
+          <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">
+            {t('reports.title')}
+          </h1>
           <span className="hidden rounded-full bg-emergency-50 px-2.5 py-1 text-xs font-semibold text-emergency-600 sm:inline-flex sm:items-center sm:gap-1">
             <IconSiren className="h-3 w-3" /> live
           </span>
         </div>
-        <p className="mt-1.5 text-ink-500 dark:text-ink-400">{t('reports.subtitle')}</p>
+        <p className="mt-1.5 text-ink-500">{t('reports.subtitle')}</p>
 
-        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-2.5 shadow-card">
-          <IconSearch className="h-4 w-4 shrink-0 text-ink-400 dark:text-ink-500" />
+        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 bg-white px-4 py-2.5 shadow-card">
+          <IconSearch className="h-4 w-4 shrink-0 text-ink-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('reports.searchPlaceholder')}
-            className="w-full bg-transparent text-sm text-ink-800 outline-none placeholder:text-ink-400 dark:text-ink-100"
+            className="w-full bg-transparent text-sm text-ink-800 outline-none placeholder:text-ink-400"
           />
         </div>
 
@@ -229,7 +257,7 @@ export default function ReportsFeed() {
               className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
                 categoryFilter === chip.id
                   ? 'border-brand-800 bg-brand-800 text-white'
-                  : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800'
+                  : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
               }`}
             >
               {t(chip.labelKey)}
@@ -242,7 +270,7 @@ export default function ReportsFeed() {
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
-            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 dark:text-ink-500 transition-colors hover:text-brand-700"
+            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
           >
             <IconFilter className="h-3.5 w-3.5" />
             {t('reports.filter.heading')}
@@ -310,32 +338,36 @@ export default function ReportsFeed() {
         </AnimatePresence>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 dark:text-ink-500">
+          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400">
             {t('reports.filter.sortBy')}
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex gap-1.5 rounded-full bg-ink-100 dark:bg-ink-800 p-1">
+            <div className="flex gap-1.5 rounded-full bg-ink-100 p-1">
               {SORTS.map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => setSort(s.id)}
                   className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    sort === s.id ? 'bg-white dark:bg-ink-900 text-brand-800 shadow-card' : 'text-ink-500 dark:text-ink-400'
+                    sort === s.id
+                      ? 'bg-white text-brand-800 shadow-card'
+                      : 'text-ink-500'
                   }`}
                 >
                   {t(s.key)}
                 </button>
               ))}
             </div>
-            <div className="flex gap-1 rounded-full bg-ink-100 dark:bg-ink-800 p-1">
+            <div className="flex gap-1 rounded-full bg-ink-100 p-1">
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
                 aria-pressed={viewMode === 'list'}
                 aria-label={t('reports.view.list')}
                 className={`grid h-7 w-7 place-items-center rounded-full transition-colors ${
-                  viewMode === 'list' ? 'bg-white dark:bg-ink-900 text-brand-800 shadow-card' : 'text-ink-500 dark:text-ink-400'
+                  viewMode === 'list'
+                    ? 'bg-white text-brand-800 shadow-card'
+                    : 'text-ink-500'
                 }`}
               >
                 <IconListChecks className="h-3.5 w-3.5" />
@@ -346,7 +378,9 @@ export default function ReportsFeed() {
                 aria-pressed={viewMode === 'map'}
                 aria-label={t('reports.view.map')}
                 className={`grid h-7 w-7 place-items-center rounded-full transition-colors ${
-                  viewMode === 'map' ? 'bg-white dark:bg-ink-900 text-brand-800 shadow-card' : 'text-ink-500 dark:text-ink-400'
+                  viewMode === 'map'
+                    ? 'bg-white text-brand-800 shadow-card'
+                    : 'text-ink-500'
                 }`}
               >
                 <IconMapPin className="h-3.5 w-3.5" />
@@ -356,15 +390,21 @@ export default function ReportsFeed() {
         </div>
 
         {sort === 'nearest' && locating && (
-          <p className="mt-3 text-xs text-ink-400 dark:text-ink-500">{t('reports.locating')}</p>
+          <p className="mt-3 text-xs text-ink-400">{t('reports.locating')}</p>
         )}
         {sort === 'nearest' && locationError && (
-          <p className="mt-3 text-xs text-warning-600">{t('reports.locationDenied')}</p>
+          <p className="mt-3 text-xs text-warning-600">
+            {t('reports.locationDenied')}
+          </p>
         )}
 
         {viewMode === 'map' ? (
           <div className="mt-5">
-            <ReportsMapView reports={sorted} user={user} onUpvote={(id) => toggleUpvote(id)} />
+            <ReportsMapView
+              reports={sorted}
+              user={user}
+              onUpvote={(id) => toggleUpvote(id)}
+            />
           </div>
         ) : (
           <div className="mt-5 space-y-3">
@@ -374,7 +414,9 @@ export default function ReportsFeed() {
                 report={report}
                 index={i}
                 distanceKm={report._distance}
-                upvoted={user ? (report.upvotedBy ?? []).includes(user.uid) : false}
+                upvoted={
+                  user ? (report.upvotedBy ?? []).includes(user.uid) : false
+                }
                 onUpvote={() => toggleUpvote(report.id)}
               />
             ))}

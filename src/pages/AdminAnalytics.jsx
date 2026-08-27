@@ -57,10 +57,13 @@ export default function AdminAnalytics() {
   )
 
   const avgResolutionHours = useMemo(() => {
-    const resolved = reports.filter((r) => r.status === 'resolved' && r.resolvedAt)
+    const resolved = reports.filter(
+      (r) => r.status === 'resolved' && r.resolvedAt
+    )
     if (resolved.length === 0) return null
     const totalMs = resolved.reduce(
-      (sum, r) => sum + (toDate(r.resolvedAt).getTime() - toDate(r.createdAt).getTime()),
+      (sum, r) =>
+        sum + (toDate(r.resolvedAt).getTime() - toDate(r.createdAt).getTime()),
       0
     )
     return totalMs / resolved.length / (1000 * 60 * 60)
@@ -105,13 +108,13 @@ export default function AdminAnalytics() {
   const maxStatusCount = Math.max(...byStatus.map((s) => s.count), 1)
 
   return (
-    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
-      <header className="sticky top-0 z-20 border-b border-ink-200 dark:border-ink-700 bg-white/95 dark:bg-ink-900/95 shadow-card backdrop-blur-md">
+    <div className="min-h-screen bg-ink-50">
+      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <button
             type="button"
             onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-1 text-sm font-medium text-ink-500 dark:text-ink-400 hover:text-brand-700"
+            className="inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
           >
             <IconChevronLeft className="h-4 w-4" />
             {t('admin.teams.backToDashboard')}
@@ -122,7 +125,7 @@ export default function AdminAnalytics() {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 dark:border-ink-700 px-3.5 py-2 text-sm font-medium text-ink-600 dark:text-ink-300 transition-colors hover:border-emergency-300 hover:text-emergency-600"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-3.5 py-2 text-sm font-medium text-ink-600 transition-colors hover:border-emergency-300 hover:text-emergency-600"
           >
             <IconLogOut className="h-4 w-4" />
             {t('admin.logout')}
@@ -131,16 +134,20 @@ export default function AdminAnalytics() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50 sm:text-3xl">
+        <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">
           {t('admin.analytics.title')}
         </h1>
-        <p className="mt-1.5 text-ink-500 dark:text-ink-400">{t('admin.analytics.subtitle')}</p>
+        <p className="mt-1.5 text-ink-500">{t('admin.analytics.subtitle')}</p>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile label={t('admin.stats.total')} value={reports.length} />
           <StatTile
             label={t('admin.analytics.avgResolution')}
-            value={avgResolutionHours == null ? '—' : `${avgResolutionHours.toFixed(1)}h`}
+            value={
+              avgResolutionHours == null
+                ? '—'
+                : `${avgResolutionHours.toFixed(1)}h`
+            }
           />
           <StatTile
             label={t('admin.analytics.resolvedCount')}
@@ -148,8 +155,8 @@ export default function AdminAnalytics() {
           />
         </div>
 
-        <section className="mt-8 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-5 sm:p-6">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+        <section className="mt-8 rounded-2xl border border-ink-200 bg-white p-5 sm:p-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500">
             {t('admin.analytics.byDay')}
           </h2>
           <div className="mt-4 flex h-32 items-end gap-1.5">
@@ -157,11 +164,16 @@ export default function AdminAnalytics() {
               <div key={i} className="flex flex-1 flex-col items-center gap-1">
                 <div
                   className="w-full rounded-t bg-brand-600"
-                  style={{ height: `${Math.max((day.count / maxDailyCount) * 100, day.count > 0 ? 6 : 2)}%` }}
+                  style={{
+                    height: `${Math.max((day.count / maxDailyCount) * 100, day.count > 0 ? 6 : 2)}%`,
+                  }}
                   title={`${day.count}`}
                 />
-                <span className="text-[9px] text-ink-400 dark:text-ink-500">
-                  {day.date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric' })}
+                <span className="text-[9px] text-ink-400">
+                  {day.date.toLocaleDateString(
+                    lang === 'hi' ? 'hi-IN' : 'en-IN',
+                    { day: 'numeric' }
+                  )}
                 </span>
               </div>
             ))}
@@ -169,41 +181,60 @@ export default function AdminAnalytics() {
         </section>
 
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          <section className="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-5 sm:p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+          <section className="rounded-2xl border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500">
               {t('admin.analytics.byCategory')}
             </h2>
             <div className="mt-4 space-y-3">
               {byCategory.map((c) => (
-                <BarRow key={c.id} label={c.label} count={c.count} max={maxCategoryCount} theme={c.theme} />
+                <BarRow
+                  key={c.id}
+                  label={c.label}
+                  count={c.count}
+                  max={maxCategoryCount}
+                  theme={c.theme}
+                />
               ))}
             </div>
           </section>
 
-          <section className="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-5 sm:p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+          <section className="rounded-2xl border border-ink-200 bg-white p-5 sm:p-6">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500">
               {t('admin.analytics.byStatus')}
             </h2>
             <div className="mt-4 space-y-3">
               {byStatus.map((s) => (
-                <BarRow key={s.id} label={s.label} count={s.count} max={maxStatusCount} theme={s.theme} />
+                <BarRow
+                  key={s.id}
+                  label={s.label}
+                  count={s.count}
+                  max={maxStatusCount}
+                  theme={s.theme}
+                />
               ))}
             </div>
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-5 sm:p-6">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+        <section className="mt-6 rounded-2xl border border-ink-200 bg-white p-5 sm:p-6">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500">
             {t('admin.analytics.topLocations')}
           </h2>
           <div className="mt-4 space-y-2">
             {topLocations.length === 0 && (
-              <p className="text-sm text-ink-400 dark:text-ink-500">{t('admin.analytics.noData')}</p>
+              <p className="text-sm text-ink-400">
+                {t('admin.analytics.noData')}
+              </p>
             )}
             {topLocations.map((loc) => (
-              <div key={loc.city} className="flex items-center justify-between gap-3 text-sm">
-                <span className="truncate text-ink-700 dark:text-ink-200">{loc.city}</span>
-                <span className="shrink-0 font-semibold text-ink-900 dark:text-ink-50">{loc.count}</span>
+              <div
+                key={loc.city}
+                className="flex items-center justify-between gap-3 text-sm"
+              >
+                <span className="truncate text-ink-700">{loc.city}</span>
+                <span className="shrink-0 font-semibold text-ink-900">
+                  {loc.count}
+                </span>
               </div>
             ))}
           </div>
@@ -215,9 +246,9 @@ export default function AdminAnalytics() {
 
 function StatTile({ label, value }) {
   return (
-    <div className="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4">
-      <p className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50">{value}</p>
-      <p className="text-xs text-ink-500 dark:text-ink-400">{label}</p>
+    <div className="rounded-2xl border border-ink-200 bg-white p-4">
+      <p className="font-display text-2xl font-bold text-ink-900">{value}</p>
+      <p className="text-xs text-ink-500">{label}</p>
     </div>
   )
 }
@@ -226,10 +257,10 @@ function BarRow({ label, count, max, theme }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
-        <span className="text-ink-600 dark:text-ink-300">{label}</span>
-        <span className="font-semibold text-ink-900 dark:text-ink-50">{count}</span>
+        <span className="text-ink-600">{label}</span>
+        <span className="font-semibold text-ink-900">{count}</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-ink-100">
         <div
           className={`h-full rounded-full ${BAR_THEME[theme] ?? 'bg-brand-600'}`}
           style={{ width: `${(count / max) * 100}%` }}

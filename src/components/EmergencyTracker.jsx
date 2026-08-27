@@ -35,7 +35,10 @@ export default function EmergencyTracker({ createdAt, etaMinutes }) {
     return () => clearInterval(id)
   }, [])
 
-  const { remainingMs, fraction, arrived } = getEtaProgress(createdAt, etaMinutes)
+  const { remainingMs, fraction, arrived } = getEtaProgress(
+    createdAt,
+    etaMinutes
+  )
 
   return (
     <div className="w-full rounded-2xl border border-emergency-100 bg-emergency-50/60 p-6 text-center">
@@ -53,7 +56,9 @@ export default function EmergencyTracker({ createdAt, etaMinutes }) {
       </div>
 
       <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-emergency-600">
-        {arrived ? t('emergency.tracker.arrivedLabel') : t('emergency.tracker.arrivingLabel')}
+        {arrived
+          ? t('emergency.tracker.arrivedLabel')
+          : t('emergency.tracker.arrivingLabel')}
       </p>
 
       <motion.p
@@ -82,7 +87,9 @@ export default function EmergencyTracker({ createdAt, etaMinutes }) {
         />
       </div>
 
-      <p className="mt-4 text-xs text-emergency-600/80">{t('emergency.tracker.disclaimer')}</p>
+      <p className="mt-4 text-xs text-emergency-600/80">
+        {t('emergency.tracker.disclaimer')}
+      </p>
     </div>
   )
 }

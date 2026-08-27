@@ -8,7 +8,13 @@ import { IconChevronDown, IconCheck } from './Icons'
  * instead of falling back to each browser's own select-box chrome, the
  * way a filter bar on a shopping site behaves.
  */
-export default function FilterDropdown({ label, value, options, onChange, disabled = false }) {
+export default function FilterDropdown({
+  label,
+  value,
+  options,
+  onChange,
+  disabled = false,
+}) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -37,7 +43,9 @@ export default function FilterDropdown({ label, value, options, onChange, disabl
         }`}
       >
         {selected?.label ?? label}
-        <IconChevronDown className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <IconChevronDown
+          className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
 
       <AnimatePresence>
@@ -48,9 +56,11 @@ export default function FilterDropdown({ label, value, options, onChange, disabl
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
             role="listbox"
-            className="absolute left-0 z-30 mt-2 max-h-64 w-52 overflow-y-auto rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-1.5 shadow-card-hover"
+            className="absolute left-0 z-30 mt-2 max-h-64 w-52 overflow-y-auto rounded-2xl border border-ink-200 bg-white p-1.5 shadow-card-hover"
           >
-            <p className="px-3 pb-1.5 pt-1 text-xs font-medium text-ink-400 dark:text-ink-500">{label}</p>
+            <p className="px-3 pb-1.5 pt-1 text-xs font-medium text-ink-400">
+              {label}
+            </p>
             {options.map((opt) => (
               <button
                 key={opt.value}
@@ -62,11 +72,15 @@ export default function FilterDropdown({ label, value, options, onChange, disabl
                   setOpen(false)
                 }}
                 className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors ${
-                  opt.value === value ? 'bg-brand-50 text-brand-800' : 'text-ink-700 dark:text-ink-200 hover:bg-ink-50 dark:hover:bg-ink-800'
+                  opt.value === value
+                    ? 'bg-brand-50 text-brand-800'
+                    : 'text-ink-700 hover:bg-ink-50'
                 }`}
               >
                 <span className="truncate">{opt.label}</span>
-                {opt.value === value && <IconCheck className="h-3.5 w-3.5 shrink-0" />}
+                {opt.value === value && (
+                  <IconCheck className="h-3.5 w-3.5 shrink-0" />
+                )}
               </button>
             ))}
           </motion.div>

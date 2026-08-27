@@ -310,30 +310,6 @@ export function IconEdit(props) {
   )
 }
 
-export function IconSun(props) {
-  return (
-    <Svg {...props}>
-      <circle cx="12" cy="12" r="4.5" />
-      <path d="M12 2.5v2.5" />
-      <path d="M12 19v2.5" />
-      <path d="M4.2 4.2l1.8 1.8" />
-      <path d="M18 18l1.8 1.8" />
-      <path d="M2.5 12h2.5" />
-      <path d="M19 12h2.5" />
-      <path d="M4.2 19.8l1.8-1.8" />
-      <path d="M18 6l1.8-1.8" />
-    </Svg>
-  )
-}
-
-export function IconMoon(props) {
-  return (
-    <Svg {...props}>
-      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" />
-    </Svg>
-  )
-}
-
 export function IconSparkle(props) {
   return (
     <Svg {...props}>

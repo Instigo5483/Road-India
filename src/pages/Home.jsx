@@ -12,17 +12,17 @@ export default function Home() {
   const firstName = user?.name?.split(' ')[0] ?? ''
 
   return (
-    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
+    <div className="min-h-screen bg-ink-50">
       <Navbar />
       <PageTransition className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50 sm:text-3xl"
+          className="font-display text-2xl font-bold text-ink-900 sm:text-3xl"
         >
           {t('home.welcome', { name: firstName })}
         </motion.h1>
-        <p className="mt-1.5 text-ink-500 dark:text-ink-400">{t('home.subtitle')}</p>
+        <p className="mt-1.5 text-ink-500">{t('home.subtitle')}</p>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((category, i) => (

@@ -23,12 +23,14 @@ export default function StepProgress({ step }) {
             >
               {step > s.id ? <IconCheck className="h-4 w-4" /> : s.id}
             </motion.div>
-            <span className={`text-sm font-medium ${step >= s.id ? 'text-ink-800 dark:text-ink-100' : 'text-ink-400 dark:text-ink-500'}`}>
+            <span
+              className={`text-sm font-medium ${step >= s.id ? 'text-ink-800' : 'text-ink-400'}`}
+            >
               {t(s.key)}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800">
+            <div className="h-0.5 flex-1 overflow-hidden rounded-full bg-ink-100">
               <motion.div
                 className="h-full bg-brand-800"
                 initial={false}

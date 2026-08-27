@@ -36,7 +36,7 @@ export default function CategoryCard({ category, index = 0 }) {
       transition={{ delay: index * 0.08, duration: 0.4, ease: 'easeOut' }}
       whileHover={{ y: -6 }}
       whileTap={{ scale: 0.98 }}
-      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-8 text-left ring-1 ring-transparent transition-shadow duration-300 hover:shadow-card-hover ${theme.ring}`}
+      className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-ink-200 bg-white p-8 text-left ring-1 ring-transparent transition-shadow duration-300 hover:shadow-card-hover ${theme.ring}`}
     >
       <div
         className={`pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br ${theme.glow} to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
@@ -46,11 +46,17 @@ export default function CategoryCard({ category, index = 0 }) {
         <div className="inline-block overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
           <CategoryIcon category={category.id} className="h-14 w-14" />
         </div>
-        <h3 className="mt-4 text-lg font-bold text-ink-900 dark:text-ink-50">{t(category.labelKey)}</h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-500 dark:text-ink-400">{t(category.taglineKey)}</p>
+        <h3 className="mt-4 text-lg font-bold text-ink-900">
+          {t(category.labelKey)}
+        </h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-500">
+          {t(category.taglineKey)}
+        </p>
       </div>
 
-      <div className={`relative mt-6 flex items-center gap-1.5 text-sm font-semibold ${theme.cta}`}>
+      <div
+        className={`relative mt-6 flex items-center gap-1.5 text-sm font-semibold ${theme.cta}`}
+      >
         <span>Report now</span>
         <IconArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
       </div>
