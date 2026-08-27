@@ -150,7 +150,7 @@ Any language not registered there automatically falls back to English text, so t
 
 ## Hackathon submission
 
-Built for [Build What Moves India](https://buildwhatmovesindia.com/brief). See [SUBMISSION.md](SUBMISSION.md) for the full project summary, what's real vs. mocked, and how this could work at scale.
+Built for [Build What Moves India](https://buildwhatmovesindia.com). See [SUBMISSION.md](SUBMISSION.md) for the full project summary, what's real vs. mocked, and how this could work at scale.
 
 ## License
 
