@@ -1,6 +1,6 @@
 // Seeds a handful of demo response teams into Firestore's `teams`
-// collection so there's something for the dispatch Cloud Function
-// (functions/index.js) to actually match against, and something to sign
+// collection so there's something for the dispatch endpoint
+// (api/_dispatch-core.js) to actually match against, and something to sign
 // into at /team/login. Safe to re-run -- uses fixed doc IDs, so it
 // overwrites rather than duplicates.
 //

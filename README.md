@@ -37,9 +37,9 @@ The app runs immediately with **no Firebase project required** — it falls back
 
 1. Create a project at [console.firebase.google.com](https://console.firebase.google.com).
 2. Enable **Authentication → Sign-in method → Anonymous** (the simulated DigiLocker flow signs the verified user in anonymously and attaches their profile in Firestore — no real phone/OTP provider needed).
-3. Enable **Firestore Database** and **Storage** (Storage holds uploaded report photos).
+3. Enable **Firestore Database**. (Report photos are stored inline as base64 in Firestore, not in Firebase Storage — Storage requires the paid Blaze plan, which this project intentionally stays off of; see `PhotoUpload.jsx`'s client-side compression that keeps this well under Firestore's document size limit.)
 4. Project settings → General → Your apps → add a Web app, copy the config values into a `.env.local` file (see `.env.example`).
-5. Deploy the included security rules: `firebase deploy --only firestore:rules,storage` (requires the [Firebase CLI](https://firebase.google.com/docs/cli), `firebase init` once to link the project — the repo already has `firestore.rules` and `storage.rules`).
+5. Deploy the included security rules: `firebase deploy --only firestore:rules` (requires the [Firebase CLI](https://firebase.google.com/docs/cli), `firebase init` once to link the project — the repo already has `firestore.rules`).
 6. Optional: seed the Firestore `reports` collection with the same demo data the mock backend uses — see `scripts/seed.js`.
 
 Once real Firebase env vars are present, the app automatically switches from the mock backend to Firestore — no code changes needed, see `isFirebaseConfigured` in `src/lib/firebase.js`.
@@ -129,7 +129,7 @@ public/
   logo.svg                    Full Road India logo (mark + wordmark), used in this README
   favicon.svg                 Browser tab icon -- just the logo mark, no wordmark
   firebase-messaging-sw.js    Browser push notification handler for /team
-firebase.json    Firebase CLI config (Firestore rules, Storage rules)
+firebase.json    Firebase CLI config (Firestore rules)
 firestore.rules  Security rules for the reports/users/teams collections
 scripts/seed.js       Optional: seed a real Firestore project with demo reports
 scripts/seedTeams.js  Optional: seed a real Firestore project with demo response teams

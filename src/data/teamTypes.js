@@ -1,9 +1,9 @@
 // Response-team types and which ones get dispatched for each emergency
-// report type. Mirrored in functions/index.js (the Cloud Function that
-// actually does the dispatch) -- Cloud Functions live in a separate
-// deployable package with its own dependencies, so this small, stable
-// mapping is duplicated there rather than pulled in through shared tooling.
-// Keep both in sync if you add a team type or emergency type.
+// report type. Mirrored in api/_dispatch-core.js (a separate Node runtime
+// from this Vite client bundle, not a Firebase Cloud Function -- see that
+// file's header comment for why), so this small, stable mapping is
+// duplicated there rather than pulled in through shared tooling. Keep both
+// in sync if you add a team type or emergency type.
 
 import { reportTypeIds } from './categoryTypes'
 

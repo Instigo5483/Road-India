@@ -76,16 +76,6 @@ export const mockBackend = {
     return user
   },
 
-  async updateUser(uid, patch) {
-    users = users.map((u) => (u.uid === uid ? { ...u, ...patch } : u))
-    writeStore(STORAGE_KEYS.users, users)
-    if (session?.uid === uid) {
-      session = { ...session, ...patch }
-      writeStore(STORAGE_KEYS.session, session)
-    }
-    notify()
-  },
-
   async signOut() {
     session = null
     writeStore(STORAGE_KEYS.session, null)
@@ -94,10 +84,6 @@ export const mockBackend = {
 
   async listReports() {
     return reports
-  },
-
-  async listReportsByUser(uid) {
-    return reports.filter((r) => r.createdBy === uid)
   },
 
   async createReport(report) {

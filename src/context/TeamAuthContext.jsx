@@ -16,8 +16,9 @@ const STORAGE_KEY = 'road_india_team_id'
  * "this is prototype-grade, not real access control" caveat.
  *
  * This entire feature requires a real Firebase project -- there is no
- * mock-backend equivalent for Cloud Functions + Cloud Messaging, so
- * `team` stays null and `unavailable: true` when Firebase isn't configured.
+ * mock-backend equivalent for Firestore-backed team matching or Cloud
+ * Messaging push notifications, so `team` stays null and
+ * `unavailable: true` when Firebase isn't configured.
  */
 const TeamAuthContext = createContext(null)
 

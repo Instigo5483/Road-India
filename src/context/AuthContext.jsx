@@ -13,10 +13,12 @@ const AuthContext = createContext(null)
 /**
  * Wraps either the real Firebase Auth + Firestore user profile, or the
  * in-memory mock backend, behind one identical interface:
- *   { user, loading, completeLogin(profile), updateProfile(patch), logout() }
+ *   { user, loading, completeLogin(profile), logout() }
  *
  * `user` shape: { uid, digilockerId, name, preferredLanguage, createdAt }
- * `user` is null when logged out.
+ * `user` is null when logged out. There's deliberately no profile-update
+ * method: name comes from the simulated Aadhaar/DigiLocker verification
+ * (see Login.jsx) and isn't user-editable (see Settings.jsx).
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => (isFirebaseConfigured ? null : mockBackend.getSession()))
@@ -78,14 +80,6 @@ export function AuthProvider({ children }) {
 
         await setDoc(ref, profile, { merge: true })
         return { uid, ...profile }
-      },
-
-      async updateProfile(patch) {
-        if (!user) return
-        if (!isFirebaseConfigured) {
-          return mockBackend.updateUser(user.uid, patch)
-        }
-        await setDoc(doc(db, 'users', user.uid), patch, { merge: true })
       },
 
       async logout() {
