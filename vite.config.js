@@ -49,5 +49,22 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // Split heavy third-party libraries into their own chunks,
+          // separate from app code and from each other. Firebase/Leaflet/
+          // Framer Motion rarely change between deploys, so browsers cache
+          // these chunks across releases instead of re-downloading them
+          // whenever only app code changes -- and they load in parallel
+          // with the app chunk rather than as one large blocking bundle.
+          manualChunks: {
+            firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/messaging'],
+            leaflet: ['leaflet', 'react-leaflet'],
+            'framer-motion': ['framer-motion'],
+          },
+        },
+      },
+    },
   }
 })

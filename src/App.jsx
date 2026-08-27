@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
@@ -7,20 +8,27 @@ import { TeamAuthProvider } from './context/TeamAuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import TeamProtectedRoute from './components/TeamProtectedRoute'
+import LoadingScreen from './components/LoadingScreen'
 
 import Landing from './pages/Landing'
 import Login from './pages/Login'
-import Home from './pages/Home'
-import ReportFlow from './pages/ReportFlow'
-import Dashboard from './pages/Dashboard'
-import ReportsFeed from './pages/ReportsFeed'
-import Settings from './pages/Settings'
-import AdminLogin from './pages/AdminLogin'
-import Admin from './pages/Admin'
-import AdminTeams from './pages/AdminTeams'
-import AdminAddTeam from './pages/AdminAddTeam'
-import TeamLogin from './pages/TeamLogin'
-import TeamDashboard from './pages/TeamDashboard'
+
+// Route-level code splitting -- a citizen never downloads the admin/team
+// dashboards' JS (and vice versa), and each of these only loads the first
+// time its route is actually visited rather than on initial page load.
+// Landing/Login stay eager above since they're what almost every visit
+// hits first.
+const Home = lazy(() => import('./pages/Home'))
+const ReportFlow = lazy(() => import('./pages/ReportFlow'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ReportsFeed = lazy(() => import('./pages/ReportsFeed'))
+const Settings = lazy(() => import('./pages/Settings'))
+const AdminLogin = lazy(() => import('./pages/AdminLogin'))
+const Admin = lazy(() => import('./pages/Admin'))
+const AdminTeams = lazy(() => import('./pages/AdminTeams'))
+const AdminAddTeam = lazy(() => import('./pages/AdminAddTeam'))
+const TeamLogin = lazy(() => import('./pages/TeamLogin'))
+const TeamDashboard = lazy(() => import('./pages/TeamDashboard'))
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -34,85 +42,87 @@ function AnimatedRoutes() {
     // blank page. Same root cause class as the AnimatePresence fixes in
     // Login.jsx and ReportFlow.jsx. Each page still animates in on its own
     // via PageTransition / per-component motion props.
-    <Routes location={location} key={location.pathname}>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/report/:category"
-        element={
-          <ProtectedRoute>
-            <ReportFlow />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reports"
-        element={
-          <ProtectedRoute>
-            <ReportsFeed />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route
-        path="/admin"
-        element={
-          <AdminProtectedRoute>
-            <Admin />
-          </AdminProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/teams"
-        element={
-          <AdminProtectedRoute>
-            <AdminTeams />
-          </AdminProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/teams/new"
-        element={
-          <AdminProtectedRoute>
-            <AdminAddTeam />
-          </AdminProtectedRoute>
-        }
-      />
-      <Route path="/team/login" element={<TeamLogin />} />
-      <Route
-        path="/team"
-        element={
-          <TeamProtectedRoute>
-            <TeamDashboard />
-          </TeamProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Landing />} />
-    </Routes>
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/report/:category"
+          element={
+            <ProtectedRoute>
+              <ReportFlow />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsFeed />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminProtectedRoute>
+              <Admin />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/teams"
+          element={
+            <AdminProtectedRoute>
+              <AdminTeams />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/teams/new"
+          element={
+            <AdminProtectedRoute>
+              <AdminAddTeam />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route path="/team/login" element={<TeamLogin />} />
+        <Route
+          path="/team"
+          element={
+            <TeamProtectedRoute>
+              <TeamDashboard />
+            </TeamProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Landing />} />
+      </Routes>
+    </Suspense>
   )
 }
 
