@@ -151,6 +151,7 @@ export default function ReportsFeed() {
       const q = search.trim().toLowerCase()
       list = list.filter(
         (r) =>
+          r.id.toLowerCase().includes(q) ||
           r.description?.toLowerCase().includes(q) ||
           r.location?.address?.toLowerCase().includes(q)
       )

@@ -68,6 +68,7 @@ export default function Login() {
   const from = location.state?.from?.pathname ?? '/home'
 
   const [stage, setStage] = useState('role') // 'role' | 'method' | 'id' | 'otp' | 'digilocker' | 'profile'
+  const [method, setMethod] = useState('') // 'aadhaar' | 'digilocker' -- which verification path supplied the name
   const [digilockerId, setDigilockerId] = useState('')
   const [otp, setOtp] = useState('')
   const [name, setName] = useState('')
@@ -137,6 +138,7 @@ export default function Login() {
 
   function selectMethod(methodId) {
     setError('')
+    setMethod(methodId)
     if (methodId === 'aadhaar') {
       setStage('id')
     } else {
@@ -318,7 +320,9 @@ export default function Login() {
                   </p>
                   <div>
                     <span className="mb-1.5 block text-sm font-medium text-ink-700">
-                      {t('auth.profile.name.label')}
+                      {method === 'digilocker'
+                        ? t('auth.profile.name.fromDigilocker')
+                        : t('auth.profile.name.fromAadhaar')}
                     </span>
                     <p className="rounded-xl bg-ink-50 px-3.5 py-2.5 text-sm font-semibold text-ink-900">
                       {name}
