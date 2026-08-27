@@ -83,7 +83,6 @@ export default {
 
   'home.welcome': 'वापसी पर स्वागत है, {name}',
   'home.subtitle': 'आप क्या रिपोर्ट करना चाहेंगे?',
-  'home.emergencyBanner': 'जानलेवा आपातस्थिति में पहले 112 पर कॉल करें, फिर यहां रिपोर्ट करें।',
 
   'category.problem.label': 'सड़क समस्या',
   'category.problem.tagline': 'गड्ढे, जलभराव और अधिक',

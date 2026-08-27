@@ -83,7 +83,6 @@ export default {
 
   'home.welcome': 'Welcome back, {name}',
   'home.subtitle': 'What would you like to report?',
-  'home.emergencyBanner': 'In a life-threatening emergency, call 112 first, then file here.',
 
   'category.problem.label': 'Road Problem',
   'category.problem.tagline': 'Potholes, waterlogging & more',
