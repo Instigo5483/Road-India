@@ -87,7 +87,7 @@ export default function MapPicker({ value, onChange }) {
   const zoom = value?.lat ? PICKER_ZOOM : DEFAULT_ZOOM
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-ink-200 shadow-card">
+    <div className="relative overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 shadow-card">
       <MapContainer
         center={center}
         zoom={zoom}
@@ -120,14 +120,14 @@ export default function MapPicker({ value, onChange }) {
         onClick={handleUseCurrentLocation}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="absolute bottom-3 right-3 z-[400] flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-sm font-semibold text-brand-800 shadow-card-hover"
+        className="absolute bottom-3 right-3 z-[400] flex items-center gap-2 rounded-full bg-white dark:bg-ink-900 px-3.5 py-2 text-sm font-semibold text-brand-800 shadow-card-hover"
       >
         {locating ? <IconLoader className="h-4 w-4" /> : <IconLocate className="h-4 w-4" />}
         {locating ? t('report.step2.locating') : t('report.step2.useCurrentLocation')}
       </motion.button>
 
       {resolvingAddress && (
-        <div className="absolute left-3 top-3 z-[400] rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-ink-500 shadow-card">
+        <div className="absolute left-3 top-3 z-[400] rounded-full bg-white/95 dark:bg-ink-900/95 px-3 py-1.5 text-xs font-medium text-ink-500 dark:text-ink-400 shadow-card">
           {t('common.loading')}
         </div>
       )}

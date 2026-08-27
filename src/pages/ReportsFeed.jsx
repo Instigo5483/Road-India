@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import PageTransition from '../components/PageTransition'
 import ReportCard from '../components/ReportCard'
+import ReportsMapView from '../components/ReportsMapView'
 import EmptyState from '../components/EmptyState'
 import FilterDropdown from '../components/FilterDropdown'
 import { useReports } from '../context/ReportsContext'
@@ -12,7 +13,15 @@ import { CATEGORIES } from '../data/categoryTypes'
 import { distanceKm } from '../lib/geo'
 import { toDate } from '../lib/time'
 import { TIME_RANGES, uniqueValues } from '../lib/reportFilters'
-import { IconSearch, IconFilter, IconSiren, IconChevronDown, IconX } from '../components/Icons'
+import {
+  IconSearch,
+  IconFilter,
+  IconSiren,
+  IconChevronDown,
+  IconX,
+  IconListChecks,
+  IconMapPin,
+} from '../components/Icons'
 
 const SORTS = [
   { id: 'relevance', key: 'reports.sort.relevance' },
@@ -28,6 +37,7 @@ export default function ReportsFeed() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [sort, setSort] = useState('relevance')
+  const [viewMode, setViewMode] = useState('list')
   const [userLocation, setUserLocation] = useState(null)
   const [locating, setLocating] = useState(false)
   const [locationError, setLocationError] = useState(false)
@@ -189,24 +199,24 @@ export default function ReportsFeed() {
   const categoryChips = [{ id: 'all', labelKey: 'reports.filter.all' }, ...CATEGORIES]
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
       <Navbar />
       <PageTransition className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="flex items-center gap-2">
-          <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">{t('reports.title')}</h1>
+          <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50 sm:text-3xl">{t('reports.title')}</h1>
           <span className="hidden rounded-full bg-emergency-50 px-2.5 py-1 text-xs font-semibold text-emergency-600 sm:inline-flex sm:items-center sm:gap-1">
             <IconSiren className="h-3 w-3" /> live
           </span>
         </div>
-        <p className="mt-1.5 text-ink-500">{t('reports.subtitle')}</p>
+        <p className="mt-1.5 text-ink-500 dark:text-ink-400">{t('reports.subtitle')}</p>
 
-        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 bg-white px-4 py-2.5 shadow-card">
-          <IconSearch className="h-4 w-4 shrink-0 text-ink-400" />
+        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-2.5 shadow-card">
+          <IconSearch className="h-4 w-4 shrink-0 text-ink-400 dark:text-ink-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('reports.searchPlaceholder')}
-            className="w-full bg-transparent text-sm outline-none placeholder:text-ink-400"
+            className="w-full bg-transparent text-sm text-ink-800 outline-none placeholder:text-ink-400 dark:text-ink-100"
           />
         </div>
 
@@ -219,7 +229,7 @@ export default function ReportsFeed() {
               className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
                 categoryFilter === chip.id
                   ? 'border-brand-800 bg-brand-800 text-white'
-                  : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
+                  : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800'
               }`}
             >
               {t(chip.labelKey)}
@@ -232,7 +242,7 @@ export default function ReportsFeed() {
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
-            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
+            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 dark:text-ink-500 transition-colors hover:text-brand-700"
           >
             <IconFilter className="h-3.5 w-3.5" />
             {t('reports.filter.heading')}
@@ -300,50 +310,82 @@ export default function ReportsFeed() {
         </AnimatePresence>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400">
+          <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 dark:text-ink-500">
             {t('reports.filter.sortBy')}
           </div>
-          <div className="flex gap-1.5 rounded-full bg-ink-100 p-1">
-            {SORTS.map((s) => (
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5 rounded-full bg-ink-100 dark:bg-ink-800 p-1">
+              {SORTS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSort(s.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    sort === s.id ? 'bg-white dark:bg-ink-900 text-brand-800 shadow-card' : 'text-ink-500 dark:text-ink-400'
+                  }`}
+                >
+                  {t(s.key)}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1 rounded-full bg-ink-100 dark:bg-ink-800 p-1">
               <button
-                key={s.id}
                 type="button"
-                onClick={() => setSort(s.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  sort === s.id ? 'bg-white text-brand-800 shadow-card' : 'text-ink-500'
+                onClick={() => setViewMode('list')}
+                aria-pressed={viewMode === 'list'}
+                aria-label={t('reports.view.list')}
+                className={`grid h-7 w-7 place-items-center rounded-full transition-colors ${
+                  viewMode === 'list' ? 'bg-white dark:bg-ink-900 text-brand-800 shadow-card' : 'text-ink-500 dark:text-ink-400'
                 }`}
               >
-                {t(s.key)}
+                <IconListChecks className="h-3.5 w-3.5" />
               </button>
-            ))}
+              <button
+                type="button"
+                onClick={() => setViewMode('map')}
+                aria-pressed={viewMode === 'map'}
+                aria-label={t('reports.view.map')}
+                className={`grid h-7 w-7 place-items-center rounded-full transition-colors ${
+                  viewMode === 'map' ? 'bg-white dark:bg-ink-900 text-brand-800 shadow-card' : 'text-ink-500 dark:text-ink-400'
+                }`}
+              >
+                <IconMapPin className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
         {sort === 'nearest' && locating && (
-          <p className="mt-3 text-xs text-ink-400">{t('reports.locating')}</p>
+          <p className="mt-3 text-xs text-ink-400 dark:text-ink-500">{t('reports.locating')}</p>
         )}
         {sort === 'nearest' && locationError && (
           <p className="mt-3 text-xs text-warning-600">{t('reports.locationDenied')}</p>
         )}
 
-        <div className="mt-5 space-y-3">
-          {sorted.map((report, i) => (
-            <ReportCard
-              key={report.id}
-              report={report}
-              index={i}
-              distanceKm={report._distance}
-              upvoted={user ? (report.upvotedBy ?? []).includes(user.uid) : false}
-              onUpvote={() => toggleUpvote(report.id)}
-            />
-          ))}
+        {viewMode === 'map' ? (
+          <div className="mt-5">
+            <ReportsMapView reports={sorted} user={user} onUpvote={(id) => toggleUpvote(id)} />
+          </div>
+        ) : (
+          <div className="mt-5 space-y-3">
+            {sorted.map((report, i) => (
+              <ReportCard
+                key={report.id}
+                report={report}
+                index={i}
+                distanceKm={report._distance}
+                upvoted={user ? (report.upvotedBy ?? []).includes(user.uid) : false}
+                onUpvote={() => toggleUpvote(report.id)}
+              />
+            ))}
 
-          {sorted.length === 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <EmptyState title={t('reports.empty')} />
-            </motion.div>
-          )}
-        </div>
+            {sorted.length === 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <EmptyState title={t('reports.empty')} />
+              </motion.div>
+            )}
+          </div>
+        )}
       </PageTransition>
     </div>
   )

@@ -5,12 +5,12 @@ const variants = {
   // High-emphasis call-to-action -- orange, matching the reference
   // design system's primary "Start Free Trial"-style button treatment.
   primary:
-    'bg-accent-500 text-white shadow-card hover:bg-accent-600 disabled:bg-ink-200 disabled:text-ink-400',
+    'bg-accent-500 text-white shadow-card hover:bg-accent-600 disabled:bg-ink-200 disabled:text-ink-400 dark:disabled:text-ink-500',
   secondary:
-    'bg-white text-brand-600 border border-ink-200 hover:border-brand-300 hover:bg-brand-50 disabled:text-ink-300',
-  ghost: 'bg-transparent text-ink-600 hover:bg-ink-100 disabled:text-ink-300',
+    'bg-white dark:bg-ink-900 text-brand-600 border border-ink-200 dark:border-ink-700 hover:border-brand-300 hover:bg-brand-50 disabled:text-ink-300',
+  ghost: 'bg-transparent text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 disabled:text-ink-300',
   danger:
-    'bg-emergency-600 text-white shadow-card hover:bg-emergency-700 disabled:bg-ink-200 disabled:text-ink-400',
+    'bg-emergency-600 text-white shadow-card hover:bg-emergency-700 disabled:bg-ink-200 disabled:text-ink-400 dark:disabled:text-ink-500',
 }
 
 const sizes = {

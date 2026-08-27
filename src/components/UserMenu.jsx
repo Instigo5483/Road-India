@@ -47,16 +47,16 @@ export default function UserMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-full border border-ink-200 py-1 pl-1 pr-2.5 transition-colors hover:border-brand-200 hover:bg-brand-50 sm:pr-3"
+        className="flex items-center gap-2 rounded-full border border-ink-200 dark:border-ink-700 py-1 pl-1 pr-2.5 transition-colors hover:border-brand-200 hover:bg-brand-50 sm:pr-3"
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink-100 text-ink-500">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink-100 dark:bg-ink-800 text-ink-500 dark:text-ink-400">
           <IconUser className="h-4 w-4" />
         </span>
-        <span className="hidden max-w-[8rem] truncate text-sm font-medium text-ink-700 sm:inline">
+        <span className="hidden max-w-[8rem] truncate text-sm font-medium text-ink-700 dark:text-ink-200 sm:inline">
           {user?.name}
         </span>
         <IconChevronDown
-          className={`h-3.5 w-3.5 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 text-ink-400 dark:text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -68,11 +68,11 @@ export default function UserMenu() {
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
             role="menu"
-            className="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card-hover"
+            className="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 shadow-card-hover"
           >
-            <div className="border-b border-ink-100 px-4 py-3">
-              <p className="truncate text-sm font-semibold text-ink-900">{user?.name}</p>
-              <p className="truncate text-xs text-ink-400">{maskAadhaarId(user?.digilockerId)}</p>
+            <div className="border-b border-ink-100 dark:border-ink-800 px-4 py-3">
+              <p className="truncate text-sm font-semibold text-ink-900 dark:text-ink-50">{user?.name}</p>
+              <p className="truncate text-xs text-ink-400 dark:text-ink-500">{maskAadhaarId(user?.digilockerId)}</p>
             </div>
 
             <div className="p-1.5">
@@ -83,9 +83,9 @@ export default function UserMenu() {
                   closeMenu()
                   navigate('/settings')
                 }}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink-700 transition-colors hover:bg-ink-50"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink-700 dark:text-ink-200 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800"
               >
-                <IconSettings className="h-4 w-4 text-ink-400" />
+                <IconSettings className="h-4 w-4 text-ink-400 dark:text-ink-500" />
                 {t('nav.settings')}
               </button>
 
@@ -94,13 +94,13 @@ export default function UserMenu() {
                 role="menuitem"
                 aria-expanded={languageOpen}
                 onClick={() => setLanguageOpen((o) => !o)}
-                className="flex w-full items-center justify-between gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink-700 transition-colors hover:bg-ink-50"
+                className="flex w-full items-center justify-between gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink-700 dark:text-ink-200 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800"
               >
                 <span className="flex items-center gap-2.5">
-                  <IconGlobe className="h-4 w-4 text-ink-400" />
+                  <IconGlobe className="h-4 w-4 text-ink-400 dark:text-ink-500" />
                   {t('nav.language')}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-ink-400">
+                <span className="flex items-center gap-1 text-xs text-ink-400 dark:text-ink-500">
                   {currentLanguage?.nativeLabel}
                   <IconChevronDown
                     className={`h-3 w-3 transition-transform ${languageOpen ? 'rotate-180' : ''}`}
@@ -129,7 +129,7 @@ export default function UserMenu() {
                             closeMenu()
                           }}
                           className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
-                            l.code === lang ? 'text-brand-800' : 'text-ink-600 hover:bg-ink-50'
+                            l.code === lang ? 'text-brand-800' : 'text-ink-600 dark:text-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800'
                           }`}
                         >
                           {l.nativeLabel}
@@ -141,7 +141,7 @@ export default function UserMenu() {
                 )}
               </AnimatePresence>
 
-              <div className="my-1.5 border-t border-ink-100" />
+              <div className="my-1.5 border-t border-ink-100 dark:border-ink-800" />
 
               <button
                 type="button"

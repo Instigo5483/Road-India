@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
@@ -11,23 +11,40 @@ import EmergencyTracker from '../components/EmergencyTracker'
 import AiTriageCard from '../components/AiTriageCard'
 import { useLanguage } from '../context/LanguageContext'
 import { useReports } from '../context/ReportsContext'
+import { useToast } from '../context/ToastContext'
 import { getCategory } from '../data/categoryTypes'
 import { formatTimestamp } from '../lib/time'
+import { distanceKm } from '../lib/geo'
 import {
   IconChevronLeft,
   IconAlertCircle,
   IconClock,
   IconMapPin,
   IconCheckCircle,
+  IconThumbsUp,
 } from '../components/Icons'
 
 const STEP = { DETAILS: 1, LOCATION: 2, SUCCESS: 3 }
+
+// "Similar reports nearby" nudge -- anything of the same category within
+// this radius, not already resolved, is worth surfacing so a citizen can
+// upvote an existing report instead of filing a duplicate.
+const NEARBY_RADIUS_KM = 0.3
+
+// Client-side spam/duplicate guard -- there's no server-side rate limiting
+// (no Cloud Functions in this project, see api/_dispatch-core.js's header
+// comment for why), so this is a best-effort deterrent against accidental
+// double-submits and rapid-fire filing, not real abuse prevention.
+const MIN_SECONDS_BETWEEN_REPORTS = 10
+const DUPLICATE_WINDOW_SECONDS = 60
+const LAST_REPORT_KEY = 'road_india_last_report'
 
 export default function ReportFlow() {
   const { category: categoryId } = useParams()
   const navigate = useNavigate()
   const { t } = useLanguage()
-  const { createReport } = useReports()
+  const { reports, createReport, toggleUpvote } = useReports()
+  const { showToast } = useToast()
 
   const category = getCategory(categoryId)
 
@@ -40,6 +57,21 @@ export default function ReportFlow() {
   const [submitting, setSubmitting] = useState(false)
   const [now, setNow] = useState(() => new Date())
   const [submittedReport, setSubmittedReport] = useState(null)
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
+  const [upvotedIds, setUpvotedIds] = useState([])
+
+  // Anything of the same category within NEARBY_RADIUS_KM that isn't
+  // already resolved -- surfaced so the citizen can support an existing
+  // report instead of filing a near-duplicate.
+  const nearbyReports = useMemo(() => {
+    if (!location?.lat || !category) return []
+    return reports
+      .filter((r) => r.category === category.id && r.status !== 'resolved')
+      .map((r) => ({ ...r, _distance: distanceKm(location, r.location) }))
+      .filter((r) => r._distance <= NEARBY_RADIUS_KM)
+      .sort((a, b) => a._distance - b._distance)
+      .slice(0, 3)
+  }, [reports, location, category])
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000 * 30)
@@ -60,11 +92,49 @@ export default function ReportFlow() {
     if (Object.keys(nextErrors).length === 0) setStep(STEP.LOCATION)
   }
 
+  // Best-effort client-side spam/duplicate guard -- see the constants'
+  // comment above for why this isn't real server-side rate limiting.
+  // Emergencies are never blocked by it: a genuine second emergency should
+  // never be delayed by a heuristic meant for accidental double-submits.
+  function checkSpamGuard() {
+    if (category.id === 'emergency') return null
+    try {
+      const raw = localStorage.getItem(LAST_REPORT_KEY)
+      if (!raw) return null
+      const last = JSON.parse(raw)
+      const secondsSince = (Date.now() - last.at) / 1000
+      if (secondsSince < MIN_SECONDS_BETWEEN_REPORTS) return t('toast.tooFast')
+      if (
+        secondsSince < DUPLICATE_WINDOW_SECONDS &&
+        last.category === category.id &&
+        last.description === description.trim()
+      ) {
+        return t('toast.duplicateBlocked')
+      }
+    } catch {
+      // localStorage unavailable (private mode, quota) -- don't block filing.
+    }
+    return null
+  }
+
+  async function handleNearbyUpvote(reportId) {
+    await toggleUpvote(reportId)
+    setUpvotedIds((prev) => [...prev, reportId])
+    showToast(t('toast.upvoted'))
+  }
+
   async function handleSubmit() {
     if (!location?.lat) {
       setErrors({ location: t('report.step2.error.location') })
       return
     }
+
+    const guardMessage = checkSpamGuard()
+    if (guardMessage) {
+      showToast(guardMessage, 'error')
+      return
+    }
+
     setSubmitting(true)
     try {
       const report = await createReport({
@@ -74,6 +144,14 @@ export default function ReportFlow() {
         photoUrls: photos.map((p) => p.src),
         location,
       })
+      try {
+        localStorage.setItem(
+          LAST_REPORT_KEY,
+          JSON.stringify({ at: Date.now(), category: category.id, description: description.trim() })
+        )
+      } catch {
+        // Non-fatal -- just means the guard won't catch the next submit.
+      }
       setSubmittedReport(report)
       setStep(STEP.SUCCESS)
     } finally {
@@ -82,7 +160,7 @@ export default function ReportFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
       <Navbar />
       <PageTransition className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
         {step !== STEP.SUCCESS && (
@@ -90,14 +168,14 @@ export default function ReportFlow() {
             <button
               type="button"
               onClick={() => (step === STEP.DETAILS ? navigate('/home') : setStep(STEP.DETAILS))}
-              className="mb-5 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
+              className="mb-5 inline-flex items-center gap-1 text-sm font-medium text-ink-500 dark:text-ink-400 hover:text-brand-700"
             >
               <IconChevronLeft className="h-4 w-4" />
               {t('common.back')}
             </button>
 
             <div className="mb-6 flex items-center gap-2">
-              <h1 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
+              <h1 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50 sm:text-2xl">
                 {t(category.labelKey)}
               </h1>
             </div>
@@ -115,15 +193,15 @@ export default function ReportFlow() {
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25 }}
-              className="space-y-6 rounded-2xl border border-ink-200 bg-white p-6 shadow-card sm:p-8"
+              className="space-y-6 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-6 shadow-card sm:p-8"
             >
-              <h2 className="text-base font-bold text-ink-900">{t('report.step1.title')}</h2>
+              <h2 className="text-base font-bold text-ink-900 dark:text-ink-50">{t('report.step1.title')}</h2>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink-700">
+                <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
                   {t('report.step1.typeLabel')}
                 </label>
-                <p className="mb-2.5 text-xs text-ink-400">{t('report.step1.typeHint')}</p>
+                <p className="mb-2.5 text-xs text-ink-400 dark:text-ink-500">{t('report.step1.typeHint')}</p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {category.types.map((opt) => {
                     const selected = types.includes(opt.id)
@@ -136,7 +214,7 @@ export default function ReportFlow() {
                         className={`rounded-xl border px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                           selected
                             ? 'border-brand-600 bg-brand-50 text-brand-800'
-                            : 'border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:bg-brand-50/40'
+                            : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:border-brand-300 hover:bg-brand-50/40'
                         }`}
                       >
                         {t(opt.labelKey)}
@@ -148,16 +226,16 @@ export default function ReportFlow() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink-700">
+                <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
                   {t('report.step1.photos.label')}{' '}
-                  <span className="font-normal text-ink-400">({t('common.optional')})</span>
+                  <span className="font-normal text-ink-400 dark:text-ink-500">({t('common.optional')})</span>
                 </label>
-                <p className="mb-2.5 text-xs text-ink-400">{t('report.step1.photos.hint')}</p>
+                <p className="mb-2.5 text-xs text-ink-400 dark:text-ink-500">{t('report.step1.photos.hint')}</p>
                 <PhotoUpload photos={photos} onChange={setPhotos} />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-ink-700">
+                <label className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
                   {t('report.step1.details.label')}
                 </label>
                 <textarea
@@ -182,32 +260,76 @@ export default function ReportFlow() {
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25 }}
-              className="space-y-5 rounded-2xl border border-ink-200 bg-white p-6 shadow-card sm:p-8"
+              className="space-y-5 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-6 shadow-card sm:p-8"
             >
               <div>
-                <h2 className="text-base font-bold text-ink-900">{t('report.step2.title')}</h2>
-                <p className="mt-1 text-sm text-ink-500">{t('report.step2.subtitle')}</p>
+                <h2 className="text-base font-bold text-ink-900 dark:text-ink-50">{t('report.step2.title')}</h2>
+                <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">{t('report.step2.subtitle')}</p>
               </div>
 
               <MapPicker value={location} onChange={setLocation} />
               <FieldError message={errors.location} />
 
-              <div className="grid gap-3 rounded-xl bg-ink-50 p-4 text-sm sm:grid-cols-2">
+              <div className="grid gap-3 rounded-xl bg-ink-50 dark:bg-ink-950 p-4 text-sm sm:grid-cols-2">
                 <div className="flex items-start gap-2">
                   <IconMapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
                   <div>
-                    <p className="font-medium text-ink-700">{t('report.step2.address')}</p>
-                    <p className="text-ink-500">{location?.address ?? '—'}</p>
+                    <p className="font-medium text-ink-700 dark:text-ink-200">{t('report.step2.address')}</p>
+                    <p className="text-ink-500 dark:text-ink-400">{location?.address ?? '—'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <IconClock className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
                   <div>
-                    <p className="font-medium text-ink-700">{t('report.step2.timestamp')}</p>
-                    <p className="text-ink-500">{formatTimestamp(now.toISOString())}</p>
+                    <p className="font-medium text-ink-700 dark:text-ink-200">{t('report.step2.timestamp')}</p>
+                    <p className="text-ink-500 dark:text-ink-400">{formatTimestamp(now.toISOString())}</p>
                   </div>
                 </div>
               </div>
+
+              {!nudgeDismissed && nearbyReports.length > 0 && (
+                <div className="space-y-3 rounded-xl border border-warning-200 bg-warning-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-warning-700">
+                      {t('report.nearby.heading')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setNudgeDismissed(true)}
+                      className="shrink-0 text-xs font-medium text-ink-400 dark:text-ink-500 hover:text-ink-600 dark:hover:text-ink-300"
+                    >
+                      {t('report.nearby.dismiss')}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {nearbyReports.map((nearby) => (
+                      <div
+                        key={nearby.id}
+                        className="flex items-center justify-between gap-3 rounded-lg bg-white dark:bg-ink-900 px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-ink-900 dark:text-ink-50">
+                            {nearby.description}
+                          </p>
+                          <p className="text-xs text-ink-400 dark:text-ink-500">
+                            {t('reports.distanceAway', { distance: nearby._distance.toFixed(2) })}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={upvotedIds.includes(nearby.id)}
+                          onClick={() => handleNearbyUpvote(nearby.id)}
+                          icon={<IconThumbsUp className="h-3.5 w-3.5" />}
+                        >
+                          {upvotedIds.includes(nearby.id) ? t('reports.upvoted') : t('report.nearby.support')}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Button
                 className="w-full"
@@ -229,10 +351,10 @@ export default function ReportFlow() {
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
               className="flex flex-col items-center"
             >
-              <h2 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
+              <h2 className="font-display text-xl font-bold text-ink-900 dark:text-ink-50 sm:text-2xl">
                 {t('emergency.tracker.title')}
               </h2>
-              <p className="mt-1.5 max-w-sm text-center text-sm text-ink-500">
+              <p className="mt-1.5 max-w-sm text-center text-sm text-ink-500 dark:text-ink-400">
                 {t('emergency.tracker.subtitle')}
               </p>
 
@@ -264,7 +386,7 @@ export default function ReportFlow() {
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="flex flex-col items-center rounded-2xl border border-ink-200 bg-white p-10 text-center shadow-card"
+              className="flex flex-col items-center rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-10 text-center shadow-card"
             >
               <motion.span
                 initial={{ scale: 0 }}
@@ -274,8 +396,8 @@ export default function ReportFlow() {
               >
                 <IconCheckCircle className="h-8 w-8" />
               </motion.span>
-              <h2 className="mt-5 font-display text-xl font-bold text-ink-900">{t('report.success.title')}</h2>
-              <p className="mt-1.5 max-w-sm text-sm text-ink-500">{t('report.success.subtitle')}</p>
+              <h2 className="mt-5 font-display text-xl font-bold text-ink-900 dark:text-ink-50">{t('report.success.title')}</h2>
+              <p className="mt-1.5 max-w-sm text-sm text-ink-500 dark:text-ink-400">{t('report.success.subtitle')}</p>
 
               <div className="mt-5 w-full">
                 <AiTriageCard triage={submittedReport?.aiTriage} />

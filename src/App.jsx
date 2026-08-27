@@ -1,14 +1,17 @@
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { ReportsProvider } from './context/ReportsContext'
 import { AdminAuthProvider } from './context/AdminAuthContext'
 import { TeamAuthProvider } from './context/TeamAuthContext'
+import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import TeamProtectedRoute from './components/TeamProtectedRoute'
 import LoadingScreen from './components/LoadingScreen'
+import ThemeToggle from './components/ThemeToggle'
 
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -27,6 +30,7 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const Admin = lazy(() => import('./pages/Admin'))
 const AdminTeams = lazy(() => import('./pages/AdminTeams'))
 const AdminAddTeam = lazy(() => import('./pages/AdminAddTeam'))
+const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'))
 const TeamLogin = lazy(() => import('./pages/TeamLogin'))
 const TeamDashboard = lazy(() => import('./pages/TeamDashboard'))
 
@@ -111,6 +115,14 @@ function AnimatedRoutes() {
             </AdminProtectedRoute>
           }
         />
+        <Route
+          path="/admin/analytics"
+          element={
+            <AdminProtectedRoute>
+              <AdminAnalytics />
+            </AdminProtectedRoute>
+          }
+        />
         <Route path="/team/login" element={<TeamLogin />} />
         <Route
           path="/team"
@@ -129,17 +141,22 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AuthProvider>
-        <AdminAuthProvider>
-          <TeamAuthProvider>
-            <ReportsProvider>
-              <BrowserRouter>
-                <AnimatedRoutes />
-              </BrowserRouter>
-            </ReportsProvider>
-          </TeamAuthProvider>
-        </AdminAuthProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AdminAuthProvider>
+              <TeamAuthProvider>
+                <ReportsProvider>
+                  <BrowserRouter>
+                    <AnimatedRoutes />
+                    <ThemeToggle />
+                  </BrowserRouter>
+                </ReportsProvider>
+              </TeamAuthProvider>
+            </AdminAuthProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </LanguageProvider>
   )
 }

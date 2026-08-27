@@ -51,12 +51,12 @@ export default function TeamLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-ink-50 dark:bg-ink-950 px-4 py-10">
       <div className="w-full max-w-3xl">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 dark:text-ink-400 hover:text-brand-700"
         >
           <IconChevronLeft className="h-4 w-4" />
           {t('team.back')}
@@ -66,13 +66,13 @@ export default function TeamLogin() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-card-hover sm:p-8"
+            className="w-full max-w-sm overflow-hidden rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-6 shadow-card-hover sm:p-8"
           >
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-emergency-500/10 text-emergency-600">
               <IconSiren className="h-5.5 w-5.5" />
             </span>
-            <h1 className="mt-4 text-lg font-bold text-ink-900">{t('team.login.title')}</h1>
-            <p className="mt-1 text-sm text-ink-500">{t('team.login.subtitle')}</p>
+            <h1 className="mt-4 text-lg font-bold text-ink-900 dark:text-ink-50">{t('team.login.title')}</h1>
+            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">{t('team.login.subtitle')}</p>
 
             {unavailable ? (
               <p className="mt-5 flex items-start gap-2 rounded-xl bg-warning-50 px-3.5 py-3 text-sm text-warning-600">
@@ -82,7 +82,7 @@ export default function TeamLogin() {
             ) : (
               <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-ink-700">
+                  <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
                     {t('team.login.idLabel')}
                   </span>
                   <input
@@ -95,7 +95,7 @@ export default function TeamLogin() {
                 </label>
 
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-ink-700">
+                  <span className="mb-1.5 block text-sm font-medium text-ink-700 dark:text-ink-200">
                     {t('team.login.passcodeLabel')}
                   </span>
                   <input
@@ -139,12 +139,12 @@ export default function TeamLogin() {
                   return (
                     <div
                       key={team.id}
-                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-white px-3 py-2 text-xs"
+                      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-white dark:bg-ink-900 px-3 py-2 text-xs"
                     >
-                      <span className="font-medium text-ink-500">
+                      <span className="font-medium text-ink-500 dark:text-ink-400">
                         {type ? t(type.labelKey) : team.type}
                       </span>
-                      <span className="font-mono text-ink-900">
+                      <span className="font-mono text-ink-900 dark:text-ink-50">
                         {team.id} / {team.passcode}
                       </span>
                     </div>

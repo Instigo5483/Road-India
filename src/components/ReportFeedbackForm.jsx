@@ -35,12 +35,12 @@ export default function ReportFeedbackForm({ onSubmit }) {
       className="space-y-4 rounded-2xl border border-brand-200 bg-brand-50/50 p-4"
     >
       <div>
-        <p className="text-sm font-semibold text-ink-900">{t('feedback.title')}</p>
-        <p className="mt-0.5 text-xs text-ink-500">{t('feedback.subtitle')}</p>
+        <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">{t('feedback.title')}</p>
+        <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">{t('feedback.subtitle')}</p>
       </div>
 
       <div>
-        <p className="mb-1.5 text-xs font-medium text-ink-700">{t('feedback.confirmLabel')}</p>
+        <p className="mb-1.5 text-xs font-medium text-ink-700 dark:text-ink-200">{t('feedback.confirmLabel')}</p>
         <div className="flex gap-2">
           <button
             type="button"
@@ -49,7 +49,7 @@ export default function ReportFeedbackForm({ onSubmit }) {
             className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               confirmedResolved === true
                 ? 'border-success-600 bg-success-600 text-white'
-                : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-50'
+                : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800'
             }`}
           >
             {t('feedback.confirmYes')}
@@ -61,7 +61,7 @@ export default function ReportFeedbackForm({ onSubmit }) {
             className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               confirmedResolved === false
                 ? 'border-emergency-600 bg-emergency-600 text-white'
-                : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-50'
+                : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:bg-ink-50 dark:hover:bg-ink-800'
             }`}
           >
             {t('feedback.confirmNo')}
@@ -70,13 +70,13 @@ export default function ReportFeedbackForm({ onSubmit }) {
       </div>
 
       <div>
-        <p className="mb-1.5 text-xs font-medium text-ink-700">{t('feedback.ratingLabel')}</p>
+        <p className="mb-1.5 text-xs font-medium text-ink-700 dark:text-ink-200">{t('feedback.ratingLabel')}</p>
         <StarRatingInput value={rating} onChange={setRating} />
       </div>
 
       <label className="block">
-        <span className="mb-1.5 block text-xs font-medium text-ink-700">
-          {t('feedback.reviewLabel')} <span className="font-normal text-ink-400">({t('common.optional')})</span>
+        <span className="mb-1.5 block text-xs font-medium text-ink-700 dark:text-ink-200">
+          {t('feedback.reviewLabel')} <span className="font-normal text-ink-400 dark:text-ink-500">({t('common.optional')})</span>
         </span>
         <textarea
           value={review}

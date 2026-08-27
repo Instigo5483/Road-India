@@ -25,11 +25,11 @@ export default function Dashboard() {
   const chips = [{ id: 'all', labelKey: 'dashboard.filter.all' }, ...STATUSES]
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
       <Navbar />
       <PageTransition className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-        <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">{t('dashboard.title')}</h1>
-        <p className="mt-1.5 text-ink-500">{t('dashboard.subtitle')}</p>
+        <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50 sm:text-3xl">{t('dashboard.title')}</h1>
+        <p className="mt-1.5 text-ink-500 dark:text-ink-400">{t('dashboard.subtitle')}</p>
 
         {myReports.length > 0 && (
           <div className="mt-6 flex flex-wrap gap-2">
@@ -41,8 +41,8 @@ export default function Dashboard() {
                 className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                   statusFilter === chip.id
                     ? 'bg-brand-800 text-white'
-                    : 'bg-white text-ink-600 hover:bg-ink-100'
-                } border border-ink-200`}
+                    : 'bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800'
+                } border border-ink-200 dark:border-ink-700`}
               >
                 {t(chip.labelKey)}
               </button>
@@ -65,7 +65,7 @@ export default function Dashboard() {
           ))}
 
           {!loading && myReports.length > 0 && filtered.length === 0 && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-10 text-center text-sm text-ink-400">
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-10 text-center text-sm text-ink-400 dark:text-ink-500">
               {t('reports.empty')}
             </motion.p>
           )}

@@ -3,6 +3,7 @@ export default {
   'common.back': 'Back',
   'common.loading': 'Loading…',
   'common.close': 'Close',
+  'common.cancel': 'Cancel',
   'common.optional': 'optional',
 
   'nav.home': 'Home',
@@ -135,6 +136,15 @@ export default {
   'report.step2.submitting': 'Submitting…',
   'report.step2.error.location': 'Place a pin on the map to continue.',
 
+  'reportEdit.button': 'Edit report',
+  'reportEdit.title': 'Edit your report',
+  'reportEdit.save': 'Save changes',
+  'reportEdit.unavailable': 'This report can no longer be edited once work has started on it.',
+
+  'report.nearby.heading': 'Similar reports already nearby',
+  'report.nearby.dismiss': 'Dismiss',
+  'report.nearby.support': 'Support instead',
+
   'report.success.title': 'Report submitted',
   'report.success.subtitle': 'Thanks — you can track its status anytime from My Reports.',
   'report.success.viewDashboard': 'View my reports',
@@ -159,6 +169,7 @@ export default {
 
   'report.aiTriage.heading': 'AI-assisted triage',
   'report.aiTriage.routedTo': 'Routed to {department}',
+  'report.aiTriage.photoAnalyzed': 'Photo analyzed',
 
   'feedback.title': 'How did this go?',
   'feedback.subtitle': 'Your report was marked resolved — let us know if it actually is.',
@@ -172,6 +183,18 @@ export default {
   'feedback.badge.confirmed': 'Reporter confirmed resolved',
   'feedback.badge.disputed': 'Reporter disputes resolution',
   'feedback.summary.heading': 'Reporter feedback',
+  'feedback.toast.submitted': 'Thanks for your feedback!',
+
+  'toast.upvoted': 'Supported this report',
+  'toast.unupvoted': 'Support removed',
+  'toast.statusUpdated': 'Status updated to {status}',
+  'toast.teamAssigned': '{team} assigned',
+  'toast.teamUnassigned': 'Team unassigned',
+  'toast.reportUpdated': 'Report updated',
+  'toast.reportUpdateFailed': 'Couldn’t save your changes — try again.',
+  'toast.duplicateBlocked': 'You already filed a very similar report moments ago.',
+  'toast.tooFast': 'Please wait a few seconds before filing another report.',
+  'toast.statusChanged': '{type} is now {status}',
 
   'reports.title': 'Ongoing Reports',
   'reports.subtitle': 'See what’s already been reported nearby — support it instead of filing a duplicate.',
@@ -202,6 +225,8 @@ export default {
   'reports.empty': 'No reports match your filters yet.',
   'reports.locating': 'Getting your location to sort by distance…',
   'reports.locationDenied': 'Location access denied — showing all reports instead.',
+  'reports.view.list': 'List view',
+  'reports.view.map': 'Map view',
 
   'emergency.tracker.title': 'Help is on the way',
   'emergency.tracker.subtitle': 'A response team has been notified and dispatched to your location.',
@@ -223,6 +248,9 @@ export default {
   'settings.account.id': 'Aadhaar-linked ID',
   'settings.account.memberSince': 'Member since',
   'settings.account.privacyNote': 'Your ID is used only to verify you and is never shared with third parties.',
+
+  'theme.switchToDark': 'Switch to dark mode',
+  'theme.switchToLight': 'Switch to light mode',
 
   'admin.login.title': 'Admin sign-in',
   'admin.login.subtitle': 'Staff access for managing filed reports and their status.',
@@ -248,6 +276,17 @@ export default {
   'admin.empty.title': 'No reports match these filters',
   'admin.assignedTeams.heading': 'Assigned response teams',
   'admin.assignedTeams.unassigned': 'Unassigned',
+
+  'admin.analytics.link': 'Analytics',
+  'admin.analytics.title': 'Analytics',
+  'admin.analytics.subtitle': 'How reports are trending across Road India.',
+  'admin.analytics.avgResolution': 'Avg. resolution time',
+  'admin.analytics.resolvedCount': 'Resolved',
+  'admin.analytics.byDay': 'Reports filed, last 14 days',
+  'admin.analytics.byCategory': 'By category',
+  'admin.analytics.byStatus': 'By status',
+  'admin.analytics.topLocations': 'Busiest locations',
+  'admin.analytics.noData': 'Not enough data yet.',
 
   'team.type.ambulance': 'Ambulance',
   'team.type.doctor': 'Doctor',

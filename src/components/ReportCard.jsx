@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
+import { useToast } from '../context/ToastContext'
 import { getCategory, reportTypeIds, getTypesLabel } from '../data/categoryTypes'
 import { timeAgo } from '../lib/time'
 import StatusBadge from './StatusBadge'
@@ -20,9 +21,16 @@ export default function ReportCard({
   index = 0,
 }) {
   const { t, lang } = useLanguage()
+  const { showToast } = useToast()
   const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const [detailOpen, setDetailOpen] = useState(false)
+
+  function handleUpvoteClick(e) {
+    e.stopPropagation()
+    onUpvote()
+    showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+  }
 
   return (
     <motion.div
@@ -39,7 +47,7 @@ export default function ReportCard({
           setDetailOpen(true)
         }
       }}
-      className="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-start sm:gap-4 sm:p-5"
+      className="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-start sm:gap-4 sm:p-5"
     >
       <div className="shrink-0 overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-105">
         <CategoryIcon category={report.category} className="h-11 w-11" />
@@ -47,7 +55,7 @@ export default function ReportCard({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold text-ink-900">{typeLabel || report.type}</h3>
+          <h3 className="font-semibold text-ink-900 dark:text-ink-50">{typeLabel || report.type}</h3>
           <StatusBadge status={report.status} />
           {report.aiTriage?.severity && (
             <span
@@ -69,12 +77,12 @@ export default function ReportCard({
           )}
         </div>
 
-        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-500">
+        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-500 dark:text-ink-400">
           {report.description}
         </p>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-400">
-          <span className="font-mono text-ink-400">{t('admin.reportId', { id: report.id })}</span>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-400 dark:text-ink-500">
+          <span className="font-mono text-ink-400 dark:text-ink-500">{t('admin.reportId', { id: report.id })}</span>
           <span className="inline-flex items-center gap-1">
             <IconMapPin className="h-3.5 w-3.5" />
             {report.location?.address ?? t('report.step2.coordinates')}
@@ -104,17 +112,14 @@ export default function ReportCard({
       {showUpvote && (
         <motion.button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onUpvote()
-          }}
+          onClick={handleUpvoteClick}
           whileTap={{ scale: 0.9 }}
           aria-label={t('reports.upvoteCount', { count: report.upvotes ?? 0 })}
           aria-pressed={upvoted}
           className={`flex shrink-0 flex-col items-center gap-1 self-stretch rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors sm:self-center ${
             upvoted
               ? 'border-brand-600 bg-brand-800 text-white'
-              : 'border-ink-200 bg-white text-ink-600 hover:border-brand-300 hover:text-brand-700'
+              : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:border-brand-300 hover:text-brand-700'
           }`}
         >
           <motion.span

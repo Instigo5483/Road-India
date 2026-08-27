@@ -1,5 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  // Toggled explicitly (see context/ThemeContext.jsx) rather than following
+  // OS preference automatically, so a citizen's choice sticks regardless of
+  // their device setting.
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {

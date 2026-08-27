@@ -106,8 +106,8 @@ export default function TeamDashboard() {
     : null
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
+    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
+      <header className="sticky top-0 z-20 border-b border-ink-200 dark:border-ink-700 bg-white/95 dark:bg-ink-900/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900">
             <Logo className="h-9 w-9" />
@@ -116,7 +116,7 @@ export default function TeamDashboard() {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-3.5 py-2 text-sm font-medium text-ink-600 transition-colors hover:border-emergency-300 hover:text-emergency-600"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 dark:border-ink-700 px-3.5 py-2 text-sm font-medium text-ink-600 dark:text-ink-300 transition-colors hover:border-emergency-300 hover:text-emergency-600"
           >
             <IconLogOut className="h-4 w-4" />
             {t('team.dashboard.logout')}
@@ -128,10 +128,10 @@ export default function TeamDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between rounded-2xl border border-ink-200 bg-white p-4"
+          className="flex items-center justify-between rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4"
         >
           <div>
-            <p className="text-xs font-medium text-ink-400">
+            <p className="text-xs font-medium text-ink-400 dark:text-ink-500">
               {teamType ? t(teamType.labelKey) : team?.type} · {t('team.dashboard.statusLabel')}
             </p>
             <p className={`mt-0.5 text-sm font-bold ${STATUS_TEXT[teamStatus.theme]}`}>
@@ -164,29 +164,29 @@ export default function TeamDashboard() {
               key={currentReport.id}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4 rounded-2xl border border-emergency-200 bg-white p-5 shadow-card"
+              className="space-y-4 rounded-2xl border border-emergency-200 bg-white dark:bg-ink-900 p-5 shadow-card"
             >
               <div className="flex items-center justify-between">
                 <span className="rounded-full bg-emergency-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emergency-600">
                   {t('team.dashboard.currentJob')}
                 </span>
                 {distance != null && isFinite(distance) && (
-                  <span className="text-xs font-semibold text-ink-500">
+                  <span className="text-xs font-semibold text-ink-500 dark:text-ink-400">
                     {t('team.dashboard.distanceAway', { distance: distance.toFixed(1) })}
                   </span>
                 )}
               </div>
 
               <div>
-                <h2 className="text-lg font-bold text-ink-900">
+                <h2 className="text-lg font-bold text-ink-900 dark:text-ink-50">
                   {typeLabel || currentReport.type}
                 </h2>
-                {category && <p className="text-xs text-ink-400">{t(category.labelKey)}</p>}
+                {category && <p className="text-xs text-ink-400 dark:text-ink-500">{t(category.labelKey)}</p>}
               </div>
 
-              <p className="text-sm leading-relaxed text-ink-700">{currentReport.description}</p>
+              <p className="text-sm leading-relaxed text-ink-700 dark:text-ink-200">{currentReport.description}</p>
 
-              <p className="flex items-start gap-1.5 text-sm text-ink-500">
+              <p className="flex items-start gap-1.5 text-sm text-ink-500 dark:text-ink-400">
                 <IconMapPin className="mt-0.5 h-4 w-4 shrink-0 text-emergency-600" />
                 {currentReport.location?.address ?? t('report.step2.coordinates')}
               </p>
@@ -222,5 +222,5 @@ export default function TeamDashboard() {
 const STATUS_TEXT = {
   success: 'text-success-600',
   warning: 'text-warning-600',
-  ink: 'text-ink-500',
+  ink: 'text-ink-500 dark:text-ink-400',
 }

@@ -163,20 +163,20 @@ export default function Admin() {
   const statusChips = [{ id: 'all', label: t('admin.filter.status.all') }, ...STATUSES.map((s) => ({ id: s.id, label: t(s.labelKey) }))]
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
+    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
+      <header className="sticky top-0 z-20 border-b border-ink-200 dark:border-ink-700 bg-white/95 dark:bg-ink-900/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900">
             <Logo className="h-9 w-9" />
             {t('common.appName')}
-            <span className="rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-ink-500">
+            <span className="rounded-full bg-ink-100 dark:bg-ink-800 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
               Admin
             </span>
           </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-3.5 py-2 text-sm font-medium text-ink-600 transition-colors hover:border-emergency-300 hover:text-emergency-600"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 dark:border-ink-700 px-3.5 py-2 text-sm font-medium text-ink-600 dark:text-ink-300 transition-colors hover:border-emergency-300 hover:text-emergency-600"
           >
             <IconLogOut className="h-4 w-4" />
             {t('admin.logout')}
@@ -188,15 +188,20 @@ export default function Admin() {
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="font-display text-2xl font-bold text-ink-900 sm:text-3xl"
+          className="font-display text-2xl font-bold text-ink-900 dark:text-ink-50 sm:text-3xl"
         >
           {t('admin.title')}
         </motion.h1>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="mt-1.5 text-ink-500">{t('admin.subtitle')}</p>
-          <Button variant="secondary" size="sm" onClick={() => navigate('/admin/teams')}>
-            {t('admin.teams.heading')}
-          </Button>
+          <p className="mt-1.5 text-ink-500 dark:text-ink-400">{t('admin.subtitle')}</p>
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => navigate('/admin/analytics')}>
+              {t('admin.analytics.link')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/admin/teams')}>
+              {t('admin.teams.heading')}
+            </Button>
+          </div>
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-3">
@@ -205,13 +210,13 @@ export default function Admin() {
           <StatTile icon={IconClock} label={t('admin.stats.unresolved')} value={stats.unresolved} theme="accent" />
         </div>
 
-        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 bg-white px-4 py-2.5 shadow-card">
-          <IconSearch className="h-4 w-4 shrink-0 text-ink-400" />
+        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-2.5 shadow-card">
+          <IconSearch className="h-4 w-4 shrink-0 text-ink-400 dark:text-ink-500" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('admin.searchPlaceholder')}
-            className="w-full bg-transparent text-sm outline-none placeholder:text-ink-400"
+            className="w-full bg-transparent text-sm text-ink-800 outline-none placeholder:text-ink-400 dark:text-ink-100"
           />
         </div>
 
@@ -224,7 +229,7 @@ export default function Admin() {
               className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
                 categoryFilter === chip.id
                   ? 'border-brand-800 bg-brand-800 text-white'
-                  : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
+                  : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800'
               }`}
             >
               {chip.label}
@@ -239,7 +244,7 @@ export default function Admin() {
               type="button"
               onClick={() => setStatusFilter(chip.id)}
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                statusFilter === chip.id ? 'bg-ink-800 text-white' : 'bg-ink-100 text-ink-600 hover:bg-ink-200'
+                statusFilter === chip.id ? 'bg-ink-800 text-white' : 'bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300 hover:bg-ink-200'
               }`}
             >
               {chip.label}
@@ -252,7 +257,7 @@ export default function Admin() {
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
-            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
+            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 dark:text-ink-500 transition-colors hover:text-brand-700"
           >
             <IconFilter className="h-3.5 w-3.5" />
             {t('reports.filter.heading')}
@@ -338,12 +343,12 @@ const STAT_THEME = {
 
 function StatTile({ icon: Icon, label, value, theme }) {
   return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-4">
+    <div className="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4">
       <span className={`grid h-9 w-9 place-items-center rounded-lg ${STAT_THEME[theme]}`}>
         <Icon className="h-4.5 w-4.5" />
       </span>
-      <p className="mt-2.5 font-display text-2xl font-bold text-ink-900">{value}</p>
-      <p className="text-xs text-ink-500">{label}</p>
+      <p className="mt-2.5 font-display text-2xl font-bold text-ink-900 dark:text-ink-50">{value}</p>
+      <p className="text-xs text-ink-500 dark:text-ink-400">{label}</p>
     </div>
   )
 }

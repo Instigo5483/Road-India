@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
-import { IconSparkle } from './Icons'
+import { IconSparkle, IconCamera } from './Icons'
 
 export const SEVERITY_THEME = {
   low: 'bg-success-50 text-success-700',
@@ -22,13 +22,13 @@ export default function AiTriageCard({ triage }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
-      className="w-full rounded-xl border border-ink-200 bg-white p-4 text-left"
+      className="w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4 text-left"
     >
       <div className="flex items-center gap-2">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-600/10 text-brand-700">
           <IconSparkle className="h-3.5 w-3.5" />
         </span>
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
           {t('report.aiTriage.heading')}
         </p>
         <span
@@ -37,10 +37,18 @@ export default function AiTriageCard({ triage }) {
           {t(`severity.${triage.severity}`)}
         </span>
       </div>
-      <p className="mt-2.5 text-sm text-ink-700">{triage.summary}</p>
-      <p className="mt-1 text-xs font-medium text-ink-400">
-        {t('report.aiTriage.routedTo', { department: triage.department })}
-      </p>
+      <p className="mt-2.5 text-sm text-ink-700 dark:text-ink-200">{triage.summary}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p className="text-xs font-medium text-ink-400 dark:text-ink-500">
+          {t('report.aiTriage.routedTo', { department: triage.department })}
+        </p>
+        {triage.photoAnalyzed && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-600">
+            <IconCamera className="h-3 w-3" />
+            {t('report.aiTriage.photoAnalyzed')}
+          </span>
+        )}
+      </div>
     </motion.div>
   )
 }

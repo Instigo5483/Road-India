@@ -3,6 +3,7 @@ export default {
   'common.back': 'वापस',
   'common.loading': 'लोड हो रहा है…',
   'common.close': 'बंद करें',
+  'common.cancel': 'रद्द करें',
   'common.optional': 'वैकल्पिक',
 
   'nav.home': 'होम',
@@ -135,6 +136,15 @@ export default {
   'report.step2.submitting': 'सबमिट हो रहा है…',
   'report.step2.error.location': 'जारी रखने के लिए नक्शे पर एक पिन लगाएं।',
 
+  'reportEdit.button': 'रिपोर्ट संपादित करें',
+  'reportEdit.title': 'अपनी रिपोर्ट संपादित करें',
+  'reportEdit.save': 'बदलाव सेव करें',
+  'reportEdit.unavailable': 'काम शुरू होने के बाद इस रिपोर्ट को संपादित नहीं किया जा सकता।',
+
+  'report.nearby.heading': 'पास में पहले से मिलती-जुलती रिपोर्ट्स',
+  'report.nearby.dismiss': 'हटाएं',
+  'report.nearby.support': 'इसका समर्थन करें',
+
   'report.success.title': 'रिपोर्ट सबमिट हो गई',
   'report.success.subtitle': 'धन्यवाद — आप इसे कभी भी "मेरी रिपोर्ट्स" से ट्रैक कर सकते हैं।',
   'report.success.viewDashboard': 'मेरी रिपोर्ट्स देखें',
@@ -159,6 +169,7 @@ export default {
 
   'report.aiTriage.heading': 'AI-सहायित मूल्यांकन',
   'report.aiTriage.routedTo': '{department} को भेजा गया',
+  'report.aiTriage.photoAnalyzed': 'फोटो का विश्लेषण किया गया',
 
   'feedback.title': 'यह कैसा रहा?',
   'feedback.subtitle': 'आपकी रिपोर्ट हल के रूप में चिह्नित की गई है — बताएं क्या यह वाकई हल हुई।',
@@ -172,6 +183,18 @@ export default {
   'feedback.badge.confirmed': 'रिपोर्टर ने हल होने की पुष्टि की',
   'feedback.badge.disputed': 'रिपोर्टर हल होने से असहमत है',
   'feedback.summary.heading': 'रिपोर्टर की प्रतिक्रिया',
+  'feedback.toast.submitted': 'आपकी प्रतिक्रिया के लिए धन्यवाद!',
+
+  'toast.upvoted': 'इस रिपोर्ट का समर्थन किया',
+  'toast.unupvoted': 'समर्थन हटाया गया',
+  'toast.statusUpdated': 'स्थिति अपडेट होकर {status} हुई',
+  'toast.teamAssigned': '{team} नियुक्त की गई',
+  'toast.teamUnassigned': 'टीम की नियुक्ति हटाई गई',
+  'toast.reportUpdated': 'रिपोर्ट अपडेट हो गई',
+  'toast.reportUpdateFailed': 'आपके बदलाव सेव नहीं हो सके — फिर कोशिश करें।',
+  'toast.duplicateBlocked': 'आपने अभी कुछ ही देर पहले एक जैसी रिपोर्ट दर्ज की है।',
+  'toast.tooFast': 'अगली रिपोर्ट दर्ज करने से पहले कुछ सेकंड रुकें।',
+  'toast.statusChanged': '{type} अब {status} है',
 
   'reports.title': 'चल रही रिपोर्ट्स',
   'reports.subtitle': 'देखें आस-पास पहले से क्या रिपोर्ट किया गया है — डुप्लीकेट दर्ज करने की बजाय उसका समर्थन करें।',
@@ -202,6 +225,8 @@ export default {
   'reports.empty': 'आपके फ़िल्टर से कोई रिपोर्ट मेल नहीं खाती।',
   'reports.locating': 'दूरी अनुसार क्रमबद्ध करने के लिए आपका स्थान प्राप्त किया जा रहा है…',
   'reports.locationDenied': 'स्थान की अनुमति नहीं मिली — इसके बजाय सभी रिपोर्ट्स दिखाई जा रही हैं।',
+  'reports.view.list': 'सूची दृश्य',
+  'reports.view.map': 'मानचित्र दृश्य',
 
   'emergency.tracker.title': 'मदद रास्ते में है',
   'emergency.tracker.subtitle': 'एक रिस्पॉन्स टीम को सूचित कर दिया गया है और आपके स्थान पर भेजा गया है।',
@@ -223,6 +248,9 @@ export default {
   'settings.account.id': 'आधार-लिंक्ड ID',
   'settings.account.memberSince': 'सदस्य बने',
   'settings.account.privacyNote': 'आपकी ID का उपयोग केवल आपकी पहचान सत्यापित करने के लिए किया जाता है और इसे कभी भी किसी तीसरे पक्ष के साथ साझा नहीं किया जाता।',
+
+  'theme.switchToDark': 'डार्क मोड में बदलें',
+  'theme.switchToLight': 'लाइट मोड में बदलें',
 
   'admin.login.title': 'एडमिन साइन-इन',
   'admin.login.subtitle': 'दर्ज रिपोर्ट्स और उनकी स्थिति प्रबंधित करने के लिए स्टाफ एक्सेस।',
@@ -248,6 +276,17 @@ export default {
   'admin.empty.title': 'इन फ़िल्टर से कोई रिपोर्ट मेल नहीं खाती',
   'admin.assignedTeams.heading': 'नियुक्त रिस्पॉन्स टीमें',
   'admin.assignedTeams.unassigned': 'नियुक्त नहीं',
+
+  'admin.analytics.link': 'एनालिटिक्स',
+  'admin.analytics.title': 'एनालिटिक्स',
+  'admin.analytics.subtitle': 'रोड इंडिया पर रिपोर्ट्स का रुझान कैसा है।',
+  'admin.analytics.avgResolution': 'औसत समाधान समय',
+  'admin.analytics.resolvedCount': 'हल हुईं',
+  'admin.analytics.byDay': 'पिछले 14 दिनों में दर्ज रिपोर्ट्स',
+  'admin.analytics.byCategory': 'श्रेणी अनुसार',
+  'admin.analytics.byStatus': 'स्थिति अनुसार',
+  'admin.analytics.topLocations': 'सबसे व्यस्त स्थान',
+  'admin.analytics.noData': 'अभी पर्याप्त डेटा नहीं है।',
 
   'team.type.ambulance': 'एम्बुलेंस',
   'team.type.doctor': 'डॉक्टर',

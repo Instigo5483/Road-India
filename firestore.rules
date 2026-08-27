@@ -51,7 +51,10 @@ service cloud.firestore {
         // so this rule can only check "is *some* authenticated Firebase
         // user", not "is a verified admin/team". Add custom claims + a real
         // rule check here before handling real citizen data.
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+        // resolvedAt is stamped alongside status in the same write (see
+        // updateReportStatus in ReportsContext.jsx) -- used by
+        // pages/AdminAnalytics.jsx to compute average resolution time.
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])) ||
         // assignedTeams is changed by the admin dashboard's team-reassignment
         // control (src/components/AdminReportRow.jsx via reassignReportTeam
         // in src/lib/teams.js) -- same "any authenticated Firebase user, not

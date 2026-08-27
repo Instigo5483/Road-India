@@ -57,7 +57,7 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
           setDetailOpen(true)
         }
       }}
-      className="cursor-pointer rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-5"
+      className="cursor-pointer rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-5"
     >
       <div className="flex flex-wrap items-start gap-3">
         <div className="shrink-0 overflow-hidden rounded-xl">
@@ -66,9 +66,9 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-ink-900">{typeLabel || report.type}</h3>
+            <h3 className="font-semibold text-ink-900 dark:text-ink-50">{typeLabel || report.type}</h3>
             {category && (
-              <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500">
+              <span className="rounded-full bg-ink-100 dark:bg-ink-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-500 dark:text-ink-400">
                 {t(category.labelKey)}
               </span>
             )}
@@ -84,16 +84,16 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
             )}
           </div>
 
-          <p className="mt-1.5 text-sm leading-relaxed text-ink-700">{report.description}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink-700 dark:text-ink-200">{report.description}</p>
 
           {report.aiTriage?.department && (
-            <p className="mt-1.5 text-xs font-medium text-ink-400">
+            <p className="mt-1.5 text-xs font-medium text-ink-400 dark:text-ink-500">
               {t('report.aiTriage.routedTo', { department: report.aiTriage.department })}
             </p>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-400">
-            <span className="font-mono text-ink-400">{t('admin.reportId', { id: report.id })}</span>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-400 dark:text-ink-500">
+            <span className="font-mono text-ink-400 dark:text-ink-500">{t('admin.reportId', { id: report.id })}</span>
             <span className="inline-flex items-center gap-1">
               <IconMapPin className="h-3.5 w-3.5" />
               {report.location?.address ?? t('report.step2.coordinates')}
@@ -114,7 +114,7 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
         </div>
 
         <label className="flex shrink-0 flex-col gap-1" onClick={(e) => e.stopPropagation()}>
-          <span className="text-[11px] font-medium text-ink-400">{t('admin.status.updateLabel')}</span>
+          <span className="text-[11px] font-medium text-ink-400 dark:text-ink-500">{t('admin.status.updateLabel')}</span>
           <select
             value={report.status}
             onChange={handleStatusChange}
@@ -132,17 +132,17 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
 
       {isEmergency && isFirebaseConfigured && requiredTeamTypes.length > 0 && (
         <div
-          className="mt-3 space-y-2 border-t border-ink-100 pt-3"
+          className="mt-3 space-y-2 border-t border-ink-100 dark:border-ink-800 pt-3"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-xs font-semibold text-ink-500">{t('admin.assignedTeams.heading')}</p>
+          <p className="text-xs font-semibold text-ink-500 dark:text-ink-400">{t('admin.assignedTeams.heading')}</p>
           {requiredTeamTypes.map((teamType) => {
             const assigned = report.assignedTeams?.find((a) => a.teamType === teamType)
             const options = teams.filter((tm) => tm.type === teamType)
             const teamTypeMeta = getTeamType(teamType)
             return (
               <div key={teamType} className="flex items-center justify-between gap-3">
-                <span className="text-xs text-ink-500">
+                <span className="text-xs text-ink-500 dark:text-ink-400">
                   {teamTypeMeta ? t(teamTypeMeta.labelKey) : teamType}
                 </span>
                 <select

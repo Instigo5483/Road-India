@@ -37,8 +37,26 @@ function pickMockSeverity(description) {
   return 'low'
 }
 
-export async function runTriage({ category, types, description }, apiKey) {
+export async function runTriage({ category, types, description, photoUrls }, apiKey) {
   if (!apiKey) return mockTriage({ category, description })
+
+  // gpt-4o-mini is multimodal -- when a photo is attached, let the model
+  // actually look at it rather than triaging on the text description
+  // alone. Only the first photo goes in: triage just needs a severity
+  // signal, not exhaustive visual detail, and keeping it to one image
+  // keeps the request small (photos are already client-compressed to
+  // ~1280px by PhotoUpload.jsx, but base64 image tokens still add up).
+  const firstPhoto = photoUrls?.[0]
+
+  const userContent = [
+    {
+      type: 'text',
+      text: `Category: ${category}\nIssue types: ${(types ?? []).join(', ') || 'unspecified'}\nDescription: ${description}`,
+    },
+  ]
+  if (firstPhoto) {
+    userContent.push({ type: 'image_url', image_url: { url: firstPhoto } })
+  }
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -57,14 +75,19 @@ export async function runTriage({ category, types, description }, apiKey) {
             role: 'system',
             content:
               'You triage civic road-issue reports for an Indian municipal grievance system. ' +
-              'Given a category, issue type, and citizen description, respond with strict JSON only: ' +
+              'Given a category, issue type, and citizen description' +
+              (firstPhoto ? ', and a photo the citizen attached' : '') +
+              ', respond with strict JSON only: ' +
               '{"severity": "low" | "medium" | "high" | "critical", ' +
               '"department": string (a plausible Indian municipal department name for this issue), ' +
-              '"summary": string (one formal sentence summarizing the issue for a caseworker)}.',
+              '"summary": string (one formal sentence summarizing the issue for a caseworker)}.' +
+              (firstPhoto
+                ? ' If the photo shows the issue is more or less severe than the text alone suggests, let the photo take precedence.'
+                : ''),
           },
           {
             role: 'user',
-            content: `Category: ${category}\nIssue types: ${(types ?? []).join(', ') || 'unspecified'}\nDescription: ${description}`,
+            content: userContent,
           },
         ],
       }),
@@ -79,7 +102,7 @@ export async function runTriage({ category, types, description }, apiKey) {
       throw new Error('OpenAI response missing expected fields')
     }
 
-    return { ...parsed, aiGenerated: true }
+    return { ...parsed, aiGenerated: true, photoAnalyzed: Boolean(firstPhoto) }
   } catch {
     // Any failure (missing/invalid key, network issue, rate limit, malformed
     // model output) falls back to the mock so a flaky API call never blocks
