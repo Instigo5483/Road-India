@@ -136,4 +136,11 @@ export const mockBackend = {
     notify()
     return reports.find((r) => r.id === reportId)
   },
+
+  async setReportFeedback(reportId, citizenFeedback) {
+    reports = reports.map((r) => (r.id === reportId ? { ...r, citizenFeedback } : r))
+    writeStore(STORAGE_KEYS.reports, reports)
+    notify()
+    return reports.find((r) => r.id === reportId)
+  },
 }

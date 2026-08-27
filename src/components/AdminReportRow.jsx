@@ -8,6 +8,7 @@ import { isFirebaseConfigured } from '../lib/firebase'
 import { reassignReportTeam } from '../lib/teams'
 import { SEVERITY_THEME } from './AiTriageCard'
 import ReportDetailModal from './ReportDetailModal'
+import FeedbackBadge from './FeedbackBadge'
 import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconSparkle, IconThumbsUp } from './Icons'
 
 const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
@@ -116,6 +117,12 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
               {report.upvotes ?? 0}
             </span>
           </div>
+
+          {report.citizenFeedback && (
+            <div className="mt-2">
+              <FeedbackBadge feedback={report.citizenFeedback} />
+            </div>
+          )}
         </div>
 
         <label className="flex shrink-0 flex-col gap-1" onClick={(e) => e.stopPropagation()}>

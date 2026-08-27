@@ -31,6 +31,16 @@ service cloud.firestore {
         (resource.data.createdBy == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['description', 'photoUrls', 'location'])) ||
+        // Only the real author (not just "some authenticated user", unlike
+        // the status/assignedTeams rules below) can leave one-time feedback
+        // -- a 1-5 star rating + "was it really resolved?" + optional review
+        // -- once their own report is resolved (src/components/
+        // ReportFeedbackForm.jsx via submitReportFeedback in
+        // ReportsContext.jsx). Can't be added twice or before resolution.
+        (resource.data.createdBy == request.auth.uid &&
+          resource.data.status == 'resolved' &&
+          !('citizenFeedback' in resource.data) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['citizenFeedback'])) ||
         // Any signed-in user may toggle their own upvote.
         (request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['upvotes', 'upvotedBy'])) ||

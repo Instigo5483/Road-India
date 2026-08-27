@@ -321,6 +321,14 @@ export function IconListChecks(props) {
   )
 }
 
+export function IconStar({ className, ...props }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M12 2.5l2.9 6.1 6.6.7-4.9 4.6 1.3 6.6L12 17.6l-5.9 3.1 1.3-6.6L2.5 9.3l6.6-.7L12 2.5Z" />
+    </svg>
+  )
+}
+
 export function IconSparkle(props) {
   return (
     <Svg {...props}>

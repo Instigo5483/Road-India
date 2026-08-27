@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { LANGUAGES } from '../data/languages'
+import { generateRandomName } from '../lib/randomName'
 import Button from '../components/Button'
 import LanguageSelector from '../components/LanguageSelector'
 import {
@@ -84,6 +85,10 @@ export default function Login() {
     if (stage !== 'digilocker') return
     const id = setTimeout(() => {
       setDigilockerId(generateId())
+      // A real Aadhaar/DigiLocker verification returns the citizen's name
+      // as part of the identity response -- this app never asks them to
+      // type it themselves (see lib/randomName.js).
+      setName(generateRandomName())
       setStage('profile')
     }, 1200)
     return () => clearTimeout(id)
@@ -107,13 +112,16 @@ export default function Login() {
     setBusy(true)
     setTimeout(() => {
       setBusy(false)
+      // A real Aadhaar verification returns the citizen's name along with
+      // the OTP confirmation -- this app never asks them to type it
+      // themselves (see lib/randomName.js).
+      setName(generateRandomName())
       setStage('profile')
     }, 700)
   }
 
   async function handleFinish(e) {
     e.preventDefault()
-    if (!name.trim()) return
     setBusy(true)
     try {
       await completeLogin({
@@ -308,15 +316,14 @@ export default function Login() {
                     <IconShieldCheck className="h-4 w-4" />
                     {t('auth.profile.title')}
                   </p>
-                  <Field label={t('auth.profile.name.label')}>
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={t('auth.profile.name.placeholder')}
-                      className="input-field"
-                      autoFocus
-                    />
-                  </Field>
+                  <div>
+                    <span className="mb-1.5 block text-sm font-medium text-ink-700">
+                      {t('auth.profile.name.label')}
+                    </span>
+                    <p className="rounded-xl bg-ink-50 px-3.5 py-2.5 text-sm font-semibold text-ink-900">
+                      {name}
+                    </p>
+                  </div>
                   <Field label={t('auth.profile.language.label')}>
                     <select
                       value={preferredLanguage}
@@ -330,7 +337,7 @@ export default function Login() {
                       ))}
                     </select>
                   </Field>
-                  <Button type="submit" className="w-full" loading={busy} disabled={!name.trim()}>
+                  <Button type="submit" className="w-full" loading={busy}>
                     {t('auth.profile.finish')}
                   </Button>
                 </form>

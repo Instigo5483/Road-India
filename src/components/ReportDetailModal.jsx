@@ -2,12 +2,16 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
+import { useAuth } from '../context/AuthContext'
+import { useReports } from '../context/ReportsContext'
 import { getCategory, reportTypeIds, getTypesLabel } from '../data/categoryTypes'
 import { timeAgo, formatTimestamp } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
 import AiTriageCard from './AiTriageCard'
 import ReportLocationMap from './ReportLocationMap'
+import ReportFeedbackForm from './ReportFeedbackForm'
+import FeedbackBadge from './FeedbackBadge'
 import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconThumbsUp, IconX } from './Icons'
 
 const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
@@ -25,6 +29,18 @@ const THEME_STYLES = {
  * App.jsx) for why that combination is avoided here too. */
 export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, showUpvote = true }) {
   const { t, lang } = useLanguage()
+  const { user } = useAuth()
+  const { submitReportFeedback } = useReports()
+
+  // Only the citizen who filed this report can rate it, and only once
+  // it's resolved and they haven't already left feedback -- see
+  // firestore.rules for the matching write restriction.
+  const isOwner = Boolean(user && report.createdBy === user.uid)
+  const needsFeedback = isOwner && report.status === 'resolved' && !report.citizenFeedback
+
+  function handleFeedbackSubmit(feedback) {
+    return submitReportFeedback(report.id, feedback)
+  }
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -118,8 +134,25 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
             <ReportLocationMap location={report.location} />
           </div>
 
+          {needsFeedback && <ReportFeedbackForm onSubmit={handleFeedbackSubmit} />}
+
+          {report.citizenFeedback && (
+            <div className="rounded-xl border border-ink-200 bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  {t('feedback.summary.heading')}
+                </p>
+                <FeedbackBadge feedback={report.citizenFeedback} />
+              </div>
+              {report.citizenFeedback.review && (
+                <p className="mt-2 text-sm italic text-ink-600">“{report.citizenFeedback.review}”</p>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-4 text-xs text-ink-400">
             <div>
+              <p className="font-mono">{t('admin.reportId', { id: report.id })}</p>
               {report.createdByName && <p>{t('admin.reporter', { name: report.createdByName })}</p>}
               <p>{formatTimestamp(report.createdAt)} · {timeAgo(report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}</p>
             </div>

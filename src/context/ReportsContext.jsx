@@ -131,14 +131,40 @@ export function ReportsProvider({ children }) {
     await updateDoc(doc(db, 'reports', reportId), { status })
   }, [])
 
+  // Only the citizen who filed a resolved report can leave feedback on it --
+  // see ReportDetailModal.jsx (the only place this is called from) for the
+  // ownership + "resolved, no feedback yet" gating, and firestore.rules for
+  // the matching write rule (restricted to the report's own createdBy uid,
+  // unlike the more permissive status/assignedTeams rules).
+  const submitReportFeedback = useCallback(
+    async (reportId, feedback) => {
+      if (!user) throw new Error('Must be logged in to leave feedback')
+      const citizenFeedback = { ...feedback, submittedAt: new Date().toISOString() }
+
+      if (!isFirebaseConfigured) {
+        return mockBackend.setReportFeedback(reportId, citizenFeedback)
+      }
+      await updateDoc(doc(db, 'reports', reportId), { citizenFeedback })
+    },
+    [user]
+  )
+
   const myReports = useMemo(
     () => (user ? reports.filter((r) => r.createdBy === user.uid) : []),
     [reports, user]
   )
 
   const value = useMemo(
-    () => ({ reports, myReports, loading, createReport, toggleUpvote, updateReportStatus }),
-    [reports, myReports, loading, createReport, toggleUpvote, updateReportStatus]
+    () => ({
+      reports,
+      myReports,
+      loading,
+      createReport,
+      toggleUpvote,
+      updateReportStatus,
+      submitReportFeedback,
+    }),
+    [reports, myReports, loading, createReport, toggleUpvote, updateReportStatus, submitReportFeedback]
   )
 
   return <ReportsContext.Provider value={value}>{children}</ReportsContext.Provider>

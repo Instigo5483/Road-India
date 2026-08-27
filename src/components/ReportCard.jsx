@@ -6,6 +6,7 @@ import { timeAgo } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
 import ReportDetailModal from './ReportDetailModal'
+import FeedbackBadge from './FeedbackBadge'
 import { SEVERITY_THEME } from './AiTriageCard'
 import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconThumbsUp, IconSparkle } from './Icons'
 
@@ -85,6 +86,7 @@ export default function ReportCard({
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-400">
+          <span className="font-mono text-ink-400">{t('admin.reportId', { id: report.id })}</span>
           <span className="inline-flex items-center gap-1">
             <IconMapPin className="h-3.5 w-3.5" />
             {report.location?.address ?? t('report.step2.coordinates')}
@@ -103,6 +105,12 @@ export default function ReportCard({
             </span>
           )}
         </div>
+
+        {report.citizenFeedback && (
+          <div className="mt-2">
+            <FeedbackBadge feedback={report.citizenFeedback} />
+          </div>
+        )}
       </div>
 
       {showUpvote && (
