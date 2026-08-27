@@ -12,15 +12,8 @@ import AiTriageCard from './AiTriageCard'
 import ReportLocationMap from './ReportLocationMap'
 import ReportFeedbackForm from './ReportFeedbackForm'
 import FeedbackBadge from './FeedbackBadge'
-import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconThumbsUp, IconX } from './Icons'
-
-const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
-
-const THEME_STYLES = {
-  accent: 'bg-accent-500/10 text-accent-600',
-  brand: 'bg-brand-600/10 text-brand-700',
-  emergency: 'bg-emergency-500/10 text-emergency-600',
-}
+import CategoryIcon from './CategoryIcon'
+import { IconMapPin, IconThumbsUp, IconX } from './Icons'
 
 /** Full-detail popup for a single report -- opened by clicking a
  * ReportCard. Not wrapped in AnimatePresence (mount-only entrance
@@ -56,7 +49,6 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
 
   const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
-  const Icon = category ? ICONS[category.icon] : null
 
   // Even though this renders through a portal (physically outside
   // ReportCard's DOM node), React dispatches its synthetic events along
@@ -82,13 +74,9 @@ export default function ReportDetailModal({ report, onClose, onUpvote, upvoted, 
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-ink-200 bg-white shadow-card-hover"
       >
         <div className="flex items-start gap-3 border-b border-ink-100 p-5">
-          <span
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${
-              category ? THEME_STYLES[category.theme] : 'bg-ink-100 text-ink-500'
-            }`}
-          >
-            {Icon && <Icon className="h-5.5 w-5.5" />}
-          </span>
+          <div className="shrink-0 overflow-hidden rounded-xl">
+            <CategoryIcon category={report.category} className="h-11 w-11" />
+          </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-bold text-ink-900">{typeLabel || report.type}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">

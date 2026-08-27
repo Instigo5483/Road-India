@@ -18,34 +18,6 @@ function Svg({ children, className, strokeWidth = 1.8, ...props }) {
   )
 }
 
-export function IconPothole(props) {
-  return (
-    <Svg {...props}>
-      <path d="M3 17c1.8-3 3.6-1.5 5.4-3.4 1.6-1.7-.2-3.4 1.8-4.8C12.4 7.4 14 9 16 8c2-1 3.6.4 5 2" />
-      <ellipse cx="12" cy="16.5" rx="8" ry="3.2" />
-      <path d="M6.5 15.2c1-1 3-1.6 5.5-1.6s4.5.6 5.5 1.6" />
-    </Svg>
-  )
-}
-
-export function IconDroplet(props) {
-  return (
-    <Svg {...props}>
-      <path d="M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3Z" />
-    </Svg>
-  )
-}
-
-export function IconSignpost(props) {
-  return (
-    <Svg {...props}>
-      <path d="M12 21V9" />
-      <path d="M12 5 4 7l8 2 8-2-8-2Z" />
-      <path d="M8 21h8" />
-    </Svg>
-  )
-}
-
 export function IconSiren(props) {
   return (
     <Svg {...props}>

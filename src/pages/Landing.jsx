@@ -7,16 +7,9 @@ import { useLanguage } from '../context/LanguageContext'
 import LanguageSelector from '../components/LanguageSelector'
 import Button from '../components/Button'
 import Logo from '../components/Logo'
+import CategoryIcon from '../components/CategoryIcon'
 import { CATEGORIES } from '../data/categoryTypes'
-import {
-  IconArrowRight,
-  IconMapPin,
-  IconCamera,
-  IconCheckCircle,
-  IconPothole,
-  IconSignpost,
-  IconSiren,
-} from '../components/Icons'
+import { IconArrowRight, IconMapPin, IconCamera, IconCheckCircle } from '../components/Icons'
 
 const HOW_STEPS = [
   {
@@ -45,12 +38,6 @@ const STAT_COLORS = {
   cities: 'text-accent-600',
 }
 
-const CATEGORY_ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
-const CATEGORY_BADGE = {
-  accent: 'bg-accent-500/10 text-accent-600',
-  brand: 'bg-brand-600/10 text-brand-700',
-  emergency: 'bg-emergency-500/10 text-emergency-600',
-}
 const CATEGORY_CTA = {
   accent: 'text-accent-700',
   brand: 'text-brand-700',
@@ -217,7 +204,6 @@ export default function Landing() {
 
             <div className="mt-10 grid gap-4 text-left sm:grid-cols-3">
               {CATEGORIES.map((category, i) => {
-                const Icon = CATEGORY_ICONS[category.icon]
                 return (
                   <motion.button
                     key={category.id}
@@ -231,9 +217,9 @@ export default function Landing() {
                     className="flex h-full flex-col justify-between rounded-2xl border border-ink-200 bg-white p-8 text-left transition-shadow duration-300 hover:shadow-card-hover"
                   >
                     <div>
-                      <span className={`grid h-14 w-14 place-items-center rounded-xl ${CATEGORY_BADGE[category.theme]}`}>
-                        {Icon && <Icon className="h-6.5 w-6.5" />}
-                      </span>
+                      <div className="inline-block overflow-hidden rounded-xl">
+                        <CategoryIcon category={category.id} className="h-14 w-14" />
+                      </div>
                       <h3 className="mt-4 text-lg font-bold text-ink-900">{t(category.labelKey)}</h3>
                       <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{t(category.taglineKey)}</p>
                     </div>

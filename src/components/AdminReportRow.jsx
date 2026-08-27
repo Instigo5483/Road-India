@@ -9,15 +9,8 @@ import { reassignReportTeam } from '../lib/teams'
 import { SEVERITY_THEME } from './AiTriageCard'
 import ReportDetailModal from './ReportDetailModal'
 import FeedbackBadge from './FeedbackBadge'
-import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconSparkle, IconThumbsUp } from './Icons'
-
-const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
-
-const THEME_STYLES = {
-  accent: 'bg-accent-500/10 text-accent-600',
-  brand: 'bg-brand-600/10 text-brand-700',
-  emergency: 'bg-emergency-500/10 text-emergency-600',
-}
+import CategoryIcon from './CategoryIcon'
+import { IconMapPin, IconSparkle, IconThumbsUp } from './Icons'
 
 export default function AdminReportRow({ report, onStatusChange, teams = [], index = 0 }) {
   const { t, lang } = useLanguage()
@@ -26,7 +19,6 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
   const [reassigningType, setReassigningType] = useState('')
   const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
-  const Icon = category ? ICONS[category.icon] : null
 
   const isEmergency = report.category === 'emergency'
   const requiredTeamTypes = isEmergency ? getRequiredTeamTypesForReport(report) : []
@@ -68,13 +60,9 @@ export default function AdminReportRow({ report, onStatusChange, teams = [], ind
       className="cursor-pointer rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:p-5"
     >
       <div className="flex flex-wrap items-start gap-3">
-        <span
-          className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${
-            category ? THEME_STYLES[category.theme] : 'bg-ink-100 text-ink-500'
-          }`}
-        >
-          {Icon && <Icon className="h-5.5 w-5.5" />}
-        </span>
+        <div className="shrink-0 overflow-hidden rounded-xl">
+          <CategoryIcon category={report.category} className="h-11 w-11" />
+        </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

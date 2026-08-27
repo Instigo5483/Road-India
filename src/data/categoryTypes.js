@@ -11,7 +11,6 @@ export const CATEGORIES = [
     id: 'problem',
     labelKey: 'category.problem.label',
     taglineKey: 'category.problem.tagline',
-    icon: 'pothole',
     theme: 'accent',
     types: [
       { id: 'pothole', labelKey: 'type.problem.pothole' },
@@ -27,7 +26,6 @@ export const CATEGORIES = [
     id: 'corruption',
     labelKey: 'category.corruption.label',
     taglineKey: 'category.corruption.tagline',
-    icon: 'signpost',
     theme: 'brand',
     types: [
       { id: 'bad_road_quality', labelKey: 'type.corruption.bad_road_quality' },
@@ -43,7 +41,6 @@ export const CATEGORIES = [
     id: 'emergency',
     labelKey: 'category.emergency.label',
     taglineKey: 'category.emergency.tagline',
-    icon: 'siren',
     theme: 'emergency',
     // Blinkit/Zepto-style promise: a response team is dispatched the
     // moment an emergency report is submitted, ETA shown live from then.

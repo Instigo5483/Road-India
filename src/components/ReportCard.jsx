@@ -7,16 +7,9 @@ import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
 import ReportDetailModal from './ReportDetailModal'
 import FeedbackBadge from './FeedbackBadge'
+import CategoryIcon from './CategoryIcon'
 import { SEVERITY_THEME } from './AiTriageCard'
-import { IconPothole, IconSignpost, IconSiren, IconMapPin, IconThumbsUp, IconSparkle } from './Icons'
-
-const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
-
-const THEME_STYLES = {
-  accent: 'bg-accent-500/10 text-accent-600',
-  brand: 'bg-brand-600/10 text-brand-700',
-  emergency: 'bg-emergency-500/10 text-emergency-600',
-}
+import { IconMapPin, IconThumbsUp, IconSparkle } from './Icons'
 
 export default function ReportCard({
   report,
@@ -29,7 +22,6 @@ export default function ReportCard({
   const { t, lang } = useLanguage()
   const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
-  const Icon = category ? ICONS[category.icon] : null
   const [detailOpen, setDetailOpen] = useState(false)
 
   return (
@@ -49,12 +41,8 @@ export default function ReportCard({
       }}
       className="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-start sm:gap-4 sm:p-5"
     >
-      <div
-        className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-105 ${
-          category ? THEME_STYLES[category.theme] : 'bg-ink-100 text-ink-500'
-        }`}
-      >
-        {Icon && <Icon className="h-5.5 w-5.5" />}
+      <div className="shrink-0 overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-105">
+        <CategoryIcon category={report.category} className="h-11 w-11" />
       </div>
 
       <div className="min-w-0 flex-1">

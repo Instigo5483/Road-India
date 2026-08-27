@@ -1,26 +1,22 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
-import { IconPothole, IconSignpost, IconSiren, IconArrowRight } from './Icons'
-
-const ICONS = { pothole: IconPothole, signpost: IconSignpost, siren: IconSiren }
+import CategoryIcon from './CategoryIcon'
+import { IconArrowRight } from './Icons'
 
 const THEME_STYLES = {
   accent: {
     ring: 'group-hover:ring-accent-300',
-    iconBg: 'bg-accent-500/10 text-accent-600',
     glow: 'from-accent-100/70',
     cta: 'text-accent-700',
   },
   brand: {
     ring: 'group-hover:ring-brand-300',
-    iconBg: 'bg-brand-600/10 text-brand-700',
     glow: 'from-brand-100/70',
     cta: 'text-brand-700',
   },
   emergency: {
     ring: 'group-hover:ring-emergency-300',
-    iconBg: 'bg-emergency-500/10 text-emergency-600',
     glow: 'from-emergency-100/70',
     cta: 'text-emergency-700',
   },
@@ -29,7 +25,6 @@ const THEME_STYLES = {
 export default function CategoryCard({ category, index = 0 }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
-  const Icon = ICONS[category.icon]
   const theme = THEME_STYLES[category.theme]
 
   return (
@@ -48,11 +43,9 @@ export default function CategoryCard({ category, index = 0 }) {
       />
 
       <div className="relative">
-        <span
-          className={`grid h-14 w-14 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 ${theme.iconBg}`}
-        >
-          {Icon && <Icon className="h-6.5 w-6.5" />}
-        </span>
+        <div className="inline-block overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+          <CategoryIcon category={category.id} className="h-14 w-14" />
+        </div>
         <h3 className="mt-4 text-lg font-bold text-ink-900">{t(category.labelKey)}</h3>
         <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{t(category.taglineKey)}</p>
       </div>
