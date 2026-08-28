@@ -52,6 +52,17 @@ export default defineConfig(({ mode }) => {
       port: 5173,
     },
     build: {
+      // Vite's default modulePreload injects <link rel="modulepreload">
+      // for every vendor chunk reachable anywhere in the app -- including
+      // ones only ever reached through a React.lazy() route, like
+      // `leaflet` (only used by map components on ReportFlow/ReportsFeed/
+      // report-detail) and `firebase-messaging` (only TeamDashboard). That
+      // silently defeats the whole point of lazy-loading those routes:
+      // every visitor's very first page load -- Landing, Login, all of
+      // it -- would eagerly fetch ~90KB+ gzip of map/push-notification
+      // code they may never touch. Disabling it makes those chunks load
+      // only when their owning route's dynamic import() actually runs.
+      modulePreload: false,
       rollupOptions: {
         output: {
           // Split heavy third-party libraries into their own chunks,
@@ -60,10 +71,30 @@ export default defineConfig(({ mode }) => {
           // these chunks across releases instead of re-downloading them
           // whenever only app code changes -- and they load in parallel
           // with the app chunk rather than as one large blocking bundle.
-          manualChunks: {
-            firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/messaging'],
-            leaflet: ['leaflet', 'react-leaflet'],
-            'framer-motion': ['framer-motion'],
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined
+            // react/react-dom get an explicit, stable home of their own.
+            // Without this, Rollup's cross-chunk dependency deduplication
+            // was picking one of the *other* forced vendor chunks (leaflet,
+            // in practice) to host React's shared internals, then made the
+            // main entry import that one small binding from it -- which
+            // meant the browser had to fetch the entire ~90KB gzip leaflet
+            // chunk on every single page load just to run the app at all,
+            // completely defeating the point of lazy-loading it.
+            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
+              return 'vendor-react'
+            }
+            // Kept separate from the firebase chunk below deliberately:
+            // it's only ever imported by lib/messaging.js, which only
+            // TeamDashboard.jsx (a lazy-loaded route) touches. Grouping it
+            // with auth/firestore -- which load eagerly for every visitor,
+            // logged in or not -- would ship push-notification code to
+            // every citizen who never goes near /team.
+            if (id.includes('firebase/messaging')) return 'firebase-messaging'
+            if (id.includes('/firebase/') || id.includes('@firebase')) return 'firebase'
+            if (id.includes('leaflet')) return 'leaflet'
+            if (id.includes('framer-motion')) return 'framer-motion'
+            return undefined
           },
         },
       },

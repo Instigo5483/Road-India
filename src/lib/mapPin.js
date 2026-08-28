@@ -1,4 +1,9 @@
 import L from 'leaflet'
+// Leaflet's own CSS lives here rather than in main.jsx, so it's part of
+// the same lazy chunk as the map components (MapPicker/ReportLocationMap/
+// ReportsMapView all import this file) instead of loading eagerly on
+// every page, including ones with no map on them at all.
+import 'leaflet/dist/leaflet.css'
 
 // A custom pin drawn as an inline SVG data URI, so the map never depends
 // on Leaflet's default marker image assets (a common bundler footgun).
