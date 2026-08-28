@@ -96,21 +96,50 @@ export default function Login() {
     [stage]
   )
 
+  // A real Aadhaar/DigiLocker verification returns the citizen's name as
+  // part of the identity response -- this app never asks them to type it
+  // themselves (see lib/randomName.js). But it should be *their real*
+  // name, not just any freshly-made-up one: resolving the account here,
+  // right after the ID is verified, means a returning citizen sees their
+  // own existing name on the confirmation screen below, instead of a
+  // brand-new random one that then gets silently swapped out the moment
+  // they click "Enter Road India". The random name is only actually used
+  // if this citizen has genuinely never signed in before.
+  async function resolveIdentity(id) {
+    const previewName = generateRandomName()
+    try {
+      const resolved = await completeLogin({
+        digilockerId: id,
+        name: previewName,
+        preferredLanguage,
+      })
+      setName(resolved?.name || previewName)
+    } catch {
+      // Best-effort here -- if this fails (a real backend hiccup), show
+      // the preview name for now; handleFinish's own completeLogin call
+      // retries the real resolution before actually entering the app.
+      setName(previewName)
+    }
+  }
+
   // DigiLocker path skips manual ID entry entirely -- a real DigiLocker
   // OAuth redirect already knows the user's verified identity, so this
   // simulates that hand-off with a brief "connecting" beat before landing
   // on the same profile step the Aadhaar path uses.
   useEffect(() => {
     if (stage !== 'digilocker') return
-    const id = setTimeout(() => {
-      setDigilockerId(generateId())
-      // A real Aadhaar/DigiLocker verification returns the citizen's name
-      // as part of the identity response -- this app never asks them to
-      // type it themselves (see lib/randomName.js).
-      setName(generateRandomName())
-      setStage('profile')
-    }, 1200)
-    return () => clearTimeout(id)
+    let cancelled = false
+    const id = generateId()
+    setDigilockerId(id)
+
+    Promise.all([resolveIdentity(id), new Promise((r) => setTimeout(r, 1200))]).then(() => {
+      if (!cancelled) setStage('profile')
+    })
+
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage])
 
   function handleSendOtp(e) {
@@ -124,24 +153,24 @@ export default function Login() {
     }, 700)
   }
 
-  function handleVerifyOtp(e) {
+  async function handleVerifyOtp(e) {
     e.preventDefault()
     if (otp.trim().length !== 6) return setError(t('auth.error.invalidOtp'))
     setError('')
     setBusy(true)
-    setTimeout(() => {
-      setBusy(false)
-      // A real Aadhaar verification returns the citizen's name along with
-      // the OTP confirmation -- this app never asks them to type it
-      // themselves (see lib/randomName.js).
-      setName(generateRandomName())
+    try {
+      await new Promise((r) => setTimeout(r, 700))
+      await resolveIdentity(digilockerId.replace(/\D/g, ''))
       setStage('profile')
-    }, 700)
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleFinish(e) {
     e.preventDefault()
     setBusy(true)
+    setError('')
     try {
       await completeLogin({
         digilockerId: digilockerId.replace(/\D/g, ''),
@@ -149,6 +178,8 @@ export default function Login() {
         preferredLanguage,
       })
       navigate(from, { replace: true })
+    } catch {
+      setError(t('auth.error.loginFailed'))
     } finally {
       setBusy(false)
     }
@@ -375,6 +406,7 @@ export default function Login() {
                       ))}
                     </select>
                   </Field>
+                  <ErrorText message={error} />
                   <Button type="submit" className="w-full" loading={busy}>
                     {t('auth.profile.finish')}
                   </Button>

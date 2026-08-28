@@ -80,6 +80,7 @@ export default {
   'auth.consent.text': 'By continuing you agree to verify your identity to use Road India.',
   'auth.error.invalidId': 'Enter a valid 12-digit Aadhaar number to continue.',
   'auth.error.invalidOtp': 'That OTP doesn’t match. Check the hint above.',
+  'auth.error.loginFailed': 'Couldn’t sign you in — check your connection and try again.',
   'auth.back': 'Back to Road India',
 
   'home.welcome': 'Welcome back, {name}',
