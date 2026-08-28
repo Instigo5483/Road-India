@@ -13,14 +13,21 @@ queue as a faded lane marking.
 
 **What we built:** a mobile-first flow — pick a category, select every issue
 that applies, add a photo, drop a precise map pin, done. Every report is
-triaged in real time by an OpenAI model (severity, department, caseworker
-summary — shown to the citizen, not hidden). Emergency reports automatically
-dispatch to the nearest available response team (ambulance/doctor/fire/
-police/tow) through a live Firestore-backed matching system with push
-notifications; the team sees the job on their own dashboard, navigates, and
-marks it resolved. A separate admin dashboard lets staff search/filter every
-report, update status, and reassign teams. A public, upvotable feed prevents
-duplicate filing.
+triaged in real time by an OpenAI model that looks at the photo as well as
+the text (severity, department, caseworker summary — shown to the citizen,
+not hidden). Emergency reports automatically dispatch to the nearest
+available response team (ambulance/doctor/fire/police/tow) through a live
+Firestore-backed matching system with push notifications; the team sees the
+job on their own dashboard, navigates, and marks it resolved — the citizen's
+"arriving in" countdown stops the instant that happens, not on a fixed timer.
+A citizen can edit their own report before work starts, gets notified the
+moment its status changes, and rates the resolution once it's marked done —
+that verdict shows as a badge everywhere the report appears. A separate admin
+dashboard lets staff search/filter every report, update status, reassign
+teams, and see live analytics (resolution time, volume by category/day/
+location). A public, upvotable feed — with a map view, not just a list — and
+an in-flow "reports nearby" nudge steer citizens toward supporting an
+existing report instead of filing a duplicate.
 
 **What's mocked:** identity verification (a simulated Aadhaar/DigiLocker OTP
 flow — no real UIDAI integration) and the admin/team sign-in (a shared
@@ -69,13 +76,29 @@ reports by hand also face this, with no help prioritizing what's urgent.
   filter by category/status/time/location, update status, and see or change
   which team is assigned to an emergency — plus a separate page to provision
   new response teams (admin picks the team's own ID/passcode and its city).
-- A public "Ongoing Reports" feed with search, filters, and upvoting, so
-  duplicate reports consolidate into community support instead of duplicating
-  effort — plus a full detail popup (photos, AI triage, an embedded map of the
-  exact location) available to citizens, admins, and response teams alike.
+- A public "Ongoing Reports" feed with search (by report ID, description, or
+  address), filters, sort, a map-view toggle, and upvoting, so duplicate
+  reports consolidate into community support instead of duplicating effort —
+  plus a full detail popup (photos, AI triage, an embedded map of the exact
+  location) available to citizens, admins, and response teams alike. Report
+  IDs are visible on every report, everywhere it appears.
+- A "reports nearby" nudge while filing — surfaces existing unresolved
+  reports of the same category within ~300m so a citizen can support one
+  instead of filing a near-duplicate — plus a client-side guard against
+  accidental double-submits and rapid duplicate filing (emergencies are
+  exempt from it).
 - A personal dashboard tracking each report's status
   (Submitted → In Review → In Progress → Resolved), with dynamic homepage
   stats computed live from real report counts rather than hardcoded numbers.
+  A citizen can edit their own report's description, photos, or location
+  while it's still awaiting review, and gets an in-app notification the
+  moment one of their reports changes status — wherever in the app they
+  happen to be. Once a report is marked Resolved, the citizen who filed it
+  rates it and confirms (or disputes) it's actually fixed; that verdict shows
+  as a badge on the report in the feed, dashboard, and admin view alike.
+- Live admin analytics (average resolution time, resolved-report count, and
+  category/status/day-by-day breakdowns), computed from the same data the
+  rest of the app uses — not a separate fixture.
 
 ## Why is this version better?
 
@@ -106,11 +129,21 @@ real response team.
 - Response team management (`/admin/teams`, `/admin/teams/new`) — a real
   Firestore-backed roster; admins choose each team's ID, passcode, and base
   city themselves.
-- The community feed (search/filter/sort/upvote), personal dashboard, and
-  report detail popup with map.
+- The community feed (search/filter/sort/upvote/map view), personal
+  dashboard, and report detail popup with map.
+- Citizen report editing, the resolution rating/feedback loop, live
+  status-change notifications, the "reports nearby" duplicate-avoidance
+  nudge, and admin analytics — all reading and writing the same live
+  Firestore data as everything else, enforced by `firestore.rules` (e.g. only
+  the report's actual author can edit it or leave feedback, and only while
+  it's in the right status).
 - Firebase Auth/Firestore as the real backend when configured (the app also
   runs on a local in-memory/localStorage mock with zero setup for fast
-  demoing — see `src/lib/mockBackend.js`).
+  demoing — see `src/lib/mockBackend.js`). Login identity is a real,
+  server-minted Firebase custom auth token keyed to a one-way hash of the
+  (simulated) Aadhaar/DigiLocker ID, not a throwaway anonymous session — so
+  the same ID reliably resolves back to the same account and report history
+  on every future login, from any device.
 
 **Explicitly mocked, not real:**
 - Identity verification: a simulated Aadhaar/DigiLocker-style ID → OTP →
@@ -123,8 +156,13 @@ real response team.
   document this limitation explicitly (see `firestore.rules`).
 - The "arriving in X:XX" countdown shown to the citizen is a client-side
   estimate from the category's promised response window, not a real ETA fed
-  by the dispatched team's live location. The UI tells users to call 112
-  directly for real emergencies.
+  by the dispatched team's live location — though it does stop the moment
+  the report is actually marked resolved, rather than always running to
+  zero. The UI tells users to call 112 directly for real emergencies.
+- The duplicate-submission guard (rapid double-submits, same-report refiling)
+  is a client-side `localStorage` heuristic, not a server-enforced check — a
+  real deployment would need this re-implemented server-side (e.g. in the
+  triage/dispatch functions) since a client can always be bypassed.
 
 ## How could this work safely at a larger scale?
 
@@ -138,8 +176,10 @@ real response team.
 - Put a human moderation queue in front of AI triage output before it routes
   to a real department — the model assists prioritization, it shouldn't be
   the final authority on what a municipal team acts on.
-- Rate-limit and deduplicate by geohash + category before creating a new
-  report, rather than relying only on upvoting existing ones.
+- Move the duplicate/rapid-submission guard server-side (it's currently a
+  client-side heuristic — see above) and expand the "nearby reports" nudge's
+  geohash + category matching into the actual creation path, not just a
+  pre-submit suggestion.
 - Feed the dispatched team's live GPS location into the citizen-facing ETA
   instead of a static per-category estimate, and connect the emergency path
   to real municipal/112 dispatch infrastructure where it exists.

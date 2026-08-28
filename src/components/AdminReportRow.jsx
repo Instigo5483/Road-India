@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
+import { useToast } from '../context/ToastContext'
 import {
   getCategory,
   reportTypeIds,
   getTypesLabel,
+  getStatus,
   STATUSES,
 } from '../data/categoryTypes'
 import {
@@ -28,6 +30,7 @@ export default function AdminReportRow({
   index = 0,
 }) {
   const { t, lang } = useLanguage()
+  const { showToast } = useToast()
   const [updating, setUpdating] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
   const [reassigningType, setReassigningType] = useState('')
@@ -44,6 +47,7 @@ export default function AdminReportRow({
     setUpdating(true)
     try {
       await onStatusChange(report.id, status)
+      showToast(t('toast.statusUpdated', { status: t(getStatus(status).labelKey) }))
     } finally {
       setUpdating(false)
     }
@@ -53,6 +57,12 @@ export default function AdminReportRow({
     setReassigningType(teamType)
     try {
       await reassignReportTeam(report, teamType, newTeamId || null)
+      if (newTeamId) {
+        const team = teams.find((tm) => tm.id === newTeamId)
+        showToast(t('toast.teamAssigned', { team: team?.name ?? newTeamId }))
+      } else {
+        showToast(t('toast.teamUnassigned'))
+      }
     } finally {
       setReassigningType('')
     }

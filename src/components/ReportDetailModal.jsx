@@ -176,6 +176,12 @@ export default function ReportDetailModal({
               <p className="text-sm leading-relaxed text-ink-700">
                 {report.description}
               </p>
+
+              {isOwner && !canEdit && (
+                <p className="text-xs text-ink-400">
+                  {t('reportEdit.unavailable')}
+                </p>
+              )}
             </>
           )}
 

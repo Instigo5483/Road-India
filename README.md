@@ -37,11 +37,12 @@ The app runs immediately with **no Firebase project required** — it falls back
 ## Connecting a real Firebase backend
 
 1. Create a project at [console.firebase.google.com](https://console.firebase.google.com).
-2. Enable **Authentication → Sign-in method → Anonymous** (the simulated DigiLocker flow signs the verified user in anonymously and attaches their profile in Firestore — no real phone/OTP provider needed).
+2. Enable **Authentication → Sign-in method → Anonymous** — used as a fallback sign-in path if `FIREBASE_SERVICE_ACCOUNT` (step 6 below) isn't set; the normal path signs in with a server-minted custom token instead, which doesn't need a specific provider enabled (see [Demo auth](#demo-auth-not-real-aadhardigilocker) below).
 3. Enable **Firestore Database**. (Report photos are stored inline as base64 in Firestore, not in Firebase Storage — Storage requires the paid Blaze plan, which this project intentionally stays off of; see `PhotoUpload.jsx`'s client-side compression that keeps this well under Firestore's document size limit.)
 4. Project settings → General → Your apps → add a Web app, copy the config values into a `.env.local` file (see `.env.example`).
 5. Deploy the included security rules: `firebase deploy --only firestore:rules` (requires the [Firebase CLI](https://firebase.google.com/docs/cli), `firebase init` once to link the project — the repo already has `firestore.rules`).
-6. Optional: seed the Firestore `reports` collection with the same demo data the mock backend uses — see `scripts/seed.js`.
+6. Project settings → **Service accounts** → Generate new private key, then base64-encode it into `FIREBASE_SERVICE_ACCOUNT` (see `.env.example` for the exact command). This is what lets each citizen's login resolve to a *stable* identity (see [Demo auth](#demo-auth-not-real-aadhardigilocker) below) — it's the same credential [emergency dispatch](#emergency-response-team-dispatch) uses, so if you're setting that up too, you only need to do this once.
+7. Optional: seed the Firestore `reports` collection with the same demo data the mock backend uses — see `scripts/seed.js`.
 
 Once real Firebase env vars are present, the app automatically switches from the mock backend to Firestore — no code changes needed, see `isFirebaseConfigured` in `src/lib/firebase.js`.
 
@@ -50,6 +51,8 @@ Once real Firebase env vars are present, the app automatically switches from the
 `/login` first asks which of three roles you're signing in as — **User**, **Admin**, or **Response Team** — since a real deployment would have three genuinely separate audiences who wouldn't otherwise know to look for `/admin/login` or `/team/login`. Choosing **Admin** or **Response Team** navigates straight to their own login pages (see [Admin dashboard](#admin-dashboard) / [Emergency response-team dispatch](#emergency-response-team-dispatch) below); choosing **User** continues into the flow described here.
 
 Real Aadhaar/DigiLocker integration requires UIDAI/DigiLocker API partner access that isn't obtainable for a hackathon prototype. The citizen login screen (`src/pages/Login.jsx`) instead offers a choice of two simulated flows: **Aadhaar** (enter a 12-digit Aadhaar-linked ID, receive an on-screen OTP — no real SMS is sent — then verify) or **DigiLocker** (a brief simulated "Connecting to DigiLocker…" redirect, mirroring how a real DigiLocker OAuth hand-off works). Either way, the profile step that follows never asks you to type a name: a real Aadhaar/DigiLocker verification returns the citizen's name as part of the identity response, so this simulates that by generating one (`src/lib/randomName.js`) and clearly labeling which of the two methods it came from — the name is view-only from that point on, including in Settings (`src/pages/Settings.jsx`). No real Aadhaar, DigiLocker, or government data is requested, transmitted, or stored anywhere in this codebase. Swap this out for a real OAuth/identity provider before using this beyond a prototype.
+
+**Same ID, same account, every time.** The verified ID is a stable identity, not a one-off session: `api/_auth-core.js`/`api/login.js` derive a UID from a one-way hash of the ID and mint a Firebase custom auth token for it server-side (`src/lib/authToken.js` calls it, `AuthContext.jsx` signs in with the result via `signInWithCustomToken`). Firebase's plain `signInAnonymously()` — used only as a fallback when `FIREBASE_SERVICE_ACCOUNT` isn't configured — hands out a brand-new, unrelated identity on every single call, so without this, the same citizen re-entering the same ID on a later visit would land in a different account with a freshly generated name, and their past reports wouldn't show up in "My Reports". With it, the account and report history resolve correctly on every future login, from any device or browser.
 
 ## AI-assisted triage
 
@@ -64,11 +67,11 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 
 `/admin/login` → `/admin` — a staff view of every report filed across the app (not just one citizen's own).
 
-- **Search and filters** — search by report ID, description, address, or reporter name; filter chips for category and status; a collapsible filter panel for time range and cascading state/district/city (mirroring the citizen Ongoing Reports feed's filters, sharing the same logic via `src/lib/reportFilters.js`). A per-report dropdown moves status through Submitted → In Review → In Progress → Resolved, stamping a `resolvedAt` timestamp the moment a report reaches Resolved. Live emergencies sort to the top.
+- **Search and filters** — search by report ID, description, address, or reporter name; filter chips for category and status; a collapsible filter panel for time range and cascading state/district/city (mirroring the citizen Ongoing Reports feed's filters, sharing the same logic via `src/lib/reportFilters.js`). A per-report dropdown moves status through Submitted → In Review → In Progress → Resolved, stamping a `resolvedAt` timestamp the moment a report reaches Resolved and showing a toast confirmation. Live emergencies sort to the top.
 - **Report detail popup** — click any report row to open the same detail modal (with map) the citizen feed uses, without leaving the dashboard. If the citizen has since rated the resolution, the Confirmed/Disputed feedback badge shows here too.
 - **Analytics** — `/admin/analytics` (linked from the dashboard header) computes average resolution time from `resolvedAt`, a resolved-report count, and category/status/day-by-day breakdowns, all live from the current data rather than a fixture (`src/pages/AdminAnalytics.jsx`).
 - **Response team management, on its own page** — `/admin/teams` shows the full roster (name, type, ID, live status); `/admin/teams/new` provisions a new team. The admin chooses the team's own **ID and passcode** directly (rather than one being auto-generated) and picks a **base area** from a city dropdown (`src/data/cities.js`) rather than dropping an exact map pin — a team's coverage is naturally city-level, and a city center is precise enough for the nearest-team dispatch match.
-- **See and change team assignment** — each emergency report row shows a dropdown per required team type (ambulance, doctor, fire, police, tow — derived from the report's issue type(s)) with the currently assigned team, or "Unassigned". Changing it (`src/lib/teams.js`'s `reassignReportTeam`) frees the previous team back to `available` and marks the new one `busy` on that report.
+- **See and change team assignment** — each emergency report row shows a dropdown per required team type (ambulance, doctor, fire, police, tow — derived from the report's issue type(s)) with the currently assigned team, or "Unassigned". Changing it (`src/lib/teams.js`'s `reassignReportTeam`) frees the previous team back to `available`, marks the new one `busy` on that report, and shows a toast confirming which team was assigned (or that the slot was unassigned).
 - **Separate from citizen login** — real municipal staff wouldn't authenticate through a citizen Aadhaar/DigiLocker flow, so `/admin` uses its own passcode gate (`src/context/AdminAuthContext.jsx`), independent of `AuthContext`.
 - **Passcode**: set `VITE_ADMIN_PASSCODE` in `.env.local`, or use the default `roadindia-admin` if unset (see `.env.example`). **This is a client-side convenience gate for the prototype, not real access control** — change the default before sharing a live deployment link publicly.
 - **Not a real role system** — there's no per-admin identity or backend-enforced permission check. In `firestore.rules`, any authenticated Firebase user (not just someone who knows the admin passcode) can update a report's `status`/`assignedTeams` fields or a team's fields — a documented prototype limitation. Add a custom-claims-based admin role before handling real citizen data at scale.
@@ -84,7 +87,7 @@ Every filed report is triaged by an OpenAI model in real time: severity (`low`/`
 2. Right after it's saved, the client calls `POST /api/dispatch` (`api/_dispatch-core.js`), which unions every selected type's required response-team type(s) (`src/data/teamTypes.js` — e.g. `accident` → `ambulance` + `doctor`, `fire_hazard` → `fire`, so an accident-and-fire report pulls in all three), and for each required type finds the **nearest `available` team** by straight-line distance to the report's location.
 3. That team's Firestore doc is marked `busy` and given `currentReportId`; if the team has a push token, a Firebase Cloud Messaging notification is sent to their device.
 4. The team's dashboard (`/team`, `src/pages/TeamDashboard.jsx`) shows the job live the moment `currentReportId` changes — via a Firestore listener while the page is open, or via a browser push notification when it isn't — with an embedded map of the exact location, a "Navigate" button (opens Google Maps), and the same AI-triage summary the citizen sees.
-5. Tapping **Mark completed** sets the report's status to `resolved` (the same `updateReportStatus` the admin dashboard uses — reflected on the citizen's dashboard and the community feed instantly) and frees the team back to `available`.
+5. Tapping **Mark completed** sets the report's status to `resolved` (the same `updateReportStatus` the admin dashboard uses — reflected on the citizen's dashboard and the community feed instantly) and frees the team back to `available`. The citizen's "arriving in X:XX" countdown (`EmergencyTracker.jsx`/`EmergencyEtaBadge.jsx`) reads the report's live status too, so it stops immediately rather than continuing to count down on an issue that's already been dealt with.
 6. An admin can also see which team is assigned and reassign it at any point from `/admin` — see [Admin dashboard](#admin-dashboard) above.
 
 **Browser push notifications, not an installed app:** teams get notified via Cloud Messaging in a normal browser tab — no "Add to Home Screen" step, no app store, nothing to install. The tradeoff: push reliability while the tab is fully closed (rather than just backgrounded) varies by browser, and continuous location tracking only happens while a team actually has the dashboard open (`TeamDashboard.jsx`'s `watchPosition`) — there's no background tracking once the page is closed, same as any website.
@@ -117,6 +120,8 @@ api/
   _triage-core.js      Shared triage logic (real OpenAI call + mock fallback)
   dispatch.js          Vercel serverless endpoint -- POST /api/dispatch
   _dispatch-core.js    Shared dispatch logic (nearest-team matching + FCM push)
+  login.js             Vercel serverless endpoint -- POST /api/login
+  _auth-core.js        Shared login logic (stable-UID custom token minting)
 src/
   components/   Reusable UI: cards, buttons, map picker/viewer/report-map, report detail modal,
                 report edit form, feedback form + badge, star rating, AI triage card, admin report
@@ -125,8 +130,8 @@ src/
                 ToastContext
   data/         Category/type definitions, language list, demo seed reports, team types, cities
   i18n/         en.js, hi.js dictionaries + translate() helper
-  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, messaging.js, teams.js,
-                reportFilters.js, geo.js, mapPin.js, time.js, randomName.js, format.js
+  lib/          firebase.js, mockBackend.js, triage.js, dispatch.js, authToken.js, messaging.js,
+                teams.js, reportFilters.js, geo.js, mapPin.js, time.js, randomName.js, format.js
   pages/        Landing, Login, Home, ReportFlow, Dashboard, ReportsFeed, Settings,
                 AdminLogin, Admin, AdminTeams, AdminAddTeam, AdminAnalytics, TeamLogin, TeamDashboard
   styles/       Tailwind entry + small custom CSS (map pin animation etc.)

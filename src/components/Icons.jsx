@@ -88,14 +88,6 @@ export function IconClock(props) {
   )
 }
 
-export function IconChevronRight(props) {
-  return (
-    <Svg {...props}>
-      <path d="M9 6l6 6-6 6" />
-    </Svg>
-  )
-}
-
 export function IconChevronLeft(props) {
   return (
     <Svg {...props}>
@@ -219,22 +211,6 @@ export function IconLoader(props) {
       <path d="M18 12h3" />
       <path d="M4.2 19.8l2.1-2.1" />
       <path d="M17.7 6.3l2.1-2.1" />
-    </Svg>
-  )
-}
-
-export function IconPhoneCall(props) {
-  return (
-    <Svg {...props}>
-      <path d="M6 3h3l2 5-2.5 1.5a11 11 0 0 0 5 5L15 12l5 2v3a2 2 0 0 1-2 2C10.5 19 5 13.5 5 6a2 2 0 0 1 1-3Z" />
-    </Svg>
-  )
-}
-
-export function IconWrench(props) {
-  return (
-    <Svg {...props}>
-      <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4L15 12l-3-3 2.7-2.7Z" />
     </Svg>
   )
 }
