@@ -82,6 +82,7 @@ export default function ReportCard({
               <EmergencyEtaBadge
                 createdAt={report.createdAt}
                 etaMinutes={category.etaMinutes}
+                status={report.status}
               />
             </>
           )}

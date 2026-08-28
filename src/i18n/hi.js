@@ -232,9 +232,11 @@ export default {
   'emergency.tracker.subtitle': 'एक रिस्पॉन्स टीम को सूचित कर दिया गया है और आपके स्थान पर भेजा गया है।',
   'emergency.tracker.arrivingLabel': 'टीम आ रही है',
   'emergency.tracker.arrivedLabel': 'टीम को अब तक पहुंच जाना चाहिए',
+  'emergency.tracker.resolvedLabel': 'समस्या हल हो गई',
   'emergency.tracker.stage.received': 'अलर्ट मिल गया — नज़दीकी रिस्पॉन्स टीम खोजी जा रही है',
   'emergency.tracker.stage.dispatched': 'रिस्पॉन्स टीम भेज दी गई है — रास्ते में है',
   'emergency.tracker.stage.arriving': 'टीम अभी पहुंच रही है',
+  'emergency.tracker.stage.resolved': 'रिस्पॉन्स टीम द्वारा समस्या हल घोषित',
   'emergency.tracker.disclaimer': 'अनुमानित प्रतिक्रिया समय — तत्काल खतरे में हमेशा सीधे 112 पर कॉल करें।',
   'emergency.badge.arriving': '{time} में पहुंच रही है',
 

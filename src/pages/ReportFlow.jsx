@@ -399,6 +399,10 @@ export default function ReportFlow() {
                   <EmergencyTracker
                     createdAt={submittedReport.createdAt}
                     etaMinutes={category.etaMinutes}
+                    status={
+                      reports.find((r) => r.id === submittedReport.id)?.status ??
+                      submittedReport.status
+                    }
                   />
                 </div>
 

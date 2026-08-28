@@ -126,6 +126,7 @@ export default function ReportDetailModal({
                 <EmergencyEtaBadge
                   createdAt={report.createdAt}
                   etaMinutes={category?.etaMinutes}
+                  status={report.status}
                 />
               )}
             </div>

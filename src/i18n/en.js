@@ -232,9 +232,11 @@ export default {
   'emergency.tracker.subtitle': 'A response team has been notified and dispatched to your location.',
   'emergency.tracker.arrivingLabel': 'Team arriving in',
   'emergency.tracker.arrivedLabel': 'Team should be on site',
+  'emergency.tracker.resolvedLabel': 'Issue resolved',
   'emergency.tracker.stage.received': 'Alert received — locating the nearest response team',
   'emergency.tracker.stage.dispatched': 'Response team dispatched — on the way',
   'emergency.tracker.stage.arriving': 'Team is arriving now',
+  'emergency.tracker.stage.resolved': 'Marked resolved by the response team',
   'emergency.tracker.disclaimer': 'Estimated response window — for immediate danger, always call 112 directly.',
   'emergency.badge.arriving': 'Arriving in {time}',
 

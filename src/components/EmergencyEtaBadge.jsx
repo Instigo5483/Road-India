@@ -9,9 +9,13 @@ import { IconSiren } from './Icons'
  * report cards (community feed + dashboard). Renders nothing once the
  * promised ETA window has passed, so the card falls back to the normal
  * status badge -- see lib/time.js's getEtaProgress for how the countdown
- * is computed (a client-side simulation, not a real dispatch feed).
+ * is computed (a client-side simulation, not a real dispatch feed). Also
+ * hides as soon as the report is marked resolved, even if the simulated
+ * countdown hasn't run out yet -- a response team can genuinely finish
+ * faster than the promised ETA, and the badge shouldn't keep counting
+ * down on an issue that's already been dealt with.
  */
-export default function EmergencyEtaBadge({ createdAt, etaMinutes }) {
+export default function EmergencyEtaBadge({ createdAt, etaMinutes, status }) {
   const { t } = useLanguage()
   const [, forceTick] = useState(0)
 
@@ -19,6 +23,8 @@ export default function EmergencyEtaBadge({ createdAt, etaMinutes }) {
     const id = setInterval(() => forceTick((n) => n + 1), 1000)
     return () => clearInterval(id)
   }, [])
+
+  if (status === 'resolved') return null
 
   const { remainingMs, arrived } = getEtaProgress(createdAt, etaMinutes)
   if (arrived) return null
