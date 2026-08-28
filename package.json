@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx",
     "seed": "node scripts/seed.js",
-    "seed:teams": "node scripts/seedTeams.js"
+    "seed:teams": "node scripts/seedTeams.js",
+    "clear-data": "node scripts/clearData.js"
   },
   "dependencies": {
     "firebase": "^10.12.2",
