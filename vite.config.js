@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { runTriage } from './api/_triage-core.js'
 import { runDispatch } from './api/_dispatch-core.js'
+import { mintLoginToken } from './api/_auth-core.js'
 
 /** Mirrors a POST-only Vercel serverless endpoint under api/ as dev-server
  * middleware, so `npm run dev` exercises the exact same code path a real
@@ -45,6 +46,7 @@ export default defineConfig(({ mode }) => {
       react(),
       apiDevMiddleware('/api/triage', (payload) => runTriage(payload, env.OPENAI_API_KEY)),
       apiDevMiddleware('/api/dispatch', (payload) => runDispatch(payload, env.FIREBASE_SERVICE_ACCOUNT)),
+      apiDevMiddleware('/api/login', (payload) => mintLoginToken(payload, env.FIREBASE_SERVICE_ACCOUNT)),
     ],
     server: {
       port: 5173,

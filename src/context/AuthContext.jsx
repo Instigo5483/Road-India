@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import {
   onAuthStateChanged,
   signInAnonymously,
+  signInWithCustomToken,
   signOut as firebaseSignOut,
 } from 'firebase/auth'
 import {
@@ -13,6 +14,7 @@ import {
 } from 'firebase/firestore'
 import { isFirebaseConfigured, auth, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
+import { fetchLoginToken } from '../lib/authToken'
 
 const AuthContext = createContext(null)
 
@@ -78,7 +80,18 @@ export function AuthProvider({ children }) {
           })
         }
 
-        const cred = await signInAnonymously(auth)
+        // A deterministic Firebase identity keyed off the Aadhaar/
+        // DigiLocker ID itself, minted server-side (see lib/authToken.js,
+        // api/_auth-core.js) -- signInAnonymously() alone would hand out a
+        // different, unrelated uid on every single login, so the same
+        // citizen re-entering the same ID would never find their existing
+        // profile or reports. Falls back to a plain anonymous session if
+        // the endpoint is unavailable (e.g. FIREBASE_SERVICE_ACCOUNT isn't
+        // set) so login still works, just without that guarantee.
+        const token = await fetchLoginToken({ digilockerId })
+        const cred = token
+          ? await signInWithCustomToken(auth, token)
+          : await signInAnonymously(auth)
         const uid = cred.user.uid
         const ref = doc(db, 'users', uid)
         const existing = await getDoc(ref)
