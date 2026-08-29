@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, animate } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
@@ -47,6 +47,24 @@ const CATEGORY_CTA = {
   accent: 'text-accent-700',
   brand: 'text-brand-700',
   emergency: 'text-emergency-700',
+}
+
+/** Counts up from 0 to the real value on mount/whenever it changes,
+ * rather than just appearing -- a live stat pulled from the reports
+ * collection reads as more "real" ticking upward than a static number. */
+function AnimatedStat({ value, className }) {
+  const [displayed, setDisplayed] = useState(0)
+
+  useEffect(() => {
+    const controls = animate(0, value, {
+      duration: 1.4,
+      ease: 'easeOut',
+      onUpdate: (latest) => setDisplayed(Math.round(latest)),
+    })
+    return () => controls.stop()
+  }, [value])
+
+  return <motion.p className={className}>{displayed.toLocaleString()}</motion.p>
 }
 
 export default function Landing() {
@@ -178,11 +196,10 @@ export default function Landing() {
           >
             {stats.map((stat) => (
               <div key={stat.key}>
-                <p
-                  className={`font-display text-2xl font-bold sm:text-4xl ${stat.color}`}
-                >
-                  {stat.value.toLocaleString()}
-                </p>
+                <AnimatedStat
+                  value={stat.value}
+                  className={`font-display text-2xl font-bold tabular-nums sm:text-4xl ${stat.color}`}
+                />
                 <p className="mt-1 text-xs text-ink-500 sm:text-sm">
                   {t(stat.key)}
                 </p>

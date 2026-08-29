@@ -36,10 +36,14 @@ const db = getFirestore()
 async function clearCollection(name) {
   const collectionRef = db.collection(name)
   let totalDeleted = 0
+  let hasMore = true
 
-  while (true) {
+  while (hasMore) {
     const snap = await collectionRef.limit(500).get()
-    if (snap.empty) break
+    if (snap.empty) {
+      hasMore = false
+      continue
+    }
 
     const batch = db.batch()
     snap.docs.forEach((doc) => batch.delete(doc.ref))
