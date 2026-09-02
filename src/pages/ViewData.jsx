@@ -52,6 +52,7 @@ function getTrend(reports, range) {
 }
 
 function TrendChart({ points, lang, t }) {
+  const [hover, setHover] = useState(null)
   const width = 680
   const height = 220
   const pad = { top: 14, right: 18, bottom: 36, left: 35 }
@@ -60,6 +61,25 @@ function TrendChart({ points, lang, t }) {
   const y = (value) => height - pad.bottom - (value / max) * (height - pad.top - pad.bottom)
   const line = (key) => points.map((point, index) => `${index ? 'L' : 'M'} ${x(index)} ${y(point[key])}`).join(' ')
   const tickIndexes = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])]
+  const activePoint = hover ? points[hover.index] : null
+  const tooltipWidth = 132
+  const tooltipX = activePoint
+    ? Math.min(Math.max(x(hover.index) + 10, pad.left + 4), width - pad.right - tooltipWidth)
+    : 0
+
+  function setHoveredPoint(event, series) {
+    const svg = event.currentTarget.ownerSVGElement
+    const bounds = svg.getBoundingClientRect()
+    const svgX = ((event.clientX - bounds.left) / bounds.width) * width
+    const index = Math.max(
+      0,
+      Math.min(
+        points.length - 1,
+        Math.round(((svgX - pad.left) / (width - pad.left - pad.right)) * (points.length - 1))
+      )
+    )
+    setHover({ series, index })
+  }
 
   return (
     <div className="mt-4 overflow-x-auto">
@@ -76,41 +96,81 @@ function TrendChart({ points, lang, t }) {
             {points[index].date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}
           </text>
         ))}
-        <path d={line('filed')} fill="none" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        <path d={line('resolved')} fill="none" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {hover && <line x1={x(hover.index)} x2={x(hover.index)} y1={pad.top} y2={height - pad.bottom} stroke="#94a3b8" strokeDasharray="3 4" />}
+        {['filed', 'resolved'].map((series) => {
+          const isActive = hover?.series === series
+          const color = series === 'filed' ? '#2563eb' : '#16a34a'
+          return <g key={series}>
+            <path d={line(series)} fill="none" stroke={color} strokeWidth={isActive ? 4.5 : 3} strokeOpacity={hover && !isActive ? 0.22 : 1} strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke-width 180ms ease, stroke-opacity 180ms ease' }} />
+            <path d={line(series)} fill="none" stroke="transparent" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" className="cursor-pointer" onMouseEnter={(event) => setHoveredPoint(event, series)} onMouseMove={(event) => setHoveredPoint(event, series)} onMouseLeave={() => setHover(null)} onFocus={() => setHover({ series, index: 0 })} onBlur={() => setHover(null)} tabIndex={0} aria-label={t(series === 'filed' ? 'data.trend.filed' : 'data.trend.resolved')} />
+          </g>
+        })}
         {points.map((point, index) => (
           <g key={dateKey(point.date)}>
-            <circle cx={x(index)} cy={y(point.filed)} r="3.5" fill="#2563eb"><title>{`${t('data.trend.filed')}: ${point.filed}`}</title></circle>
-            <circle cx={x(index)} cy={y(point.resolved)} r="3.5" fill="#16a34a"><title>{`${t('data.trend.resolved')}: ${point.resolved}`}</title></circle>
+            <circle cx={x(index)} cy={y(point.filed)} r={hover?.series === 'filed' && hover.index === index ? '6' : '3.5'} fill="#2563eb" style={{ transition: 'r 180ms ease' }}><title>{`${t('data.trend.filed')}: ${point.filed}`}</title></circle>
+            <circle cx={x(index)} cy={y(point.resolved)} r={hover?.series === 'resolved' && hover.index === index ? '6' : '3.5'} fill="#16a34a" style={{ transition: 'r 180ms ease' }}><title>{`${t('data.trend.resolved')}: ${point.resolved}`}</title></circle>
           </g>
         ))}
+        {activePoint && <g style={{ pointerEvents: 'none' }}><rect x={tooltipX} y={pad.top + 6} width={tooltipWidth} height="58" rx="8" fill="#0f172a" opacity="0.96" /><text x={tooltipX + 10} y={pad.top + 23} fill="white" fontSize="11" fontWeight="600">{activePoint.date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}</text><text x={tooltipX + 10} y={pad.top + 43} fill={hover.series === 'filed' ? '#93c5fd' : '#86efac'} fontSize="12" fontWeight="700">{t(hover.series === 'filed' ? 'data.trend.filed' : 'data.trend.resolved')}: {activePoint[hover.series]}</text></g>}
       </svg>
       <div className="mt-2 flex flex-wrap gap-4 text-xs font-medium text-ink-500">
-        <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-brand-600" />{t('data.trend.filed')}</span>
-        <span className="inline-flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-full bg-success-600" />{t('data.trend.resolved')}</span>
+        <span className={`inline-flex items-center gap-1.5 transition-opacity ${hover && hover.series !== 'filed' ? 'opacity-40' : ''}`}><i className="h-2.5 w-2.5 rounded-full bg-brand-600" />{t('data.trend.filed')}</span>
+        <span className={`inline-flex items-center gap-1.5 transition-opacity ${hover && hover.series !== 'resolved' ? 'opacity-40' : ''}`}><i className="h-2.5 w-2.5 rounded-full bg-success-600" />{t('data.trend.resolved')}</span>
       </div>
     </div>
   )
 }
 
 function CategoryDonut({ data, t }) {
+  const [activeId, setActiveId] = useState(null)
   const total = Math.max(data.reduce((sum, item) => sum + item.count, 0), 1)
   let current = 0
-  const gradient = data.map((item) => {
-    const start = (current / total) * 360
-    current += item.count
-    return `${CATEGORY_COLORS[item.id]} ${start}deg ${(current / total) * 360}deg`
-  }).join(', ')
+  const slices = data.map((item) => {
+    const start = current
+    current += (item.count / total) * 360
+    return { ...item, start, end: current }
+  })
+  const activeItem = data.find((item) => item.id === activeId)
+  const centerLabel = activeItem?.label ?? t('data.reports')
+  // The doughnut centre is deliberately small. Splitting labels such as
+  // “Road Emergency” into two centred lines preserves clear spacing instead
+  // of letting a long category run into the ring.
+  const centerLabelLines = centerLabel.split(/\s+/).reduce(
+    (lines, word) => {
+      if (lines.length === 1 && lines[0].length + word.length + 1 > 10) {
+        return [lines[0], word]
+      }
+      lines[lines.length - 1] = `${lines[lines.length - 1]}${lines[lines.length - 1] ? ' ' : ''}${word}`
+      return lines
+    },
+    ['']
+  ).slice(0, 2)
+
+  function pointAt(angle, radius) {
+    const radians = ((angle - 90) * Math.PI) / 180
+    return [80 + radius * Math.cos(radians), 80 + radius * Math.sin(radians)]
+  }
+
+  function slicePath(start, end) {
+    const [outerStartX, outerStartY] = pointAt(start, 66)
+    const [outerEndX, outerEndY] = pointAt(end, 66)
+    const [innerEndX, innerEndY] = pointAt(end, 41)
+    const [innerStartX, innerStartY] = pointAt(start, 41)
+    const largeArc = end - start > 180 ? 1 : 0
+    return `M ${outerStartX} ${outerStartY} A 66 66 0 ${largeArc} 1 ${outerEndX} ${outerEndY} L ${innerEndX} ${innerEndY} A 41 41 0 ${largeArc} 0 ${innerStartX} ${innerStartY} Z`
+  }
   return (
     <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row">
-      <div className="grid h-40 w-40 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(${gradient})` }}>
-        <div className="grid h-24 w-24 place-items-center rounded-full bg-white text-center">
-          <span><b className="block font-display text-2xl text-ink-900">{data.reduce((sum, item) => sum + item.count, 0)}</b><small className="text-xs text-ink-500">{t('data.reports')}</small></span>
-        </div>
-      </div>
+      <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0 overflow-visible" role="img" aria-label={t('data.category.ariaLabel')} onMouseLeave={() => setActiveId(null)}>
+        <title>{t('data.category.title')}</title>
+        {slices.map((slice) => <path key={slice.id} d={slicePath(slice.start, slice.end)} fill={CATEGORY_COLORS[slice.id]} onMouseEnter={() => setActiveId(slice.id)} onFocus={() => setActiveId(slice.id)} onBlur={() => setActiveId(null)} tabIndex={0} aria-label={`${slice.label}: ${slice.count}`} style={{ cursor: 'pointer', transformOrigin: '80px 80px', transform: activeId === slice.id ? 'scale(1.08)' : 'scale(1)', opacity: activeId && activeId !== slice.id ? 0.35 : 1, transition: 'transform 180ms ease, opacity 180ms ease' }} />)}
+        <circle cx="80" cy="80" r="39" fill="white" />
+        <text x="80" y={centerLabelLines.length > 1 ? '70' : '75'} textAnchor="middle" className="fill-ink-900 text-[22px] font-bold">{activeItem?.count ?? data.reduce((sum, item) => sum + item.count, 0)}</text>
+        {centerLabelLines.map((line, index) => <text key={`${line}-${index}`} x="80" y={centerLabelLines.length > 1 ? 91 + index * 10 : 99} textAnchor="middle" className="fill-ink-500 text-[8px] font-medium">{line}</text>)}
+      </svg>
       <div className="w-full space-y-3">
         {data.map((item) => (
-          <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
+          <div key={item.id} onMouseEnter={() => setActiveId(item.id)} onMouseLeave={() => setActiveId(null)} className={`flex items-center justify-between gap-3 rounded-lg px-2 py-1 text-sm transition-all ${activeId === item.id ? 'bg-ink-50 text-ink-900' : activeId ? 'opacity-40' : ''}`}>
             <span className="inline-flex items-center gap-2 text-ink-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[item.id] }} />{item.label}</span>
             <span className="font-semibold text-ink-900">{item.count}</span>
           </div>
