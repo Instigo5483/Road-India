@@ -121,6 +121,20 @@ export default function Landing() {
             >
               {t('landing.nav.categories')}
             </a>
+            <button
+              type="button"
+              onClick={() => navigate('/resolved')}
+              className="transition-colors hover:text-brand-700"
+            >
+              {t('landing.nav.resolved')}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/data')}
+              className="transition-colors hover:text-brand-700"
+            >
+              {t('landing.nav.data')}
+            </button>
           </nav>
 
           <div className="flex items-center gap-2.5">

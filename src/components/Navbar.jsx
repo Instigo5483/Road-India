@@ -11,6 +11,8 @@ import Logo from './Logo'
 const links = [
   { to: '/home', key: 'nav.home' },
   { to: '/reports', key: 'nav.reports' },
+  { to: '/resolved', key: 'nav.resolved' },
+  { to: '/data', key: 'nav.data' },
   { to: '/dashboard', key: 'nav.dashboard' },
 ]
 

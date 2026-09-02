@@ -23,6 +23,8 @@ const Home = lazy(() => import('./pages/Home'))
 const ReportFlow = lazy(() => import('./pages/ReportFlow'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const ReportsFeed = lazy(() => import('./pages/ReportsFeed'))
+const ResolvedReports = lazy(() => import('./pages/ResolvedReports'))
+const ViewData = lazy(() => import('./pages/ViewData'))
 const Settings = lazy(() => import('./pages/Settings'))
 const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const Admin = lazy(() => import('./pages/Admin'))
@@ -48,6 +50,8 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/resolved" element={<ResolvedReports />} />
+        <Route path="/data" element={<ViewData />} />
         <Route
           path="/home"
           element={
