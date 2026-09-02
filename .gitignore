@@ -15,4 +15,3 @@ firebase-debug.log
 firestore-debug.log
 scripts/serviceAccountKey.json
 .vercel
-.claude
