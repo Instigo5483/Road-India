@@ -100,6 +100,8 @@ export default {
 
   'auth.title': 'Log in to Road India',
   'auth.subtitle': 'Verify once, then file or track reports anytime.',
+  'auth.brandingSubtitle':
+    'Sign in as a citizen, administrator, or response team member — report hazards, manage infrastructure, and help keep roads safe.',
   'auth.role.title': 'How would you like to sign in?',
   'auth.role.user.label': 'User',
   'auth.role.user.desc': 'Report and track road issues as a citizen',

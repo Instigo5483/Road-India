@@ -88,7 +88,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <button
           type="button"
-          onClick={() => navigate('/home')}
+          onClick={() => navigate('/', { state: { fromNav: true } })}
           className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900"
         >
           <Logo className="h-8 w-8" />

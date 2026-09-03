@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { motion, animate } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useReports } from '../context/ReportsContext'
@@ -182,6 +182,7 @@ export default function Landing() {
   const { reports } = useReports()
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const location = useLocation()
 
   // Real counts from the reports collection (publicly readable, see
   // firestore.rules) -- no login required to compute these, so the landing
@@ -206,7 +207,14 @@ export default function Landing() {
     [reports]
   )
 
-  if (!loading && user) return <Navigate to="/home" replace />
+  // Logged-in users land here automatically get bounced to /home -- landing
+  // is a marketing/logged-out page. The one exception is the navbar's own
+  // "Road India" logo, which intentionally brings a logged-in user back to
+  // this page (see Navbar.jsx) rather than being a no-op click straight
+  // back to /home.
+  if (!loading && user && !location.state?.fromNav) {
+    return <Navigate to="/home" replace />
+  }
 
   return (
     <div className="min-h-screen bg-white text-ink-900">

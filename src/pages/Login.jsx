@@ -6,7 +6,9 @@ import { useLanguage } from '../context/LanguageContext'
 import { LANGUAGES } from '../data/languages'
 import { generateRandomName } from '../lib/randomName'
 import Button from '../components/Button'
+import Logo from '../components/Logo'
 import LanguageSelector from '../components/LanguageSelector'
+import authBackground from '../assets/auth/auth-background.jpg'
 import {
   IconShieldCheck,
   IconChevronLeft,
@@ -16,7 +18,11 @@ import {
   IconLoader,
   IconUser,
   IconSiren,
+  IconArrowRight,
 } from '../components/Icons'
+
+const OPTION_BUTTON =
+  'group flex w-full items-center justify-between rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-accent-400 hover:bg-accent-50/40'
 
 function formatId(raw) {
   const digits = raw.replace(/\D/g, '').slice(0, 12)
@@ -206,98 +212,121 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink-50 px-4 py-10">
-      <div className="w-full max-w-md">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
-        >
-          <IconChevronLeft className="h-4 w-4" />
-          {t('auth.back')}
-        </button>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-50 px-4 py-10 md:px-8">
+      <div className="absolute inset-0 z-0">
+        <img src={authBackground} alt="" className="h-full w-full object-cover opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/85 to-ink-50/90" />
+      </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card-hover"
-        >
-          <div className="flex items-center justify-between bg-brand-900 px-6 py-5 text-white">
-            <h1 className="text-lg font-bold">{t('auth.title')}</h1>
-            <LanguageSelector />
+      <div className="relative z-10 grid w-full max-w-5xl items-center gap-10 md:grid-cols-2">
+        <div className="hidden flex-col gap-6 text-left md:flex">
+          <div className="flex items-center gap-3">
+            <Logo className="h-12 w-12" />
+            <h1 className="font-display text-4xl font-bold tracking-tight text-ink-900">
+              {t('common.appName')}
+            </h1>
           </div>
+          <p className="max-w-md text-lg text-ink-500">{t('auth.brandingSubtitle')}</p>
+        </div>
 
-          <div className="px-6 py-6">
-            <p className="mb-5 text-sm text-ink-500">{t('auth.subtitle')}</p>
+        <div className="mx-auto w-full max-w-md md:mx-0 md:ml-auto">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
+          >
+            <IconChevronLeft className="h-4 w-4" />
+            {t('auth.back')}
+          </button>
 
-            <motion.div
-              key={stage}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.22 }}
-            >
-              {stage === 'role' && (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-ink-700">
-                    {t('auth.role.title')}
-                  </p>
-                  {ROLES.map((role) => (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="overflow-hidden rounded-2xl border border-white/60 bg-white/95 shadow-card-hover backdrop-blur-md"
+          >
+            <div className="flex flex-col items-center gap-2 px-6 pt-6 text-center md:hidden">
+              <Logo className="h-9 w-9" />
+              <h1 className="font-display text-xl font-bold text-ink-900">{t('common.appName')}</h1>
+            </div>
+
+            <div className="flex items-center justify-end px-6 pt-6 md:pt-6">
+              <LanguageSelector variant="neutral" />
+            </div>
+
+            <div className="px-6 pb-6 pt-2">
+              <motion.div
+                key={stage}
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.22 }}
+              >
+                {stage === 'role' && (
+                  <div className="space-y-3">
+                    <div className="mb-1">
+                      <h2 className="text-lg font-bold text-ink-900">{t('auth.role.title')}</h2>
+                      <p className="mt-1 text-sm text-ink-500">{t('auth.subtitle')}</p>
+                    </div>
+                    {ROLES.map((role) => (
+                      <button
+                        key={role.id}
+                        type="button"
+                        onClick={() => selectRole(role.id)}
+                        className={OPTION_BUTTON}
+                      >
+                        <span className="flex items-center gap-3.5">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink-100 text-ink-500 transition-colors group-hover:bg-accent-100 group-hover:text-accent-700">
+                            <role.icon className="h-5 w-5" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-ink-900">
+                              {t(role.labelKey)}
+                            </span>
+                            <span className="block text-xs text-ink-500">
+                              {t(role.descKey)}
+                            </span>
+                          </span>
+                        </span>
+                        <IconArrowRight className="h-4 w-4 shrink-0 text-ink-300 transition-colors group-hover:text-accent-600" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {stage === 'method' && (
+                  <div className="space-y-3">
+                    <h2 className="mb-1 text-lg font-bold text-ink-900">{t('auth.method.title')}</h2>
+                    {METHODS.map((method) => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => selectMethod(method.id)}
+                        className={OPTION_BUTTON}
+                      >
+                        <span className="flex items-center gap-3.5">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink-100 text-ink-500 transition-colors group-hover:bg-accent-100 group-hover:text-accent-700">
+                            <method.icon className="h-5 w-5" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-ink-900">
+                              {t(method.labelKey)}
+                            </span>
+                            <span className="block text-xs text-ink-500">
+                              {t(method.descKey)}
+                            </span>
+                          </span>
+                        </span>
+                        <IconArrowRight className="h-4 w-4 shrink-0 text-ink-300 transition-colors group-hover:text-accent-600" />
+                      </button>
+                    ))}
                     <button
-                      key={role.id}
                       type="button"
-                      onClick={() => selectRole(role.id)}
-                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
+                      onClick={() => setStage('role')}
+                      className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
                     >
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
-                        <role.icon className="h-5.5 w-5.5" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink-900">
-                          {t(role.labelKey)}
-                        </span>
-                        <span className="block text-xs text-ink-500">
-                          {t(role.descKey)}
-                        </span>
-                      </span>
+                      {t('auth.role.chooseDifferent')}
                     </button>
-                  ))}
-                </div>
-              )}
-
-              {stage === 'method' && (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-ink-700">
-                    {t('auth.method.title')}
-                  </p>
-                  {METHODS.map((method) => (
-                    <button
-                      key={method.id}
-                      type="button"
-                      onClick={() => selectMethod(method.id)}
-                      className="flex w-full items-center gap-3.5 rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-300 hover:bg-brand-50"
-                    >
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-600/10 text-brand-700">
-                        <method.icon className="h-5.5 w-5.5" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink-900">
-                          {t(method.labelKey)}
-                        </span>
-                        <span className="block text-xs text-ink-500">
-                          {t(method.descKey)}
-                        </span>
-                      </span>
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setStage('role')}
-                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
-                  >
-                    {t('auth.role.chooseDifferent')}
-                  </button>
-                </div>
-              )}
+                  </div>
+                )}
 
               {stage === 'id' && (
                 <form onSubmit={handleSendOtp} className="space-y-4">
@@ -415,6 +444,7 @@ export default function Login() {
             </motion.div>
           </div>
         </motion.div>
+        </div>
       </div>
     </div>
   )
