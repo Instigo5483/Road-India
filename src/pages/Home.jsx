@@ -16,7 +16,6 @@ import {
   IconShieldCheck,
   IconSiren,
   IconSparkle,
-  IconPhone,
   IconListChecks,
 } from '../components/Icons'
 
@@ -316,45 +315,6 @@ export default function Home() {
                   <IconArrowRight className="h-4 w-4" />
                 </button>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Emergency helplines -- real, publicly known Indian government
-            numbers (India's unified emergency number and the NHAI highway
-            patrol line), shown as informational only. Never fabricate a
-            contact channel this app doesn't actually operate. */}
-        <section className="bg-brand-950 py-8 text-white">
-          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="flex items-center gap-3.5">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emergency-600">
-                <IconPhone className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-brand-200">
-                  {t('home.helplines.eyebrow')}
-                </p>
-                <p className="text-sm font-semibold text-white">{t('home.helplines.title')}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <a
-                href="tel:1033"
-                className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-2.5 transition-colors hover:bg-white/15"
-              >
-                <span className="text-xs uppercase text-brand-200">{t('home.helplines.nhai')}</span>
-                <span className="font-display text-lg font-bold">1033</span>
-              </a>
-              <a
-                href="tel:112"
-                className="flex items-center gap-3 rounded-xl bg-white/10 px-4 py-2.5 transition-colors hover:bg-white/15"
-              >
-                <span className="text-xs uppercase text-brand-200">
-                  {t('home.helplines.national')}
-                </span>
-                <span className="font-display text-lg font-bold">112</span>
-              </a>
             </div>
           </div>
         </section>

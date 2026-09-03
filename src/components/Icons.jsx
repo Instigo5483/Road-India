@@ -96,6 +96,16 @@ export function IconChevronLeft(props) {
   )
 }
 
+export function IconMenu(props) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </Svg>
+  )
+}
+
 export function IconChevronRight(props) {
   return (
     <Svg {...props}>
@@ -290,14 +300,6 @@ export function IconEdit(props) {
     <Svg {...props}>
       <path d="M4 20l1-4.5L15.5 5 19 8.5 8.5 19 4 20Z" />
       <path d="M13 7l4 4" />
-    </Svg>
-  )
-}
-
-export function IconPhone(props) {
-  return (
-    <Svg {...props}>
-      <path d="M6 3h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2c-9 0-16-7-16-16a2 2 0 0 1 2-2Z" />
     </Svg>
   )
 }

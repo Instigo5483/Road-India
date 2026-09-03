@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
+import { SettingsProvider } from './context/SettingsContext'
 import { ReportsProvider } from './context/ReportsContext'
 import { AdminAuthProvider } from './context/AdminAuthContext'
 import { TeamAuthProvider } from './context/TeamAuthContext'
@@ -145,15 +146,17 @@ export default function App() {
     <LanguageProvider>
       <ToastProvider>
         <AuthProvider>
-          <AdminAuthProvider>
-            <TeamAuthProvider>
-              <ReportsProvider>
-                <BrowserRouter>
-                  <AnimatedRoutes />
-                </BrowserRouter>
-              </ReportsProvider>
-            </TeamAuthProvider>
-          </AdminAuthProvider>
+          <SettingsProvider>
+            <AdminAuthProvider>
+              <TeamAuthProvider>
+                <ReportsProvider>
+                  <BrowserRouter>
+                    <AnimatedRoutes />
+                  </BrowserRouter>
+                </ReportsProvider>
+              </TeamAuthProvider>
+            </AdminAuthProvider>
+          </SettingsProvider>
         </AuthProvider>
       </ToastProvider>
     </LanguageProvider>
