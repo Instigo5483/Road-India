@@ -96,6 +96,14 @@ export function IconChevronLeft(props) {
   )
 }
 
+export function IconChevronRight(props) {
+  return (
+    <Svg {...props}>
+      <path d="M9 6l6 6-6 6" />
+    </Svg>
+  )
+}
+
 export function IconChevronDown(props) {
   return (
     <Svg {...props}>
