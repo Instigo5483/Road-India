@@ -11,6 +11,7 @@ import {
   IconGlobe,
   IconLogOut,
   IconCheck,
+  IconCheckCircle,
 } from './Icons'
 
 export default function UserMenu() {
@@ -47,13 +48,19 @@ export default function UserMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-2 rounded-full border border-ink-200 py-1 pl-1 pr-2.5 transition-colors hover:border-brand-200 hover:bg-brand-50 sm:pr-3"
+        className="flex items-center gap-2.5 rounded-xl bg-ink-50 py-1.5 pl-3 pr-2 transition-colors hover:bg-ink-100"
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink-100 text-ink-500">
-          <IconUser className="h-4 w-4" />
+        <span className="hidden flex-col items-end sm:flex">
+          <span className="flex max-w-[9rem] items-center gap-1 truncate text-sm font-semibold text-ink-900">
+            <span className="truncate">{user?.name}</span>
+            <IconCheckCircle className="h-3.5 w-3.5 shrink-0 text-success-600" />
+          </span>
+          <span className="text-[11px] font-medium text-success-600">
+            {t('home.verified')}
+          </span>
         </span>
-        <span className="hidden max-w-[8rem] truncate text-sm font-medium text-ink-700 sm:inline">
-          {user?.name}
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-700 text-white">
+          <IconUser className="h-4 w-4" />
         </span>
         <IconChevronDown
           className={`h-3.5 w-3.5 text-ink-400 transition-transform ${open ? 'rotate-180' : ''}`}

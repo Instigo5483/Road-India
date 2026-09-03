@@ -6,6 +6,7 @@ import { useReports } from '../context/ReportsContext'
 import { useToast } from '../context/ToastContext'
 import { reportTypeIds, getTypesLabel, getStatus } from '../data/categoryTypes'
 import UserMenu from './UserMenu'
+import LanguageSelector from './LanguageSelector'
 import Logo from './Logo'
 
 const links = [
@@ -84,8 +85,8 @@ export default function Navbar() {
   useReportStatusAlerts()
 
   return (
-    <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-20 bg-white/90 shadow-[0_1px_8px_rgba(0,0,0,0.06)] backdrop-blur-xl">
+      <div className="mx-auto flex h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <button
           type="button"
           onClick={() => navigate('/', { state: { fromNav: true } })}
@@ -95,14 +96,14 @@ export default function Navbar() {
           {t('common.appName')}
         </button>
 
-        <nav className="hidden items-center gap-1 rounded-full bg-ink-50 p-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `relative rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                  isActive ? 'text-white' : 'text-ink-600 hover:text-brand-800'
+                `relative rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${
+                  isActive ? 'text-white' : 'text-ink-500 hover:bg-ink-100 hover:text-ink-900'
                 }`
               }
             >
@@ -111,7 +112,7 @@ export default function Navbar() {
                   {isActive && (
                     <motion.span
                       layoutId="nav-pill"
-                      className="absolute inset-0 rounded-full bg-brand-800"
+                      className="absolute inset-0 rounded-lg bg-accent-500"
                       transition={{
                         type: 'spring',
                         stiffness: 400,
@@ -126,19 +127,22 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="hidden sm:block">
+            <LanguageSelector variant="neutral" />
+          </div>
           <UserMenu />
         </div>
       </div>
 
-      <nav className="flex items-center gap-1 overflow-x-auto border-t border-ink-200 px-4 py-1.5 md:hidden">
+      <nav className="flex items-center gap-1 overflow-x-auto border-t border-ink-100 px-4 py-1.5 xl:hidden">
         {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             className={({ isActive }) =>
-              `whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                isActive ? 'bg-brand-800 text-white' : 'text-ink-600'
+              `whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                isActive ? 'bg-accent-500 text-white' : 'text-ink-500'
               }`
             }
           >
