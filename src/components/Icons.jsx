@@ -294,6 +294,14 @@ export function IconEdit(props) {
   )
 }
 
+export function IconPhone(props) {
+  return (
+    <Svg {...props}>
+      <path d="M6 3h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2c-9 0-16-7-16-16a2 2 0 0 1 2-2Z" />
+    </Svg>
+  )
+}
+
 export function IconSparkle(props) {
   return (
     <Svg {...props}>
