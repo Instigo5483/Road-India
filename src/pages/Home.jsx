@@ -10,6 +10,7 @@ import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CATEGORIES } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
+import { computeCivicPoints } from '../lib/civicPoints'
 import {
   IconArrowRight,
   IconAlertCircle,
@@ -17,6 +18,7 @@ import {
   IconSiren,
   IconSparkle,
   IconListChecks,
+  IconAward,
 } from '../components/Icons'
 
 const CATEGORY_ICON = {
@@ -114,10 +116,13 @@ function ReportCategoryCard({ category, index }) {
   )
 }
 
-function StatTile({ value, label, color }) {
+function StatTile({ value, label, color, icon }) {
   return (
     <div className="flex flex-col items-center px-4 first:pl-0 sm:items-start">
-      <span className={`font-display text-2xl font-bold ${color}`}>{value}</span>
+      <span className={`flex items-center gap-1 font-display text-2xl font-bold ${color}`}>
+        {value}
+        {icon}
+      </span>
       <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">
         {label}
       </span>
@@ -141,6 +146,7 @@ export default function Home() {
       filed: myReports.length,
       resolved: myReports.filter((r) => r.status === 'resolved').length,
       upvotes: myReports.reduce((sum, r) => sum + (r.upvotes ?? 0), 0),
+      civicPoints: computeCivicPoints(myReports),
     }),
     [myReports]
   )
@@ -202,6 +208,12 @@ export default function Home() {
                   value={myStats.upvotes}
                   label={t('home.stats.upvotes')}
                   color="text-brand-700"
+                />
+                <StatTile
+                  value={myStats.civicPoints}
+                  label={t('home.stats.civicPoints')}
+                  color="text-accent-600"
+                  icon={<IconAward className="h-4 w-4" />}
                 />
               </div>
             </div>

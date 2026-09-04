@@ -67,6 +67,21 @@ export function getEtaProgress(createdAt, etaMinutes) {
   return { totalMs, elapsedMs, remainingMs, fraction, arrived: remainingMs <= 0 }
 }
 
+/** Compact "how long did this take" label -- minutes under an hour, hours
+ * under two days, otherwise days. Used for the real resolvedAt-createdAt
+ * turnaround shown on resolved reports (see ReportCard, ResolvedReports),
+ * never a fabricated SLA figure. */
+export function formatDuration(ms) {
+  const minutes = Math.max(Math.round(ms / 60000), 1)
+  if (minutes < 60) return `${minutes} min`
+
+  const hours = Math.round(ms / 3600000)
+  if (hours < 48) return `${hours} hr${hours === 1 ? '' : 's'}`
+
+  const days = Math.round(ms / 86400000)
+  return `${days} day${days === 1 ? '' : 's'}`
+}
+
 export function formatCountdown(ms) {
   const totalSeconds = Math.max(Math.ceil(ms / 1000), 0)
   const minutes = Math.floor(totalSeconds / 60)

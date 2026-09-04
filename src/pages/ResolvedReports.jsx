@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import PageTransition from '../components/PageTransition'
@@ -10,17 +10,45 @@ import Button from '../components/Button'
 import { useReports } from '../context/ReportsContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { toDate } from '../lib/time'
+import { toDate, formatDuration } from '../lib/time'
 import { CATEGORIES } from '../data/categoryTypes'
 import { TIME_RANGES, uniqueValues } from '../lib/reportFilters'
 import FilterDropdown from '../components/FilterDropdown'
 import {
   IconCheckCircle,
   IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
   IconFilter,
   IconSearch,
+  IconStar,
+  IconClock,
   IconX,
 } from '../components/Icons'
+
+const PAGE_SIZE = 5
+
+const SORTS = [
+  { id: 'recent', key: 'resolved.sort.recent' },
+  { id: 'fastest', key: 'resolved.sort.fastest' },
+  { id: 'upvoted', key: 'resolved.sort.upvoted' },
+  { id: 'rating', key: 'resolved.sort.rating' },
+]
+
+function StatCard({ icon: Icon, label, value, sub, color }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-ink-200 bg-white p-4 shadow-card">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{label}</p>
+        <p className="mt-1 truncate font-display text-2xl font-bold text-ink-900">{value}</p>
+        {sub && <p className="mt-0.5 text-xs text-ink-500">{sub}</p>}
+      </div>
+      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${color}`}>
+        <Icon className="h-5 w-5" />
+      </span>
+    </div>
+  )
+}
 
 /** A public accountability feed: anyone can inspect completed work without
  * creating an account. ReportCard still exposes its full details/map modal. */
@@ -31,11 +59,52 @@ export default function ResolvedReports() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [sort, setSort] = useState('recent')
+  const [page, setPage] = useState(1)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [timeFilter, setTimeFilter] = useState('all')
   const [stateFilter, setStateFilter] = useState('all')
   const [districtFilter, setDistrictFilter] = useState('all')
   const [cityFilter, setCityFilter] = useState('all')
+
+  // Citywide totals -- deliberately computed from *every* resolved report,
+  // not just the ones matching the current search/filters, so the top
+  // stats read as a stable public record rather than jumping around as
+  // someone types in the search box.
+  const resolvedForStats = useMemo(
+    () => reports.filter((report) => report.status === 'resolved'),
+    [reports]
+  )
+
+  const categoryCounts = useMemo(() => {
+    const counts = { all: resolvedForStats.length }
+    CATEGORIES.forEach((category) => {
+      counts[category.id] = resolvedForStats.filter(
+        (report) => report.category === category.id
+      ).length
+    })
+    return counts
+  }, [resolvedForStats])
+
+  const ratingStats = useMemo(() => {
+    const rated = resolvedForStats.filter(
+      (report) => typeof report.citizenFeedback?.rating === 'number'
+    )
+    if (!rated.length) return { avg: null, count: 0 }
+    const avg = rated.reduce((sum, report) => sum + report.citizenFeedback.rating, 0) / rated.length
+    return { avg, count: rated.length }
+  }, [resolvedForStats])
+
+  const avgResolutionMs = useMemo(() => {
+    const withResolvedAt = resolvedForStats.filter((report) => report.resolvedAt)
+    if (!withResolvedAt.length) return null
+    const total = withResolvedAt.reduce(
+      (sum, report) =>
+        sum + (toDate(report.resolvedAt).getTime() - toDate(report.createdAt).getTime()),
+      0
+    )
+    return total / withResolvedAt.length
+  }, [resolvedForStats])
 
   const stateOptions = useMemo(
     () => uniqueValues(reports, 'state', (report) => report.status === 'resolved'),
@@ -116,7 +185,7 @@ export default function ResolvedReports() {
     setCityFilter('all')
   }
 
-  const resolvedReports = useMemo(() => {
+  const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
     return reports
       .filter((report) => report.status === 'resolved')
@@ -145,9 +214,6 @@ export default function ResolvedReports() {
         const range = TIME_RANGES.find((item) => item.id === timeFilter)
         return !range?.ms || toDate(report.createdAt).getTime() >= Date.now() - range.ms
       })
-      .sort((a, b) =>
-        toDate(b.resolvedAt ?? b.createdAt) - toDate(a.resolvedAt ?? a.createdAt)
-      )
   }, [
     reports,
     search,
@@ -157,6 +223,45 @@ export default function ResolvedReports() {
     cityFilter,
     timeFilter,
   ])
+
+  const sorted = useMemo(() => {
+    const list = [...filtered]
+    if (sort === 'fastest') {
+      list.sort((a, b) => {
+        const durationA = a.resolvedAt
+          ? toDate(a.resolvedAt).getTime() - toDate(a.createdAt).getTime()
+          : Infinity
+        const durationB = b.resolvedAt
+          ? toDate(b.resolvedAt).getTime() - toDate(b.createdAt).getTime()
+          : Infinity
+        return durationA - durationB
+      })
+    } else if (sort === 'upvoted') {
+      list.sort((a, b) => (b.upvotes ?? 0) - (a.upvotes ?? 0))
+    } else if (sort === 'rating') {
+      list.sort(
+        (a, b) => (b.citizenFeedback?.rating ?? -1) - (a.citizenFeedback?.rating ?? -1)
+      )
+    } else {
+      list.sort(
+        (a, b) => toDate(b.resolvedAt ?? b.createdAt) - toDate(a.resolvedAt ?? a.createdAt)
+      )
+    }
+    return list
+  }, [filtered, sort])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, categoryFilter, timeFilter, stateFilter, districtFilter, cityFilter, sort])
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
+  const pageSafe = Math.min(page, totalPages)
+  const paged = useMemo(
+    () => sorted.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE),
+    [sorted, pageSafe]
+  )
+
+  const categoryChips = [{ id: 'all', labelKey: 'reports.filter.all' }, ...CATEGORIES]
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -183,8 +288,11 @@ export default function ResolvedReports() {
         </div>
       </header>
 
-      <PageTransition className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="flex items-start gap-3">
+      <PageTransition className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+        <span className="text-xs font-bold uppercase tracking-widest text-brand-700">
+          {t('resolved.eyebrow')}
+        </span>
+        <div className="mt-1.5 flex items-start gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-success-500/10 text-success-600">
             <IconCheckCircle className="h-5 w-5" />
           </span>
@@ -196,119 +304,225 @@ export default function ResolvedReports() {
           </div>
         </div>
 
-        <div className="mt-6 flex items-center gap-2 rounded-full border border-ink-200 bg-white px-4 py-2.5 shadow-card">
-          <IconSearch className="h-4 w-4 shrink-0 text-ink-400" />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('resolved.searchPlaceholder')}
-            className="w-full bg-transparent text-sm text-ink-800 outline-none placeholder:text-ink-400"
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <StatCard
+            icon={IconCheckCircle}
+            label={t('resolved.stats.remediated')}
+            value={resolvedForStats.length.toLocaleString()}
+            color="bg-success-50 text-success-600"
+          />
+          <StatCard
+            icon={IconStar}
+            label={t('resolved.stats.rating')}
+            value={ratingStats.avg != null ? ratingStats.avg.toFixed(1) : '—'}
+            sub={
+              ratingStats.count > 0
+                ? t('resolved.stats.ratingCount', { count: ratingStats.count })
+                : t('resolved.stats.ratingEmpty')
+            }
+            color="bg-accent-50 text-accent-600"
+          />
+          <StatCard
+            icon={IconClock}
+            label={t('resolved.stats.avgResolution')}
+            value={avgResolutionMs != null ? formatDuration(avgResolutionMs) : '—'}
+            sub={avgResolutionMs == null ? t('resolved.stats.avgResolutionEmpty') : undefined}
+            color="bg-brand-50 text-brand-700"
           />
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {[{ id: 'all', labelKey: 'reports.filter.all' }, ...CATEGORIES].map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => setCategoryFilter(chip.id)}
-              className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
-                categoryFilter === chip.id
-                  ? 'border-brand-800 bg-brand-800 text-white'
-                  : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
-              }`}
-            >
-              {t(chip.labelKey)}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-5 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setFiltersOpen((open) => !open)}
-            aria-expanded={filtersOpen}
-            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
-          >
-            <IconFilter className="h-3.5 w-3.5" />
-            {t('reports.filter.heading')}
-            {activeFilterCount > 0 && (
-              <span className="grid h-4 w-4 place-items-center rounded-full bg-brand-800 text-[10px] font-bold normal-case text-white">
-                {activeFilterCount}
-              </span>
-            )}
-            <IconChevronDown
-              className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+        <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-4 shadow-card sm:p-5">
+          <div className="flex items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-4 py-2.5">
+            <IconSearch className="h-4 w-4 shrink-0 text-ink-400" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('resolved.searchPlaceholder')}
+              className="w-full bg-transparent text-sm text-ink-800 outline-none placeholder:text-ink-400"
             />
-          </button>
-          {hasAnyFilter && (
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {categoryChips.map((chip) => (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => setCategoryFilter(chip.id)}
+                className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  categoryFilter === chip.id
+                    ? 'border-brand-800 bg-brand-800 text-white'
+                    : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-100'
+                }`}
+              >
+                {t('reports.filter.categoryCount', {
+                  label: t(chip.labelKey),
+                  count: categoryCounts[chip.id] ?? 0,
+                })}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
             <button
               type="button"
-              onClick={clearAllFilters}
-              className="flex items-center gap-1 text-xs font-medium text-brand-700 underline-offset-2 hover:underline"
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-expanded={filtersOpen}
+              className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-400 transition-colors hover:text-brand-700"
             >
-              <IconX className="h-3 w-3" />
-              {t('reports.filter.clearAll')}
+              <IconFilter className="h-3.5 w-3.5" />
+              {t('reports.filter.heading')}
+              {activeFilterCount > 0 && (
+                <span className="grid h-4 w-4 place-items-center rounded-full bg-brand-800 text-[10px] font-bold normal-case text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+              <IconChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
+              />
             </button>
-          )}
+            {hasAnyFilter && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="flex items-center gap-1 text-xs font-medium text-brand-700 underline-offset-2 hover:underline"
+              >
+                <IconX className="h-3 w-3" />
+                {t('reports.filter.clearAll')}
+              </button>
+            )}
+          </div>
+
+          <AnimatePresence initial={false}>
+            {filtersOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-visible"
+              >
+                <div className="flex flex-wrap gap-2 pt-2.5">
+                  <FilterDropdown
+                    label={t('reports.filter.time')}
+                    value={timeFilter}
+                    onChange={setTimeFilter}
+                    options={timeOptions}
+                  />
+                  <FilterDropdown
+                    label={t('reports.filter.state')}
+                    value={stateFilter}
+                    onChange={handleStateChange}
+                    options={stateDropdownOptions}
+                  />
+                  <FilterDropdown
+                    label={t('reports.filter.district')}
+                    value={districtFilter}
+                    onChange={handleDistrictChange}
+                    options={districtDropdownOptions}
+                    disabled={districtOptions.length === 0}
+                  />
+                  <FilterDropdown
+                    label={t('reports.filter.city')}
+                    value={cityFilter}
+                    onChange={setCityFilter}
+                    options={cityDropdownOptions}
+                    disabled={cityOptions.length === 0}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-4">
+            <div className="text-xs font-medium uppercase tracking-wide text-ink-400">
+              {t('reports.filter.sortBy')}
+            </div>
+            <div className="flex flex-wrap gap-1.5 rounded-full bg-ink-100 p-1">
+              {SORTS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSort(s.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    sort === s.id ? 'bg-white text-brand-800 shadow-card' : 'text-ink-500'
+                  }`}
+                >
+                  {t(s.key)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <AnimatePresence initial={false}>
-          {filtersOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-visible"
-            >
-              <div className="flex flex-wrap gap-2 pt-2.5">
-                <FilterDropdown
-                  label={t('reports.filter.time')}
-                  value={timeFilter}
-                  onChange={setTimeFilter}
-                  options={timeOptions}
-                />
-                <FilterDropdown
-                  label={t('reports.filter.state')}
-                  value={stateFilter}
-                  onChange={handleStateChange}
-                  options={stateDropdownOptions}
-                />
-                <FilterDropdown
-                  label={t('reports.filter.district')}
-                  value={districtFilter}
-                  onChange={handleDistrictChange}
-                  options={districtDropdownOptions}
-                  disabled={districtOptions.length === 0}
-                />
-                <FilterDropdown
-                  label={t('reports.filter.city')}
-                  value={cityFilter}
-                  onChange={setCityFilter}
-                  options={cityDropdownOptions}
-                  disabled={cityOptions.length === 0}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <p className="mt-4 text-sm font-medium text-ink-500">
-          {t('resolved.count', { count: resolvedReports.length })}
+        <p className="mt-5 text-sm font-medium text-ink-500">
+          {t('resolved.count', { count: sorted.length })}
         </p>
 
         <div className="mt-4 space-y-3">
-          {resolvedReports.map((report, index) => (
-            <ReportCard
-              key={report.id}
-              report={report}
-              index={index}
-              showUpvote={false}
-            />
+          {paged.map((report, index) => (
+            <ReportCard key={report.id} report={report} index={index} showUpvote={false} />
           ))}
-          {resolvedReports.length === 0 && <EmptyState title={t('resolved.empty')} />}
+          {sorted.length === 0 && <EmptyState title={t('resolved.empty')} />}
         </div>
+
+        {sorted.length > 0 && (
+          <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-white p-3 shadow-card sm:flex-row">
+            <span className="text-sm text-ink-500">
+              {t('reports.pagination.showing', {
+                from: (pageSafe - 1) * PAGE_SIZE + 1,
+                to: Math.min(pageSafe * PAGE_SIZE, sorted.length),
+                total: sorted.length,
+              })}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={pageSafe === 1}
+                aria-label={t('reports.pagination.prev')}
+                className="grid h-9 w-9 place-items-center rounded-lg bg-ink-100 text-ink-500 transition-colors hover:bg-ink-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <IconChevronLeft className="h-4 w-4" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((n) => n === 1 || n === totalPages || Math.abs(n - pageSafe) <= 1)
+                .reduce((acc, n, i, arr) => {
+                  if (i > 0 && n - arr[i - 1] > 1) acc.push('…')
+                  acc.push(n)
+                  return acc
+                }, [])
+                .map((n, i) =>
+                  n === '…' ? (
+                    <span key={`ellipsis-${i}`} className="px-1 text-ink-300">
+                      •••
+                    </span>
+                  ) : (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPage(n)}
+                      className={`grid h-9 w-9 place-items-center rounded-lg text-sm font-semibold transition-colors ${
+                        n === pageSafe
+                          ? 'bg-brand-800 text-white'
+                          : 'bg-ink-100 text-ink-700 hover:bg-ink-200'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  )
+                )}
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={pageSafe === totalPages}
+                aria-label={t('reports.pagination.next')}
+                className="grid h-9 w-9 place-items-center rounded-lg bg-ink-100 text-ink-500 transition-colors hover:bg-ink-200 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <IconChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </PageTransition>
     </div>
   )

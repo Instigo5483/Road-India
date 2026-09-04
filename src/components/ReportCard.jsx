@@ -7,14 +7,14 @@ import {
   reportTypeIds,
   getTypesLabel,
 } from '../data/categoryTypes'
-import { timeAgo } from '../lib/time'
+import { timeAgo, toDate, formatDuration } from '../lib/time'
 import StatusBadge from './StatusBadge'
 import EmergencyEtaBadge from './EmergencyEtaBadge'
 import ReportDetailModal from './ReportDetailModal'
 import FeedbackBadge from './FeedbackBadge'
 import CategoryIcon from './CategoryIcon'
 import { SEVERITY_THEME } from './AiTriageCard'
-import { IconMapPin, IconThumbsUp, IconSparkle } from './Icons'
+import { IconMapPin, IconThumbsUp, IconSparkle, IconClock } from './Icons'
 
 export default function ReportCard({
   report,
@@ -112,6 +112,16 @@ export default function ReportCard({
             <span className="font-medium text-emergency-600">
               {t('reports.dispatched', {
                 teams: report.assignedTeams.map((a) => a.teamName).join(', '),
+              })}
+            </span>
+          )}
+          {report.status === 'resolved' && report.resolvedAt && (
+            <span className="inline-flex items-center gap-1 font-medium text-success-600">
+              <IconClock className="h-3.5 w-3.5" />
+              {t('reports.resolvedIn', {
+                duration: formatDuration(
+                  toDate(report.resolvedAt).getTime() - toDate(report.createdAt).getTime()
+                ),
               })}
             </span>
           )}

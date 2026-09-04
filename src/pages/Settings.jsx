@@ -1,16 +1,22 @@
+import { useMemo } from 'react'
 import Navbar from '../components/Navbar'
 import PageTransition from '../components/PageTransition'
 import { useAuth } from '../context/AuthContext'
+import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useSettings } from '../context/SettingsContext'
 import { maskAadhaarId } from '../lib/format'
 import { formatTimestamp } from '../lib/time'
-import { IconUser, IconShieldCheck, IconSiren } from '../components/Icons'
+import { computeCivicPoints } from '../lib/civicPoints'
+import { IconUser, IconShieldCheck, IconSiren, IconAward } from '../components/Icons'
 
 export default function Settings() {
   const { user } = useAuth()
+  const { myReports } = useReports()
   const { t } = useLanguage()
   const { nearbyRadiusKm, setNearbyRadiusKm, MIN_RADIUS_KM, MAX_RADIUS_KM } = useSettings()
+
+  const civicPoints = useMemo(() => computeCivicPoints(myReports), [myReports])
 
   return (
     <div className="min-h-screen bg-ink-50">
@@ -73,6 +79,27 @@ export default function Settings() {
 
           <p className="mt-3 text-xs leading-relaxed text-ink-400">
             {t('settings.nearby.note')}
+          </p>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-6 shadow-card sm:p-8">
+          <div className="flex items-center gap-2.5">
+            <IconAward className="h-5 w-5 text-accent-600" />
+            <h2 className="font-bold text-ink-900">{t('settings.civicPoints.heading')}</h2>
+          </div>
+          <p className="mt-0.5 text-xs text-ink-400">{t('settings.civicPoints.subtitle')}</p>
+
+          <div className="mt-4 flex items-end gap-2">
+            <span className="font-display text-3xl font-bold text-accent-600">
+              {civicPoints}
+            </span>
+            <span className="pb-1 text-xs font-medium text-ink-400">
+              {t('settings.civicPoints.period')}
+            </span>
+          </div>
+
+          <p className="mt-4 text-xs leading-relaxed text-ink-400">
+            {t('settings.civicPoints.note')}
           </p>
         </div>
 

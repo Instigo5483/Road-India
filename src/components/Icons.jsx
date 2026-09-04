@@ -304,6 +304,15 @@ export function IconEdit(props) {
   )
 }
 
+export function IconAward(props) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="8.5" r="5.5" />
+      <path d="M8.5 13.3L7 21l5-3 5 3-1.5-7.7" />
+    </Svg>
+  )
+}
+
 export function IconSparkle(props) {
   return (
     <Svg {...props}>
