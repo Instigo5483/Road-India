@@ -4,17 +4,15 @@ import PageTransition from '../components/PageTransition'
 import { useAuth } from '../context/AuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
-import { useSettings } from '../context/SettingsContext'
 import { maskAadhaarId } from '../lib/format'
 import { formatTimestamp } from '../lib/time'
 import { computeCivicPoints } from '../lib/civicPoints'
-import { IconUser, IconShieldCheck, IconSiren, IconAward } from '../components/Icons'
+import { IconUser, IconShieldCheck, IconAward } from '../components/Icons'
 
 export default function Settings() {
   const { user } = useAuth()
   const { myReports } = useReports()
   const { t } = useLanguage()
-  const { nearbyRadiusKm, setNearbyRadiusKm, MIN_RADIUS_KM, MAX_RADIUS_KM } = useSettings()
 
   const civicPoints = useMemo(() => computeCivicPoints(myReports), [myReports])
 
@@ -53,33 +51,6 @@ export default function Settings() {
               {t('settings.name.note')}
             </p>
           </div>
-        </div>
-
-        <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-5 shadow-card">
-          <div className="flex items-center gap-2">
-            <IconSiren className="h-4 w-4 shrink-0 text-emergency-600" />
-            <h2 className="text-sm font-bold text-ink-900">{t('settings.nearby.heading')}</h2>
-          </div>
-          <p className="mt-0.5 text-xs text-ink-400">{t('settings.nearby.subtitle')}</p>
-
-          <div className="mt-4 flex items-center gap-3">
-            <span className="text-xs font-medium text-ink-500">{t('settings.nearby.label')}</span>
-            <input
-              type="range"
-              min={MIN_RADIUS_KM}
-              max={MAX_RADIUS_KM}
-              value={nearbyRadiusKm}
-              onChange={(e) => setNearbyRadiusKm(Number(e.target.value))}
-              className="range-slider"
-            />
-            <span className="shrink-0 rounded-lg bg-ink-50 px-2.5 py-1 text-xs font-semibold text-ink-900">
-              {nearbyRadiusKm} km
-            </span>
-          </div>
-
-          <p className="mt-3 text-xs leading-relaxed text-ink-400">
-            {t('settings.nearby.note')}
-          </p>
         </div>
 
         <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-6 shadow-card sm:p-8">

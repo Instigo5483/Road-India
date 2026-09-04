@@ -36,28 +36,6 @@
     @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide;
   }
 
-  /* A compact <input type="range"> -- the unstyled native control (esp.
-     its thumb) renders quite large and inconsistently across browsers, so
-     this pins it to a thin track with a small, deliberately-draggable
-     circular handle instead. */
-  .range-slider {
-    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink-200 outline-none;
-  }
-  .range-slider::-webkit-slider-thumb {
-    @apply appearance-none rounded-full border-2 border-white bg-brand-700 shadow-card;
-    width: 14px;
-    height: 14px;
-    margin-top: 0;
-  }
-  .range-slider::-moz-range-thumb {
-    @apply cursor-pointer rounded-full border-2 border-white bg-brand-700 shadow-card;
-    width: 14px;
-    height: 14px;
-  }
-  .range-slider::-moz-range-track {
-    @apply rounded-full bg-transparent;
-    height: 6px;
-  }
 }
 
 /* Leaflet map container needs to sit below sticky nav / dropdowns */
