@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import PageTransition from '../components/PageTransition'
-import ReportCard from '../components/ReportCard'
+import ResolvedReportCard from '../components/ResolvedReportCard'
 import EmptyState from '../components/EmptyState'
 import LanguageSelector from '../components/LanguageSelector'
 import Logo from '../components/Logo'
@@ -23,6 +23,7 @@ import {
   IconSearch,
   IconStar,
   IconClock,
+  IconShieldCheck,
   IconX,
 } from '../components/Icons'
 
@@ -265,16 +266,47 @@ export default function ResolvedReports() {
 
   return (
     <div className="min-h-screen bg-ink-50">
-      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-20 border-b border-ink-100 bg-white/95 shadow-card backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => navigate(user ? '/home' : '/')}
-            className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900"
+            className="flex shrink-0 items-center gap-2.5 text-left"
           >
-            <Logo className="h-8 w-8" />
-            {t('common.appName')}
+            <Logo className="h-10 w-10" />
+            <span className="hidden sm:block">
+              <span className="block font-display text-lg font-bold leading-none text-ink-900">
+                {t('common.appName')}
+              </span>
+              <span className="mt-1 block text-[11px] font-medium text-ink-500">
+                {t('resolved.portalSubtitle')}
+              </span>
+            </span>
           </button>
+
+          <nav className="hidden items-center gap-1 rounded-xl bg-ink-100 p-1 lg:flex">
+            {[
+              [t('nav.home'), user ? '/home' : '/'],
+              [t('nav.reports'), user ? '/reports' : '/login'],
+              [t('nav.resolved'), '/resolved'],
+              [t('nav.data'), '/data'],
+              [t('nav.dashboard'), user ? '/dashboard' : '/login'],
+            ].map(([label, path]) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => navigate(path)}
+                className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                  path === '/resolved'
+                    ? 'bg-accent-500 text-white shadow-sm'
+                    : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
           <div className="flex items-center gap-2.5">
             <LanguageSelector variant="neutral" />
             <Button
@@ -288,20 +320,22 @@ export default function ResolvedReports() {
         </div>
       </header>
 
-      <PageTransition className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <span className="text-xs font-bold uppercase tracking-widest text-brand-700">
-          {t('resolved.eyebrow')}
-        </span>
-        <div className="mt-1.5 flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-success-500/10 text-success-600">
-            <IconCheckCircle className="h-5 w-5" />
-          </span>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">
+      <PageTransition className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <div className="flex flex-col justify-between gap-5 border-b border-ink-200 pb-5 lg:flex-row lg:items-center">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-accent-700">
+              <IconCheckCircle className="h-4 w-4" />
+              {t('resolved.eyebrow')}
+            </span>
+            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
               {t('resolved.title')}
             </h1>
-            <p className="mt-1 text-ink-500">{t('resolved.subtitle')}</p>
+            <p className="mt-2 max-w-2xl text-ink-500">{t('resolved.subtitle')}</p>
           </div>
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-ink-100 px-3 py-2 text-xs font-semibold text-ink-600 shadow-sm">
+            <IconShieldCheck className="h-4 w-4 text-success-600" />
+            {t('resolved.liveData')}
+          </span>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -460,7 +494,7 @@ export default function ResolvedReports() {
 
         <div className="mt-4 space-y-3">
           {paged.map((report, index) => (
-            <ReportCard key={report.id} report={report} index={index} showUpvote={false} />
+            <ResolvedReportCard key={report.id} report={report} index={index} />
           ))}
           {sorted.length === 0 && <EmptyState title={t('resolved.empty')} />}
         </div>

@@ -11,7 +11,7 @@ import CategoryIcon from '../components/CategoryIcon'
 import StatusBadge from '../components/StatusBadge'
 import { CATEGORIES, getCategory, getTypesLabel, reportTypeIds } from '../data/categoryTypes'
 import { toDate, timeAgo } from '../lib/time'
-import { IconArrowRight, IconMapPin, IconSiren, IconLocate, IconClock, IconChevronRight } from '../components/Icons'
+import { IconArrowRight, IconMapPin, IconLocate, IconClock, IconChevronRight } from '../components/Icons'
 import heroHighway from '../assets/landing/hero-highway.jpg'
 import heroWorker from '../assets/landing/hero-worker.jpg'
 import heroHazardMap from '../assets/landing/hero-hazard-map.jpg'
@@ -93,13 +93,11 @@ const STEP_OFFSET = ['', 'md:mt-10', 'md:mt-20']
 const CATEGORY_CTA = {
   accent: 'text-accent-700',
   brand: 'text-brand-700',
-  emergency: 'text-emergency-700',
 }
 
 const CARD_BAR_COLOR = {
   accent: 'bg-accent-500',
   brand: 'bg-brand-600',
-  emergency: 'bg-emergency-600',
 }
 
 /** Counts up from 0 to the real value on mount/whenever it changes, rather
@@ -252,15 +250,6 @@ export default function Landing() {
             <div className="hidden sm:block">
               <LanguageSelector variant="neutral" />
             </div>
-            <Button
-              size="sm"
-              variant="danger"
-              icon={<IconSiren className="h-4 w-4" />}
-              onClick={() => navigate('/login')}
-              className="hidden uppercase tracking-wide sm:inline-flex"
-            >
-              {t('landing.nav.reportEmergency')}
-            </Button>
             <Button size="sm" variant="secondary" onClick={() => navigate('/login')}>
               {t('landing.nav.login')}
             </Button>
@@ -318,39 +307,12 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.24 }}
-                className="relative mt-8 grid gap-4 sm:grid-cols-2"
+                className="relative mt-8 max-w-md"
               >
-                <div className="pointer-events-none absolute left-0 top-1/2 hidden h-px w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-ink-200 to-transparent sm:block" />
-
                 <button
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl bg-emergency-600 p-6 text-left shadow-[0_12px_40px_-12px_rgba(181,44,44,0.5)] transition-transform duration-300 hover:-translate-y-1.5"
-                >
-                  <span className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl transition-transform duration-700 group-hover:scale-150" />
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-white/15 shadow-inner">
-                    <IconSiren className="h-6 w-6 animate-pulse text-white" />
-                  </span>
-                  <div>
-                    <h2 className="font-display text-lg font-bold text-white">
-                      {t('landing.hero.emergencyCard.title')}
-                    </h2>
-                    <p className="mt-1.5 text-sm text-white/85">
-                      {t('landing.hero.emergencyCard.body')}
-                    </p>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-white">
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                      {t('landing.hero.emergencyCard.cta')}
-                    </span>
-                    <IconArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1.5" />
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 text-left shadow-card transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-card-hover"
+                  className="group relative flex w-full flex-col gap-4 overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 text-left shadow-card transition-transform duration-300 hover:-translate-y-1.5 hover:shadow-card-hover"
                 >
                   <span className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-brand-600/5 blur-2xl transition-transform duration-700 group-hover:scale-150" />
                   <span className="grid h-12 w-12 place-items-center rounded-xl bg-ink-100 shadow-inner">
@@ -393,7 +355,7 @@ export default function Landing() {
                 <img src={heroHighway} alt="" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="relative m-5 flex items-center gap-2 rounded-xl bg-white/95 px-3.5 py-2.5 shadow-card">
-                  <IconLocate className="h-4 w-4 shrink-0 text-emergency-600" />
+                  <IconLocate className="h-4 w-4 shrink-0 text-brand-600" />
                   <span className="text-xs font-semibold text-ink-800">
                     {t('landing.hero.mosaic.tracked')}
                   </span>
@@ -490,7 +452,7 @@ export default function Landing() {
               {t('landing.categories.subtitle')}
             </p>
 
-            <div className="mt-10 grid gap-4 text-left sm:grid-cols-3">
+            <div className="mx-auto mt-10 grid max-w-4xl gap-5 text-left sm:grid-cols-2">
               {CATEGORIES.map((category, i) => (
                 <motion.button
                   key={category.id}

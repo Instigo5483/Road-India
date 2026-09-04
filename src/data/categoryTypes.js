@@ -1,10 +1,10 @@
-// The three top-level report categories and their category-specific
+// The two top-level report categories and their category-specific
 // "type" dropdown options. Every label is an i18n key resolved through
 // LanguageContext's t() so the whole flow works in any supported language.
 //
 // `theme` keys map to Tailwind color families defined in tailwind.config.js
 // (accent = orange for everyday problems, brand = blue for civic
-// infrastructure grievances, emergency = red for urgent situations).
+// infrastructure grievances).
 
 export const CATEGORIES = [
   {
@@ -34,24 +34,6 @@ export const CATEGORIES = [
       { id: 'missing_signs', labelKey: 'type.corruption.missing_signs' },
       { id: 'no_streetlight', labelKey: 'type.corruption.no_streetlight' },
       { id: 'encroachment', labelKey: 'type.corruption.encroachment' },
-      { id: 'other', labelKey: 'type.common.other' },
-    ],
-  },
-  {
-    id: 'emergency',
-    labelKey: 'category.emergency.label',
-    taglineKey: 'category.emergency.tagline',
-    theme: 'emergency',
-    // Blinkit/Zepto-style promise: a response team is dispatched the
-    // moment an emergency report is submitted, ETA shown live from then.
-    // See lib/time.js's getEtaProgress() and components/EmergencyTracker.
-    etaMinutes: 10,
-    types: [
-      { id: 'accident', labelKey: 'type.emergency.accident' },
-      { id: 'road_clash', labelKey: 'type.emergency.road_clash' },
-      { id: 'vehicle_breakdown', labelKey: 'type.emergency.vehicle_breakdown' },
-      { id: 'fire_hazard', labelKey: 'type.emergency.fire_hazard' },
-      { id: 'medical_emergency', labelKey: 'type.emergency.medical_emergency' },
       { id: 'other', labelKey: 'type.common.other' },
     ],
   },

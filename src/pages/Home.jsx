@@ -15,7 +15,6 @@ import {
   IconArrowRight,
   IconAlertCircle,
   IconShieldCheck,
-  IconSiren,
   IconSparkle,
   IconListChecks,
   IconAward,
@@ -24,7 +23,6 @@ import {
 const CATEGORY_ICON = {
   problem: IconAlertCircle,
   corruption: IconShieldCheck,
-  emergency: IconSiren,
 }
 
 const CATEGORY_THEME = {
@@ -42,19 +40,11 @@ const CATEGORY_THEME = {
     button: 'bg-brand-700 text-white hover:bg-brand-800',
     hoverTitle: 'group-hover:text-brand-700',
   },
-  emergency: {
-    bar: 'bg-emergency-600',
-    iconBg: 'bg-emergency-100 text-emergency-700',
-    badge: 'bg-emergency-600 text-white',
-    button: 'bg-emergency-600 text-white hover:bg-emergency-700',
-    hoverTitle: 'group-hover:text-emergency-700',
-  },
 }
 
 const CATEGORY_BADGE_KEY = {
   problem: 'home.category.badge.problem',
   corruption: 'home.category.badge.corruption',
-  emergency: 'home.category.badge.emergency',
 }
 
 /** A bolder, dashboard-flavored take on the report-category action card
@@ -77,12 +67,12 @@ function ReportCategoryCard({ category, index }) {
     >
       <span className={`absolute inset-y-0 left-0 w-1.5 ${theme.bar}`} aria-hidden="true" />
 
-      <div className="space-y-4 pl-2">
-        <div className="flex items-center justify-between">
-          <span className={`grid h-14 w-14 place-items-center rounded-xl shadow-sm ${theme.iconBg}`}>
+      <div className="flex flex-1 flex-col gap-4 pl-2">
+        <div className="flex items-start justify-between gap-4">
+          <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-xl shadow-sm ${theme.iconBg}`}>
             <Icon className="h-7 w-7" />
           </span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${theme.badge}`}>
+          <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${theme.badge}`}>
             {t(CATEGORY_BADGE_KEY[category.id])}
           </span>
         </div>
@@ -96,12 +86,6 @@ function ReportCategoryCard({ category, index }) {
           </p>
         </div>
 
-        {category.etaMinutes && (
-          <div className="inline-flex items-center gap-1.5 rounded-lg bg-ink-50 px-3 py-1.5 text-xs font-semibold text-ink-600">
-            <IconSiren className="h-3.5 w-3.5" />
-            {t('home.category.emergencyEta', { minutes: category.etaMinutes })}
-          </div>
-        )}
       </div>
 
       <button
@@ -230,7 +214,7 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="mt-6 grid gap-5 lg:grid-cols-3">
+            <div className="mt-6 grid w-full gap-5 sm:grid-cols-2">
               {CATEGORIES.map((category, i) => (
                 <ReportCategoryCard key={category.id} category={category} index={i} />
               ))}

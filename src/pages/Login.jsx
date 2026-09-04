@@ -17,7 +17,6 @@ import {
   IconLockCloud,
   IconLoader,
   IconUser,
-  IconSiren,
   IconArrowRight,
 } from '../components/Icons'
 
@@ -54,12 +53,9 @@ const METHODS = [
   },
 ]
 
-// The generic "Log in" entry point offers all three sign-in types up
-// front, since real municipal staff/response teams wouldn't know to look
-// for a separate /admin or /team URL -- only "user" continues into this
-// same page's Aadhaar/DigiLocker flow; the other two are entirely
-// separate auth systems (see AdminAuthContext.jsx, TeamAuthContext.jsx)
-// with their own routes.
+// The public login entry point offers citizen and administrator access.
+// Citizen login continues into the Aadhaar/DigiLocker flow, while admin
+// authentication is handled by its own route and context.
 const ROLES = [
   {
     id: 'user',
@@ -72,12 +68,6 @@ const ROLES = [
     icon: IconLockCloud,
     labelKey: 'auth.role.admin.label',
     descKey: 'auth.role.admin.desc',
-  },
-  {
-    id: 'team',
-    icon: IconSiren,
-    labelKey: 'auth.role.team.label',
-    descKey: 'auth.role.team.desc',
   },
 ]
 
@@ -204,8 +194,6 @@ export default function Login() {
   function selectRole(roleId) {
     if (roleId === 'admin') {
       navigate('/admin/login')
-    } else if (roleId === 'team') {
-      navigate('/team/login')
     } else {
       setStage('method')
     }
