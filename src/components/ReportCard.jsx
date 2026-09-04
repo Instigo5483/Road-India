@@ -3,13 +3,11 @@ import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
 import {
-  getCategory,
   reportTypeIds,
   getTypesLabel,
 } from '../data/categoryTypes'
 import { timeAgo, toDate, formatDuration } from '../lib/time'
 import StatusBadge from './StatusBadge'
-import EmergencyEtaBadge from './EmergencyEtaBadge'
 import ReportDetailModal from './ReportDetailModal'
 import FeedbackBadge from './FeedbackBadge'
 import CategoryIcon from './CategoryIcon'
@@ -26,7 +24,6 @@ export default function ReportCard({
 }) {
   const { t, lang } = useLanguage()
   const { showToast } = useToast()
-  const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const [detailOpen, setDetailOpen] = useState(false)
 
@@ -73,18 +70,6 @@ export default function ReportCard({
               <IconSparkle className="h-2.5 w-2.5" />
               {t(`severity.${report.aiTriage.severity}`)}
             </span>
-          )}
-          {report.category === 'emergency' && (
-            <>
-              <span className="rounded-full bg-emergency-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emergency-600">
-                {t('category.emergency.label')}
-              </span>
-              <EmergencyEtaBadge
-                createdAt={report.createdAt}
-                etaMinutes={category.etaMinutes}
-                status={report.status}
-              />
-            </>
           )}
         </div>
 

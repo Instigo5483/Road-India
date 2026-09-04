@@ -7,33 +7,25 @@ import ReportCard from '../components/ReportCard'
 import ReportsMapView from '../components/ReportsMapView'
 import EmptyState from '../components/EmptyState'
 import FilterDropdown from '../components/FilterDropdown'
-import StatusBadge from '../components/StatusBadge'
-import EmergencyEtaBadge from '../components/EmergencyEtaBadge'
 import { useReports } from '../context/ReportsContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
-import { useSettings } from '../context/SettingsContext'
 import {
   CATEGORIES,
   STATUSES,
-  getCategory,
-  getTypesLabel,
-  reportTypeIds,
 } from '../data/categoryTypes'
 import { distanceKm } from '../lib/geo'
-import { toDate, timeAgo, getEtaProgress } from '../lib/time'
+import { toDate } from '../lib/time'
 import { TIME_RANGES, uniqueValues } from '../lib/reportFilters'
 import {
   IconSearch,
   IconFilter,
-  IconSiren,
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconX,
   IconListChecks,
   IconMapPin,
-  IconThumbsUp,
   IconAlertCircle,
 } from '../components/Icons'
 
@@ -45,92 +37,13 @@ const SORTS = [
 
 const PAGE_SIZE = 5
 
-/** The single most-urgent live emergency, pinned above the feed -- real
- * data only (the newest still-active emergency report), not a scripted
- * incident. Reuses the same EmergencyEtaBadge/StatusBadge every report
- * card already shows, just at a larger, harder-to-miss size. */
-function FeaturedEmergency({ report, upvoted, onUpvote }) {
-  const { t, lang } = useLanguage()
-  const category = getCategory(report.category)
-  const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl bg-emergency-600 p-5 text-white shadow-card-hover sm:p-6"
-    >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emergency-700">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emergency-600 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emergency-600" />
-              </span>
-              {t('reports.emergency.badge')}
-            </span>
-            <StatusBadge status={report.status} />
-            <span className="text-xs text-white/80">
-              {timeAgo(report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}
-            </span>
-          </div>
-
-          <h3 className="mt-2 text-lg font-bold sm:text-xl">{typeLabel || report.type}</h3>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-white/90">
-            <IconMapPin className="h-4 w-4 shrink-0" />
-            {report.location?.address ?? t('report.step2.coordinates')}
-          </p>
-          <p className="mt-2 line-clamp-2 max-w-2xl text-sm leading-relaxed text-white/85">
-            {report.description}
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <EmergencyEtaBadge
-              createdAt={report.createdAt}
-              etaMinutes={category?.etaMinutes}
-              status={report.status}
-            />
-            {report.assignedTeams?.length > 0 && (
-              <span className="rounded-full bg-black/20 px-2.5 py-1 text-xs font-semibold">
-                {t('reports.dispatched', {
-                  teams: report.assignedTeams.map((a) => a.teamName).join(', '),
-                })}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onUpvote}
-          className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-colors ${
-            upvoted ? 'bg-white text-emergency-700' : 'bg-black/20 text-white hover:bg-black/30'
-          }`}
-        >
-          <IconThumbsUp className="h-4 w-4" />
-          {report.upvotes ?? 0}
-        </button>
-      </div>
-    </motion.div>
-  )
-}
+const SUPPORTED_CATEGORY_IDS = new Set(CATEGORIES.map((category) => category.id))
 
 export default function ReportsFeed() {
   const { reports, toggleUpvote } = useReports()
   const { user } = useAuth()
   const { t } = useLanguage()
-  const { nearbyRadiusKm } = useSettings()
   const navigate = useNavigate()
-
-  // Ticks once a second so the featured-emergency selection below drops a
-  // report the instant its response ETA runs out, the same live countdown
-  // EmergencyEtaBadge already ticks for the badge text itself.
-  const [nowTick, setNowTick] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => setNowTick((n) => n + 1), 1000)
-    return () => clearInterval(id)
-  }, [])
 
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -152,7 +65,11 @@ export default function ReportsFeed() {
   // page (/resolved), so this feed's every stat, count, and filter option
   // is scoped to that same subset from the start.
   const ongoingReports = useMemo(
-    () => reports.filter((r) => r.status !== 'resolved'),
+    () =>
+      reports.filter(
+        (report) =>
+          report.status !== 'resolved' && SUPPORTED_CATEGORY_IDS.has(report.category)
+      ),
     [reports]
   )
 
@@ -160,34 +77,9 @@ export default function ReportsFeed() {
     () => ({
       active: ongoingReports.length,
       inProgress: ongoingReports.filter((r) => r.status === 'in_progress').length,
-      emergencies: ongoingReports.filter((r) => r.category === 'emergency').length,
     }),
     [ongoingReports]
   )
-
-  // Featured above the feed only while it's both nearby (within the
-  // citizen's configurable alert radius, see Settings) and still within
-  // its promised response ETA -- once either stops being true it drops
-  // out on its own, no dismiss button needed. Requires a known location;
-  // without one there's no "nearby" to judge, so nothing is featured.
-  const featuredEmergency = useMemo(() => {
-    void nowTick // re-run every tick so an expired ETA drops the report live
-    if (!userLocation) return null
-
-    const candidates = ongoingReports.filter((r) => {
-      if (r.category === 'emergency') {
-        const category = getCategory(r.category)
-        const { arrived } = getEtaProgress(r.createdAt, category?.etaMinutes ?? 10)
-        if (arrived) return false
-        const dist = distanceKm(userLocation, r.location)
-        return Number.isFinite(dist) && dist <= nearbyRadiusKm
-      }
-      return false
-    })
-
-    candidates.sort((a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime())
-    return candidates[0] ?? null
-  }, [ongoingReports, userLocation, nearbyRadiusKm, nowTick])
 
   // Cascading location filter options, derived straight from the current
   // reports so the dropdowns only ever offer values that actually exist --
@@ -285,9 +177,8 @@ export default function ReportsFeed() {
     setCityFilter('all')
   }
 
-  // Fetched once on mount rather than only when sorting by distance --
-  // the featured nearby-emergency banner needs it too, and both features
-  // share the same `userLocation` value once it resolves.
+  // Fetched once on mount so distance sorting is ready as soon as the
+  // citizen selects it.
   useEffect(() => {
     if (userLocation || locating) return
     if (!navigator.geolocation) {
@@ -360,12 +251,12 @@ export default function ReportsFeed() {
     } else if (sort === 'nearest' && userLocation) {
       list.sort((a, b) => (a._distance ?? Infinity) - (b._distance ?? Infinity))
     } else {
-      // relevance: live emergencies first, then by community support
-      list.sort((a, b) => {
-        const emergencyDelta = (b.category === 'emergency') - (a.category === 'emergency')
-        if (emergencyDelta !== 0) return emergencyDelta
-        return (b.upvotes ?? 0) - (a.upvotes ?? 0)
-      })
+      // relevance: strongest community support first, newest breaks ties
+      list.sort(
+        (a, b) =>
+          (b.upvotes ?? 0) - (a.upvotes ?? 0) ||
+          toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime()
+      )
     }
     return list
   }, [filtered, sort, userLocation])
@@ -450,17 +341,9 @@ export default function ReportsFeed() {
             <span className="font-normal text-ink-500">
               {t('reports.stats.inProgress', { count: liveStats.inProgress })}
             </span>
-            {liveStats.emergencies > 0 && (
-              <>
-                <span className="text-ink-300">•</span>
-                <span className="text-emergency-600">
-                  {t('reports.stats.emergencies', { count: liveStats.emergencies })}
-                </span>
-              </>
-            )}
           </div>
-          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-emergency-50 px-2.5 py-1 text-xs font-semibold text-emergency-600">
-            <IconSiren className="h-3 w-3" />
+          <span className="inline-flex w-fit items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+            <IconListChecks className="h-3 w-3" />
             {t('reports.live')}
           </span>
         </div>
@@ -601,18 +484,6 @@ export default function ReportsFeed() {
             <p className="mt-3 text-xs text-warning-600">{t('reports.locationDenied')}</p>
           )}
         </div>
-
-        {featuredEmergency && (
-          <div className="mt-6">
-            <FeaturedEmergency
-              report={featuredEmergency}
-              upvoted={
-                user ? (featuredEmergency.upvotedBy ?? []).includes(user.uid) : false
-              }
-              onUpvote={() => toggleUpvote(featuredEmergency.id)}
-            />
-          </div>
-        )}
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
