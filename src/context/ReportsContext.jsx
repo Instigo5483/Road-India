@@ -15,7 +15,6 @@ import {
 import { isFirebaseConfigured, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { triageReport } from '../lib/triage'
-import { dispatchEmergency } from '../lib/dispatch'
 import { useAuth } from './AuthContext'
 
 const ReportsContext = createContext(null)
@@ -65,10 +64,7 @@ export function ReportsProvider({ children }) {
         location,
         createdBy: user.uid,
         createdByName: user.name,
-        // Emergencies skip the review queue -- a response team is treated
-        // as dispatched the instant the report is filed (see
-        // components/EmergencyTracker for the live ETA shown to the user).
-        status: category === 'emergency' ? 'in_progress' : 'submitted',
+        status: 'submitted',
         upvotes: 0,
         upvotedBy: [],
         aiTriage,
@@ -88,15 +84,6 @@ export function ReportsProvider({ children }) {
         ...base,
         createdAt: serverTimestamp(),
       })
-
-      // Emergency dispatch (nearest available response team + push
-      // notification) -- fired after the report exists so it has a real
-      // id, never awaited-to-block since a flaky dispatch call shouldn't
-      // stop the citizen from having successfully filed. See
-      // lib/dispatch.js / api/_dispatch-core.js.
-      if (category === 'emergency') {
-        dispatchEmergency({ reportId: ref.id, category, types, description, location })
-      }
 
       return { id: ref.id, ...base, createdAt: new Date().toISOString() }
     },

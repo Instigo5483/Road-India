@@ -15,3 +15,4 @@ firebase-debug.log
 firestore-debug.log
 scripts/serviceAccountKey.json
 .vercel
+.stitch-reference

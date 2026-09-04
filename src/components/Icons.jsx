@@ -321,3 +321,32 @@ export function IconSparkle(props) {
     </Svg>
   )
 }
+
+export function IconHome(props) {
+  return (
+    <Svg {...props}>
+      <path d="m3 10 9-7 9 7" />
+      <path d="M5 9v11h14V9" />
+      <path d="M9 20v-6h6v6" />
+    </Svg>
+  )
+}
+
+export function IconChartBar(props) {
+  return (
+    <Svg {...props}>
+      <path d="M4 20V10h4v10" />
+      <path d="M10 20V4h4v16" />
+      <path d="M16 20v-7h4v7" />
+      <path d="M2 20h20" />
+    </Svg>
+  )
+}
+
+export function IconFolder(props) {
+  return (
+    <Svg {...props}>
+      <path d="M3 6h6l2 2h10v11H3z" />
+    </Svg>
+  )
+}

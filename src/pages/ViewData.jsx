@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageTransition from '../components/PageTransition'
+import MobileBottomNav from '../components/MobileBottomNav'
 import LanguageSelector from '../components/LanguageSelector'
 import Logo from '../components/Logo'
 import Button from '../components/Button'
@@ -8,7 +9,7 @@ import ReportHeatMap from '../components/ReportHeatMap'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useReports } from '../context/ReportsContext'
-import { CATEGORIES } from '../data/categoryTypes'
+import { CATEGORIES, normalizeCategoryId, reportTypeIds } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
 import { IconCheckCircle, IconMapPin, IconSiren, IconSparkle } from '../components/Icons'
 
@@ -20,11 +21,7 @@ const TIME_WINDOWS = [
   { id: 'all', ms: null, labelKey: 'reports.time.all' },
 ]
 
-const CATEGORY_COLORS = {
-  problem: '#f97316',
-  corruption: '#2563eb',
-  emergency: '#dc2626',
-}
+const CHART_COLORS = ['#f97316', '#2563eb', '#16a34a', '#7c3aed', '#0891b2', '#db2777', '#ca8a04', '#4f46e5', '#059669', '#ea580c', '#0284c7', '#9333ea', '#64748b']
 
 function dateKey(date) {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
@@ -163,7 +160,7 @@ function CategoryDonut({ data, t }) {
     <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row">
       <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0 overflow-visible" role="img" aria-label={t('data.category.ariaLabel')} onMouseLeave={() => setActiveId(null)}>
         <title>{t('data.category.title')}</title>
-        {slices.map((slice) => <path key={slice.id} d={slicePath(slice.start, slice.end)} fill={CATEGORY_COLORS[slice.id]} onMouseEnter={() => setActiveId(slice.id)} onFocus={() => setActiveId(slice.id)} onBlur={() => setActiveId(null)} tabIndex={0} aria-label={`${slice.label}: ${slice.count}`} style={{ cursor: 'pointer', transformOrigin: '80px 80px', transform: activeId === slice.id ? 'scale(1.08)' : 'scale(1)', opacity: activeId && activeId !== slice.id ? 0.35 : 1, transition: 'transform 180ms ease, opacity 180ms ease' }} />)}
+        {slices.map((slice) => <path key={slice.id} d={slicePath(slice.start, slice.end)} fill={slice.color} onMouseEnter={() => setActiveId(slice.id)} onFocus={() => setActiveId(slice.id)} onBlur={() => setActiveId(null)} tabIndex={0} aria-label={`${slice.label}: ${slice.count}`} style={{ cursor: 'pointer', transformOrigin: '80px 80px', transform: activeId === slice.id ? 'scale(1.08)' : 'scale(1)', opacity: activeId && activeId !== slice.id ? 0.35 : 1, transition: 'transform 180ms ease, opacity 180ms ease' }} />)}
         <circle cx="80" cy="80" r="39" fill="white" />
         <text x="80" y={centerLabelLines.length > 1 ? '70' : '75'} textAnchor="middle" className="fill-ink-900 text-[22px] font-bold">{activeItem?.count ?? data.reduce((sum, item) => sum + item.count, 0)}</text>
         {centerLabelLines.map((line, index) => <text key={`${line}-${index}`} x="80" y={centerLabelLines.length > 1 ? 91 + index * 10 : 99} textAnchor="middle" className="fill-ink-500 text-[8px] font-medium">{line}</text>)}
@@ -171,7 +168,7 @@ function CategoryDonut({ data, t }) {
       <div className="w-full space-y-3">
         {data.map((item) => (
           <div key={item.id} onMouseEnter={() => setActiveId(item.id)} onMouseLeave={() => setActiveId(null)} className={`flex items-center justify-between gap-3 rounded-lg px-2 py-1 text-sm transition-all ${activeId === item.id ? 'bg-ink-50 text-ink-900' : activeId ? 'opacity-40' : ''}`}>
-            <span className="inline-flex items-center gap-2 text-ink-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[item.id] }} />{item.label}</span>
+            <span className="inline-flex items-center gap-2 text-ink-600"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span>
             <span className="font-semibold text-ink-900">{item.count}</span>
           </div>
         ))}
@@ -190,17 +187,21 @@ export default function ViewData() {
   const range = TIME_WINDOWS.find((item) => item.id === rangeId) ?? TIME_WINDOWS[3]
 
   const scopedReports = useMemo(() => {
-    if (!range.ms) return reports
+    const supported = reports.filter(
+      (report) => normalizeCategoryId(report.category) === 'issue'
+    )
+    if (!range.ms) return supported
     const cutoff = Date.now() - range.ms
-    return reports.filter((report) => toDate(report.createdAt).getTime() >= cutoff)
+    return supported.filter((report) => toDate(report.createdAt).getTime() >= cutoff)
   }, [reports, range])
   const resolvedReports = useMemo(() => scopedReports.filter((report) => report.status === 'resolved'), [scopedReports])
   const trend = useMemo(() => getTrend(scopedReports, range), [scopedReports, range])
-  const categoryData = useMemo(() => CATEGORIES.map((category) => ({
-    id: category.id,
-    label: t(category.labelKey),
-    count: scopedReports.filter((report) => report.category === category.id).length,
-  })), [scopedReports, t])
+  const categoryData = useMemo(() => CATEGORIES[0].types.map((type, index) => ({
+    id: type.id,
+    label: t(type.labelKey),
+    color: CHART_COLORS[index % CHART_COLORS.length],
+    count: scopedReports.filter((report) => reportTypeIds(report).includes(type.id)).length,
+  })).filter((item) => item.count > 0), [scopedReports, t])
   const locationData = useMemo(() => {
     const counts = new Map()
     scopedReports.forEach((report) => {
@@ -213,7 +214,7 @@ export default function ViewData() {
   const heatReports = heatMode === 'resolved' ? resolvedReports : scopedReports
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
       <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <button type="button" onClick={() => navigate(user ? '/home' : '/')} className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900"><Logo className="h-8 w-8" />{t('common.appName')}</button>
@@ -252,6 +253,7 @@ export default function ViewData() {
 
         <section className="mt-6 rounded-2xl border border-ink-200 bg-white p-5 shadow-card sm:p-6"><div className="flex items-center gap-2"><IconMapPin className="h-5 w-5 text-brand-600" /><div><h2 className="font-display text-xl font-bold text-ink-900">{t('data.locations.title')}</h2><p className="mt-1 text-sm text-ink-500">{t('data.locations.subtitle')}</p></div></div><div className="mt-5 space-y-3">{locationData.length ? locationData.map((location) => <div key={location.name}><div className="mb-1 flex justify-between gap-3 text-sm"><span className="truncate text-ink-600">{location.name}</span><span className="font-semibold text-ink-900">{location.count}</span></div><div className="h-2 overflow-hidden rounded-full bg-ink-100"><div className="h-full rounded-full bg-brand-600" style={{ width: `${(location.count / locationData[0].count) * 100}%` }} /></div></div>) : <p className="text-sm text-ink-400">{t('data.noData')}</p>}</div></section>
       </PageTransition>
+      <MobileBottomNav />
     </div>
   )
 }

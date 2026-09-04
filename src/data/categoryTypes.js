@@ -1,16 +1,12 @@
-// The two top-level report categories and their category-specific
-// "type" dropdown options. Every label is an i18n key resolved through
+// Road problems and infrastructure-corruption complaints share one
+// reporting entry point. Every label is an i18n key resolved through
 // LanguageContext's t() so the whole flow works in any supported language.
-//
-// `theme` keys map to Tailwind color families defined in tailwind.config.js
-// (accent = orange for everyday problems, brand = blue for civic
-// infrastructure grievances).
 
 export const CATEGORIES = [
   {
-    id: 'problem',
-    labelKey: 'category.problem.label',
-    taglineKey: 'category.problem.tagline',
+    id: 'issue',
+    labelKey: 'category.issue.label',
+    taglineKey: 'category.issue.tagline',
     theme: 'accent',
     types: [
       { id: 'pothole', labelKey: 'type.problem.pothole' },
@@ -19,15 +15,6 @@ export const CATEGORIES = [
       { id: 'broken_drainage', labelKey: 'type.problem.broken_drainage' },
       { id: 'debris_on_road', labelKey: 'type.problem.debris_on_road' },
       { id: 'broken_speed_breaker', labelKey: 'type.problem.broken_speed_breaker' },
-      { id: 'other', labelKey: 'type.common.other' },
-    ],
-  },
-  {
-    id: 'corruption',
-    labelKey: 'category.corruption.label',
-    taglineKey: 'category.corruption.tagline',
-    theme: 'brand',
-    types: [
       { id: 'bad_road_quality', labelKey: 'type.corruption.bad_road_quality' },
       { id: 'no_footpath', labelKey: 'type.corruption.no_footpath' },
       { id: 'incomplete_road_work', labelKey: 'type.corruption.incomplete_road_work' },
@@ -39,8 +26,14 @@ export const CATEGORIES = [
   },
 ]
 
+const LEGACY_CATEGORY_IDS = new Set(['problem', 'corruption'])
+
+export function normalizeCategoryId(id) {
+  return id === 'issue' || LEGACY_CATEGORY_IDS.has(id) ? 'issue' : id
+}
+
 export function getCategory(id) {
-  return CATEGORIES.find((c) => c.id === id)
+  return CATEGORIES.find((c) => c.id === normalizeCategoryId(id))
 }
 
 export function getType(categoryId, typeId) {

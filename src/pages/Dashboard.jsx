@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import PageTransition from '../components/PageTransition'
+import MobileBottomNav from '../components/MobileBottomNav'
 import ReportCard from '../components/ReportCard'
 import EmptyState from '../components/EmptyState'
 import Button from '../components/Button'
@@ -25,7 +26,7 @@ export default function Dashboard() {
   const chips = [{ id: 'all', labelKey: 'dashboard.filter.all' }, ...STATUSES]
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
       <Navbar />
       <PageTransition className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">
@@ -86,6 +87,7 @@ export default function Dashboard() {
           )}
         </div>
       </PageTransition>
+      <MobileBottomNav />
     </div>
   )
 }

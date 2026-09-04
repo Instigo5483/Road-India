@@ -48,6 +48,7 @@ export default function ReportsMapView({ reports, user, onUpvote }) {
           onClose={() => setSelected(null)}
           onUpvote={() => onUpvote(selected.id)}
           upvoted={user ? (selected.upvotedBy ?? []).includes(user.uid) : false}
+          showUpvote={Boolean(user)}
         />
       )}
     </div>

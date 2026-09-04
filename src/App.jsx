@@ -11,14 +11,13 @@ import AdminProtectedRoute from './components/AdminProtectedRoute'
 import TeamProtectedRoute from './components/TeamProtectedRoute'
 import LoadingScreen from './components/LoadingScreen'
 
-import Landing from './pages/Landing'
 import Login from './pages/Login'
 
 // Route-level code splitting -- a citizen never downloads the admin/team
 // dashboards' JS (and vice versa), and each of these only loads the first
 // time its route is actually visited rather than on initial page load.
-// Landing/Login stay eager above since they're what almost every visit
-// hits first.
+// Login stays eager; the unified public/citizen home and heavier data
+// pages load only when their route is visited.
 const Home = lazy(() => import('./pages/Home'))
 const ReportFlow = lazy(() => import('./pages/ReportFlow'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -48,18 +47,11 @@ function AnimatedRoutes() {
     // via PageTransition / per-component motion props.
     <Suspense fallback={<LoadingScreen />}>
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/resolved" element={<ResolvedReports />} />
         <Route path="/data" element={<ViewData />} />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/home" element={<Home />} />
         <Route
           path="/report/:category"
           element={
@@ -76,14 +68,7 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute>
-              <ReportsFeed />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/reports" element={<ReportsFeed />} />
         <Route
           path="/settings"
           element={
@@ -134,7 +119,7 @@ function AnimatedRoutes() {
             </TeamProtectedRoute>
           }
         />
-        <Route path="*" element={<Landing />} />
+        <Route path="*" element={<Home />} />
       </Routes>
     </Suspense>
   )

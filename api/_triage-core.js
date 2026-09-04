@@ -18,7 +18,7 @@ const DEPARTMENT_BY_CATEGORY = {
 }
 
 function mockTriage({ category, description }) {
-  const severity = category === 'emergency' ? 'critical' : pickMockSeverity(description)
+  const severity = pickMockSeverity(description)
   return {
     severity,
     department: DEPARTMENT_BY_CATEGORY[category] ?? 'General Grievance Cell',

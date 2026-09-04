@@ -7,12 +7,11 @@ import StepProgress from '../components/StepProgress'
 import Button from '../components/Button'
 import PhotoUpload from '../components/PhotoUpload'
 import MapPicker from '../components/MapPicker'
-import EmergencyTracker from '../components/EmergencyTracker'
 import AiTriageCard from '../components/AiTriageCard'
 import { useLanguage } from '../context/LanguageContext'
 import { useReports } from '../context/ReportsContext'
 import { useToast } from '../context/ToastContext'
-import { getCategory } from '../data/categoryTypes'
+import { getCategory, normalizeCategoryId } from '../data/categoryTypes'
 import { formatTimestamp } from '../lib/time'
 import { distanceKm } from '../lib/geo'
 import {
@@ -66,7 +65,10 @@ export default function ReportFlow() {
   const nearbyReports = useMemo(() => {
     if (!location?.lat || !category) return []
     return reports
-      .filter((r) => r.category === category.id && r.status !== 'resolved')
+      .filter(
+        (r) =>
+          normalizeCategoryId(r.category) === category.id && r.status !== 'resolved'
+      )
       .map((r) => ({ ...r, _distance: distanceKm(location, r.location) }))
       .filter((r) => r._distance <= NEARBY_RADIUS_KM)
       .sort((a, b) => a._distance - b._distance)
@@ -97,10 +99,7 @@ export default function ReportFlow() {
 
   // Best-effort client-side spam/duplicate guard -- see the constants'
   // comment above for why this isn't real server-side rate limiting.
-  // Emergencies are never blocked by it: a genuine second emergency should
-  // never be delayed by a heuristic meant for accidental double-submits.
   function checkSpamGuard() {
-    if (category.id === 'emergency') return null
     try {
       const raw = localStorage.getItem(LAST_REPORT_KEY)
       if (!raw) return null
@@ -378,57 +377,7 @@ export default function ReportFlow() {
             </motion.div>
           )}
 
-          {step === STEP.SUCCESS &&
-            category.id === 'emergency' &&
-            submittedReport && (
-              <motion.div
-                key="success-emergency"
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-                className="flex flex-col items-center"
-              >
-                <h2 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">
-                  {t('emergency.tracker.title')}
-                </h2>
-                <p className="mt-1.5 max-w-sm text-center text-sm text-ink-500">
-                  {t('emergency.tracker.subtitle')}
-                </p>
-
-                <div className="mt-6 w-full">
-                  <EmergencyTracker
-                    createdAt={submittedReport.createdAt}
-                    etaMinutes={category.etaMinutes}
-                    status={
-                      reports.find((r) => r.id === submittedReport.id)?.status ??
-                      submittedReport.status
-                    }
-                  />
-                </div>
-
-                <div className="mt-4 w-full">
-                  <AiTriageCard triage={submittedReport.aiTriage} />
-                </div>
-
-                <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row">
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => navigate('/home')}
-                  >
-                    {t('report.success.reportAnother')}
-                  </Button>
-                  <Button
-                    className="w-full"
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    {t('report.success.viewDashboard')}
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-          {step === STEP.SUCCESS && category.id !== 'emergency' && (
+          {step === STEP.SUCCESS && (
             <motion.div
               key="success"
               initial={{ opacity: 0, scale: 0.92 }}

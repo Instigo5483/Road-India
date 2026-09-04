@@ -155,13 +155,13 @@ function RoadEmergencyIcon({ className }) {
 }
 
 const CATEGORY_ICON_COMPONENTS = {
+  issue: RoadProblemIcon,
   problem: RoadProblemIcon,
   corruption: RoadCorruptionIcon,
   emergency: RoadEmergencyIcon,
 }
 
-/** category: one of the CATEGORIES ids in data/categoryTypes.js
- * ('problem' | 'corruption' | 'emergency'). */
+/** New reports use `issue`; legacy records retain their original ids. */
 export default function CategoryIcon({ category, className = 'h-11 w-11' }) {
   const Icon = CATEGORY_ICON_COMPONENTS[category]
   return Icon ? <Icon className={className} /> : null

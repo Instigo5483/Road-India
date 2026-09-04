@@ -11,9 +11,10 @@ import { useReports } from '../context/ReportsContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { toDate, formatDuration } from '../lib/time'
-import { CATEGORIES } from '../data/categoryTypes'
+import { CATEGORIES, normalizeCategoryId } from '../data/categoryTypes'
 import { TIME_RANGES, uniqueValues } from '../lib/reportFilters'
 import FilterDropdown from '../components/FilterDropdown'
+import MobileBottomNav from '../components/MobileBottomNav'
 import {
   IconCheckCircle,
   IconChevronDown,
@@ -73,7 +74,11 @@ export default function ResolvedReports() {
   // stats read as a stable public record rather than jumping around as
   // someone types in the search box.
   const resolvedForStats = useMemo(
-    () => reports.filter((report) => report.status === 'resolved'),
+    () =>
+      reports.filter(
+        (report) =>
+          report.status === 'resolved' && normalizeCategoryId(report.category) === 'issue'
+      ),
     [reports]
   )
 
@@ -81,7 +86,7 @@ export default function ResolvedReports() {
     const counts = { all: resolvedForStats.length }
     CATEGORIES.forEach((category) => {
       counts[category.id] = resolvedForStats.filter(
-        (report) => report.category === category.id
+        (report) => normalizeCategoryId(report.category) === category.id
       ).length
     })
     return counts
@@ -191,7 +196,8 @@ export default function ResolvedReports() {
     return reports
       .filter((report) => report.status === 'resolved')
       .filter(
-        (report) => categoryFilter === 'all' || report.category === categoryFilter
+        (report) =>
+          categoryFilter === 'all' || normalizeCategoryId(report.category) === categoryFilter
       )
       .filter((report) => {
         if (!query) return true
@@ -265,7 +271,7 @@ export default function ResolvedReports() {
   const categoryChips = [{ id: 'all', labelKey: 'reports.filter.all' }, ...CATEGORIES]
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
       <header className="sticky top-0 z-20 border-b border-ink-100 bg-white/95 shadow-card backdrop-blur-xl">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <button
@@ -558,6 +564,7 @@ export default function ResolvedReports() {
           </div>
         )}
       </PageTransition>
+      <MobileBottomNav />
     </div>
   )
 }

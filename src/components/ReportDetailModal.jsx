@@ -6,13 +6,11 @@ import { useAuth } from '../context/AuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useToast } from '../context/ToastContext'
 import {
-  getCategory,
   reportTypeIds,
   getTypesLabel,
 } from '../data/categoryTypes'
 import { timeAgo, formatTimestamp } from '../lib/time'
 import StatusBadge from './StatusBadge'
-import EmergencyEtaBadge from './EmergencyEtaBadge'
 import AiTriageCard from './AiTriageCard'
 import ReportLocationMap from './ReportLocationMap'
 import ReportFeedbackForm from './ReportFeedbackForm'
@@ -86,7 +84,6 @@ export default function ReportDetailModal({
     }
   }, [onClose])
 
-  const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
 
   // Even though this renders through a portal (physically outside
@@ -122,13 +119,6 @@ export default function ReportDetailModal({
             </h2>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <StatusBadge status={report.status} />
-              {report.category === 'emergency' && (
-                <EmergencyEtaBadge
-                  createdAt={report.createdAt}
-                  etaMinutes={category?.etaMinutes}
-                  status={report.status}
-                />
-              )}
             </div>
           </div>
           {canEdit && !editing && (

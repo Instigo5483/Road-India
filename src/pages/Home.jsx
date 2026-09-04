@@ -1,320 +1,270 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import Navbar from '../components/Navbar'
 import PageTransition from '../components/PageTransition'
+import MobileBottomNav from '../components/MobileBottomNav'
+import LanguageSelector from '../components/LanguageSelector'
+import UserMenu from '../components/UserMenu'
 import ReportCard from '../components/ReportCard'
-import EmptyState from '../components/EmptyState'
+import Logo from '../components/Logo'
 import { useAuth } from '../context/AuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
-import { CATEGORIES } from '../data/categoryTypes'
+import { CATEGORIES, normalizeCategoryId } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
-import { computeCivicPoints } from '../lib/civicPoints'
 import {
   IconArrowRight,
-  IconAlertCircle,
-  IconShieldCheck,
+  IconCamera,
+  IconMapPin,
+  IconCheckCircle,
   IconSparkle,
+  IconShieldCheck,
+  IconUser,
   IconListChecks,
-  IconAward,
 } from '../components/Icons'
+import heroHighway from '../assets/landing/hero-highway.jpg'
 
-const CATEGORY_ICON = {
-  problem: IconAlertCircle,
-  corruption: IconShieldCheck,
-}
+const REPORT_CATEGORY = CATEGORIES[0]
 
-const CATEGORY_THEME = {
-  accent: {
-    bar: 'bg-accent-500',
-    iconBg: 'bg-accent-100 text-accent-700',
-    badge: 'bg-accent-50 text-accent-700',
-    button: 'bg-accent-500 text-white hover:bg-accent-600',
-    hoverTitle: 'group-hover:text-accent-700',
-  },
-  brand: {
-    bar: 'bg-brand-600',
-    iconBg: 'bg-brand-100 text-brand-700',
-    badge: 'bg-brand-50 text-brand-700',
-    button: 'bg-brand-700 text-white hover:bg-brand-800',
-    hoverTitle: 'group-hover:text-brand-700',
-  },
-}
-
-const CATEGORY_BADGE_KEY = {
-  problem: 'home.category.badge.problem',
-  corruption: 'home.category.badge.corruption',
-}
-
-/** A bolder, dashboard-flavored take on the report-category action card
- * (colored spine, icon tile, badge chip, full-width CTA) -- distinct from
- * the lighter CategoryCard used on Landing, since this is the citizen's
- * working dashboard rather than a marketing page. */
-function ReportCategoryCard({ category, index }) {
-  const { t } = useLanguage()
-  const navigate = useNavigate()
-  const theme = CATEGORY_THEME[category.theme]
-  const Icon = CATEGORY_ICON[category.id]
-  const label = t(category.labelKey)
+function Metric({ value, label, icon: Icon, tone = 'accent' }) {
+  const toneClass =
+    tone === 'success'
+      ? 'bg-success-50 text-success-700'
+      : tone === 'brand'
+        ? 'bg-brand-50 text-brand-700'
+        : 'bg-accent-50 text-accent-700'
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08, duration: 0.4, ease: 'easeOut' }}
-      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-card transition-shadow duration-300 hover:shadow-card-hover"
-    >
-      <span className={`absolute inset-y-0 left-0 w-1.5 ${theme.bar}`} aria-hidden="true" />
-
-      <div className="flex flex-1 flex-col gap-4 pl-2">
-        <div className="flex items-start justify-between gap-4">
-          <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-xl shadow-sm ${theme.iconBg}`}>
-            <Icon className="h-7 w-7" />
-          </span>
-          <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${theme.badge}`}>
-            {t(CATEGORY_BADGE_KEY[category.id])}
-          </span>
-        </div>
-
-        <div>
-          <h3 className={`text-lg font-bold text-ink-900 transition-colors ${theme.hoverTitle}`}>
-            {label}
-          </h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-ink-500">
-            {t(category.taglineKey)}
-          </p>
-        </div>
-
-      </div>
-
-      <button
-        type="button"
-        onClick={() => navigate(`/report/${category.id}`)}
-        className={`mt-6 flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-bold shadow-md transition-all duration-200 ${theme.button}`}
-      >
-        <span>{t('home.category.cta', { label })}</span>
-        <IconArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-      </button>
-    </motion.div>
+    <div className="rounded-xl bg-ink-50 p-3.5 shadow-sm">
+      <span className={`grid h-8 w-8 place-items-center rounded-lg ${toneClass}`}>
+        <Icon className="h-4 w-4" />
+      </span>
+      <p className="mt-3 font-display text-2xl font-bold leading-none text-ink-900">{value}</p>
+      <p className="mt-1 text-xs font-medium text-ink-500">{label}</p>
+    </div>
   )
 }
 
-function StatTile({ value, label, color, icon }) {
+function Step({ number, title, body, active }) {
   return (
-    <div className="flex flex-col items-center px-4 first:pl-0 sm:items-start">
-      <span className={`flex items-center gap-1 font-display text-2xl font-bold ${color}`}>
-        {value}
-        {icon}
+    <div className="flex items-start gap-3">
+      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold ${active ? 'bg-accent-600 text-white' : 'bg-white text-ink-700'}`}>
+        {number}
       </span>
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-400">
-        {label}
-      </span>
+      <div>
+        <h3 className="text-sm font-bold text-ink-900">{title}</h3>
+        <p className="mt-0.5 text-xs leading-relaxed text-ink-500">{body}</p>
+      </div>
     </div>
+  )
+}
+
+function IssueIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
+      <path d="M12 3 2.8 20h18.4L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M12 9v5M12 17.2v.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
   )
 }
 
 export default function Home() {
   const { user } = useAuth()
-  const { reports, myReports, toggleUpvote } = useReports()
+  const { reports, toggleUpvote } = useReports()
   const { t } = useLanguage()
   const navigate = useNavigate()
-  const firstName = user?.name?.split(' ')[0] ?? ''
 
-  // Every stat here comes straight from the reports collection -- no
-  // gamified points system exists in this app, so the dashboard never
-  // shows a made-up number to make a citizen's activity look bigger than
-  // it is.
-  const myStats = useMemo(
-    () => ({
-      filed: myReports.length,
-      resolved: myReports.filter((r) => r.status === 'resolved').length,
-      upvotes: myReports.reduce((sum, r) => sum + (r.upvotes ?? 0), 0),
-      civicPoints: computeCivicPoints(myReports),
-    }),
-    [myReports]
+  const supportedReports = useMemo(
+    () => reports.filter((report) => normalizeCategoryId(report.category) === 'issue'),
+    [reports]
   )
-
-  const recentReports = useMemo(
-    () =>
-      [...myReports]
-        .sort((a, b) => toDate(b.createdAt).getTime() - toDate(a.createdAt).getTime())
-        .slice(0, 3),
-    [myReports]
+  const resolvedReports = useMemo(
+    () => supportedReports
+      .filter((report) => report.status === 'resolved')
+      .sort((a, b) => toDate(b.resolvedAt || b.createdAt) - toDate(a.resolvedAt || a.createdAt)),
+    [supportedReports]
   )
+  const metrics = useMemo(() => {
+    const cities = new Set(supportedReports.map((report) => report.location?.city).filter(Boolean))
+    const rated = resolvedReports.filter((report) => report.citizenFeedback?.rating)
+    const satisfaction = rated.length
+      ? Math.round((rated.reduce((sum, report) => sum + report.citizenFeedback.rating, 0) / (rated.length * 5)) * 100)
+      : 0
+    return { filed: supportedReports.length, resolved: resolvedReports.length, satisfaction, cities: cities.size }
+  }, [supportedReports, resolvedReports])
 
-  const citywide = useMemo(() => {
-    const resolved = reports.filter((r) => r.status === 'resolved')
-    return {
-      total: reports.length,
-      resolved: resolved.length,
-      resolutionRate: reports.length ? Math.round((resolved.length / reports.length) * 100) : 0,
-    }
-  }, [reports])
+  const activeCount = supportedReports.filter((report) => report.status !== 'resolved').length
+  const desktopLinks = [
+    { to: '/home', key: 'nav.home' },
+    { to: '/reports', key: 'nav.reports' },
+    { to: '/resolved', key: 'nav.resolved' },
+    { to: '/data', key: 'nav.data' },
+    ...(user ? [{ to: '/dashboard', key: 'nav.dashboard' }] : []),
+  ]
+
+  function openReportFlow() {
+    const path = '/report/issue'
+    if (user) navigate(path)
+    else navigate('/login', { state: { from: { pathname: path } } })
+  }
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <Navbar />
-      <PageTransition>
-        {/* Welcome + personal stats */}
-        <section className="bg-white">
-          <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <span className="text-xs font-bold uppercase tracking-widest text-brand-700">
-                    {t('home.eyebrow')}
+    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
+      <header className="sticky top-0 z-30 border-b border-ink-100 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+          <button type="button" onClick={() => navigate('/home')} className="flex min-w-0 items-center gap-2 text-left">
+            <Logo className="h-8 w-8 shrink-0" />
+            <div className="min-w-0">
+              <span className="block truncate text-sm font-extrabold uppercase tracking-tight text-brand-900">{t('common.appName')}</span>
+              <span className="block max-w-28 truncate text-[10px] leading-tight text-ink-400">{user ? user.name : t('nav.home')}</span>
+            </div>
+          </button>
+
+          <div className="hidden items-center gap-1 lg:flex">
+            {desktopLinks.map(({ to, key }) => (
+              <button
+                key={to}
+                type="button"
+                onClick={() => navigate(to)}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                  to === '/home'
+                    ? 'bg-accent-50 text-accent-700'
+                    : 'text-ink-500 hover:bg-ink-50 hover:text-ink-900'
+                }`}
+              >
+                {t(key)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <LanguageSelector variant="neutral" />
+            {user ? <UserMenu /> : (
+              <button type="button" onClick={() => navigate('/login')} aria-label={t('landing.nav.login')} className="grid h-9 w-9 place-items-center rounded-full bg-brand-800 text-white shadow-sm">
+                <IconUser className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <PageTransition className="mx-auto max-w-6xl">
+        <section className="px-4 pb-5 pt-5 sm:px-6 sm:pt-10">
+          <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-12">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent-700">
+                <IconSparkle className="h-4 w-4" /> {t('landing.hero.eyebrow')}
+              </div>
+              <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-2 max-w-xl font-display text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-5xl">
+                {t('landing.hero.title')}
+              </motion.h1>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-500 sm:text-base">{t('landing.hero.subtitle')}</p>
+
+              <button type="button" onClick={openReportFlow} className="mt-5 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl bg-accent-600 px-4 py-3.5 text-white shadow-[0_10px_28px_-12px_rgba(234,88,12,0.65)] transition-transform active:scale-[0.98] lg:max-w-xl">
+                <span className="flex min-w-0 items-center gap-3 text-left">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/20"><IconCamera className="h-5 w-5" /></span>
+                  <span className="min-w-0">
+                    <span className="block text-base font-bold">{t('home.unified.cta')}</span>
+                    <span className="block truncate text-[11px] font-medium text-white/85">{t('home.unified.ctaHint')}</span>
                   </span>
-                  <span className="text-ink-300">•</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-1 text-xs font-semibold text-success-700">
-                    <IconShieldCheck className="h-3.5 w-3.5" />
-                    {t('home.verified')}
-                  </span>
+                </span>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"><IconArrowRight className="h-4 w-4" /></span>
+              </button>
+
+              <button type="button" onClick={() => navigate('/reports')} className="mx-auto mt-3 flex items-center gap-1.5 text-sm font-semibold text-ink-600 hover:text-accent-700 lg:mx-0">
+                <IconMapPin className="h-4 w-4" />
+                {t('home.unified.browse', { count: activeCount })}
+                <IconArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <div className="relative h-48 overflow-hidden rounded-xl bg-ink-900 shadow-card-hover sm:h-72 lg:h-96">
+              <img src={heroHighway} alt="" className="h-full w-full object-cover opacity-70" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-transparent to-transparent" />
+              <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 text-white">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-600"><IconShieldCheck className="h-4 w-4" /></span>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold">{t('home.unified.liveTitle')}</p>
+                    <p className="truncate text-[10px] text-white/70">{t('home.unified.liveSubtitle')}</p>
+                  </div>
                 </div>
-                <motion.h1
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-3 font-display text-2xl font-bold text-ink-900 sm:text-4xl"
-                >
-                  {t('home.welcome', { name: firstName })}
-                </motion.h1>
-                <p className="mt-2 max-w-xl text-ink-500">{t('home.intro')}</p>
+                <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold backdrop-blur">{t('home.unified.live')}</span>
               </div>
-
-              <div className="flex shrink-0 divide-x divide-ink-100 rounded-2xl border border-ink-200 bg-white p-4 shadow-card">
-                <StatTile value={myStats.filed} label={t('home.stats.filed')} color="text-ink-900" />
-                <StatTile
-                  value={myStats.resolved}
-                  label={t('home.stats.resolved')}
-                  color="text-success-600"
-                />
-                <StatTile
-                  value={myStats.upvotes}
-                  label={t('home.stats.upvotes')}
-                  color="text-brand-700"
-                />
-                <StatTile
-                  value={myStats.civicPoints}
-                  label={t('home.stats.civicPoints')}
-                  color="text-accent-600"
-                  icon={<IconAward className="h-4 w-4" />}
-                />
-              </div>
-            </div>
-
-            <div className="mt-10 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="h-6 w-1.5 rounded-full bg-accent-500" />
-                <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
-                  {t('home.subtitle')}
-                </h2>
-              </div>
-              <span className="hidden text-xs text-ink-400 sm:inline">
-                {t('home.report.hint')}
-              </span>
-            </div>
-
-            <div className="mt-6 grid w-full gap-5 sm:grid-cols-2">
-              {CATEGORIES.map((category, i) => (
-                <ReportCategoryCard key={category.id} category={category} index={i} />
-              ))}
             </div>
           </div>
         </section>
 
-        {/* Recent activity + citywide snapshot */}
-        <section className="bg-ink-50 py-12 sm:py-14">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-ink-400">
-                  {t('home.recent.eyebrow')}
-                </span>
-                <h2 className="mt-1 font-display text-xl font-bold text-ink-900 sm:text-2xl">
-                  {t('home.recent.title')}
-                </h2>
+        <section className="px-4 pb-6 sm:px-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-800">{t('home.unified.impact')}</h2>
+            <span className="text-[11px] text-ink-400">{t('resolved.liveData')}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <Metric value={metrics.filed.toLocaleString()} label={t('data.totalReports')} icon={IconListChecks} />
+            <Metric value={metrics.resolved.toLocaleString()} label={t('data.resolvedReports')} icon={IconCheckCircle} tone="success" />
+            <Metric value={`${metrics.satisfaction}%`} label={t('resolved.stats.rating')} icon={IconShieldCheck} tone="brand" />
+            <Metric value={metrics.cities.toLocaleString()} label={t('landing.stats.cities')} icon={IconMapPin} tone="brand" />
+          </div>
+        </section>
+
+        <section className="px-4 pb-6 sm:px-6">
+          <div className="mb-3">
+            <h2 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">{t('home.unified.selectTitle')}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-ink-500">{t('home.unified.selectSubtitle')}</p>
+          </div>
+          <button type="button" onClick={openReportFlow} className="w-full rounded-xl border border-ink-100 bg-white p-4 text-left shadow-card transition-transform active:scale-[0.99]">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-100 text-accent-700"><IssueIcon /></span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-ink-900">{t(REPORT_CATEGORY.labelKey)}</h3>
+                <p className="mt-0.5 text-xs text-ink-500">{t(REPORT_CATEGORY.taglineKey)}</p>
               </div>
-              {myReports.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/dashboard')}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline"
-                >
-                  {t('home.recent.viewAll', { count: myReports.length })}
-                  <IconArrowRight className="h-4 w-4" />
-                </button>
-              )}
+              <IconArrowRight className="h-5 w-5 shrink-0 text-accent-600" />
             </div>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {REPORT_CATEGORY.types.map((type) => (
+                <span key={type.id} className="rounded-full bg-ink-50 px-2.5 py-1 text-[11px] font-medium text-ink-600">{t(type.labelKey)}</span>
+              ))}
+            </div>
+          </button>
+        </section>
 
-            <div className="grid gap-5 lg:grid-cols-12">
-              <div className="flex flex-col gap-4 lg:col-span-7">
-                {recentReports.length === 0 ? (
-                  <EmptyState
-                    icon={<IconListChecks className="h-6 w-6" />}
-                    title={t('home.recent.empty.title')}
-                    subtitle={t('home.recent.empty.subtitle')}
-                  />
-                ) : (
-                  recentReports.map((report, i) => (
-                    <ReportCard
-                      key={report.id}
-                      report={report}
-                      index={i}
-                      upvoted={user ? (report.upvotedBy ?? []).includes(user.uid) : false}
-                      onUpvote={() => toggleUpvote(report.id)}
-                    />
-                  ))
-                )}
-              </div>
+        <section className="px-4 pb-6 sm:px-6">
+          <div className="rounded-xl bg-ink-100 p-5">
+            <div className="mb-4 flex items-center gap-2"><IconSparkle className="h-5 w-5 text-accent-600" /><h2 className="text-xs font-bold uppercase tracking-wider text-ink-900">{t('landing.how.title')}</h2></div>
+            <div className="space-y-4">
+              <Step number="1" active title={t('landing.how.step1.title')} body={t('landing.how.step1.body')} />
+              <Step number="2" title={t('landing.how.step2.title')} body={t('landing.how.step2.body')} />
+              <Step number="3" title={t('landing.how.step3.title')} body={t('landing.how.step3.body')} />
+            </div>
+          </div>
+        </section>
 
-              <div className="flex flex-col gap-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-card lg:col-span-5">
-                <div className="flex items-center gap-2">
-                  <IconSparkle className="h-5 w-5 text-accent-600" />
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-ink-900">
-                    {t('home.snapshot.title')}
-                  </h3>
-                </div>
+        {resolvedReports.length > 0 && (
+          <section className="px-4 pb-6 sm:px-6">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <div><span className="text-[11px] font-bold uppercase tracking-wider text-success-600">{t('landing.recent.eyebrow')}</span><h2 className="mt-0.5 font-display text-xl font-bold text-ink-900">{t('landing.recent.title')}</h2></div>
+              <button type="button" onClick={() => navigate('/resolved')} className="text-xs font-semibold text-brand-700">{t('landing.recent.viewAll')}</button>
+            </div>
+            <div className="space-y-3">
+              {resolvedReports.slice(0, 2).map((report, index) => (
+                <ReportCard key={report.id} report={report} index={index} showUpvote={Boolean(user)} upvoted={Boolean(user && (report.upvotedBy ?? []).includes(user.uid))} onUpvote={() => (user ? toggleUpvote(report.id) : navigate('/login'))} />
+              ))}
+            </div>
+          </section>
+        )}
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-xl bg-ink-50 p-3">
-                    <p className="font-display text-xl font-bold text-brand-700">
-                      {citywide.total.toLocaleString()}
-                    </p>
-                    <p className="mt-0.5 text-[11px] font-medium text-ink-500">
-                      {t('data.totalReports')}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-ink-50 p-3">
-                    <p className="font-display text-xl font-bold text-success-600">
-                      {citywide.resolved.toLocaleString()}
-                    </p>
-                    <p className="mt-0.5 text-[11px] font-medium text-ink-500">
-                      {t('data.resolvedReports')}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-ink-50 p-3">
-                    <p className="font-display text-xl font-bold text-accent-600">
-                      {citywide.resolutionRate}%
-                    </p>
-                    <p className="mt-0.5 text-[11px] font-medium text-ink-500">
-                      {t('data.resolutionRate')}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => navigate('/data')}
-                  className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-ink-200 py-2.5 text-sm font-semibold text-ink-700 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
-                >
-                  {t('home.snapshot.viewData')}
-                  <IconArrowRight className="h-4 w-4" />
-                </button>
-              </div>
+        <section className="px-4 pb-8 sm:px-6">
+          <div className="rounded-xl bg-brand-50 p-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-700"><IconShieldCheck className="h-5 w-5" /></span>
+              <div><h2 className="text-sm font-bold text-ink-900">{t('home.unified.trustTitle')}</h2><p className="mt-0.5 text-xs text-ink-500">{t('home.unified.trustSubtitle')}</p></div>
             </div>
           </div>
         </section>
       </PageTransition>
+      <MobileBottomNav />
     </div>
   )
 }

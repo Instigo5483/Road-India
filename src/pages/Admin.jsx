@@ -5,7 +5,7 @@ import { collection, onSnapshot } from 'firebase/firestore'
 import { useAdminAuth } from '../context/AdminAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
-import { CATEGORIES, STATUSES } from '../data/categoryTypes'
+import { CATEGORIES, STATUSES, normalizeCategoryId } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
 import { TIME_RANGES, uniqueValues } from '../lib/reportFilters'
 import { db, isFirebaseConfigured } from '../lib/firebase'
@@ -16,7 +16,7 @@ import Logo from '../components/Logo'
 import FilterDropdown from '../components/FilterDropdown'
 import {
   IconLogOut,
-  IconSiren,
+  IconCheckCircle,
   IconClock,
   IconListChecks,
   IconSearch,
@@ -41,6 +41,11 @@ export default function Admin() {
   const [cityFilter, setCityFilter] = useState('all')
   const [teams, setTeams] = useState([])
 
+  const managedReports = useMemo(
+    () => reports.filter((report) => normalizeCategoryId(report.category) === 'issue'),
+    [reports]
+  )
+
   useEffect(() => {
     if (!isFirebaseConfigured) return
     const unsub = onSnapshot(collection(db, 'teams'), (snap) => {
@@ -51,38 +56,36 @@ export default function Admin() {
 
   const stats = useMemo(
     () => ({
-      total: reports.length,
-      emergencies: reports.filter(
-        (r) => r.category === 'emergency' && r.status !== 'resolved'
-      ).length,
-      unresolved: reports.filter((r) => r.status !== 'resolved').length,
+      total: managedReports.length,
+      resolved: managedReports.filter((r) => r.status === 'resolved').length,
+      unresolved: managedReports.filter((r) => r.status !== 'resolved').length,
     }),
-    [reports]
+    [managedReports]
   )
 
   // Cascading location filter options, derived straight from the current
   // reports -- same pattern as the citizen Ongoing Reports feed (see
   // lib/reportFilters.js).
-  const stateOptions = useMemo(() => uniqueValues(reports, 'state'), [reports])
+  const stateOptions = useMemo(() => uniqueValues(managedReports, 'state'), [managedReports])
   const districtOptions = useMemo(
     () =>
       uniqueValues(
-        reports,
+        managedReports,
         'district',
         (r) => stateFilter === 'all' || r.location?.state === stateFilter
       ),
-    [reports, stateFilter]
+    [managedReports, stateFilter]
   )
   const cityOptions = useMemo(
     () =>
       uniqueValues(
-        reports,
+        managedReports,
         'city',
         (r) =>
           (stateFilter === 'all' || r.location?.state === stateFilter) &&
           (districtFilter === 'all' || r.location?.district === districtFilter)
       ),
-    [reports, stateFilter, districtFilter]
+    [managedReports, stateFilter, districtFilter]
   )
 
   function handleStateChange(value) {
@@ -146,9 +149,9 @@ export default function Admin() {
   }
 
   const filtered = useMemo(() => {
-    let list = reports
+    let list = managedReports
     if (categoryFilter !== 'all')
-      list = list.filter((r) => r.category === categoryFilter)
+      list = list.filter((r) => normalizeCategoryId(r.category) === categoryFilter)
     if (statusFilter !== 'all')
       list = list.filter((r) => r.status === statusFilter)
 
@@ -176,14 +179,9 @@ export default function Admin() {
       list = list.filter((r) => toDate(r.createdAt).getTime() >= cutoff)
     }
 
-    return [...list].sort((a, b) => {
-      const emergencyDelta =
-        (b.category === 'emergency') - (a.category === 'emergency')
-      if (emergencyDelta !== 0) return emergencyDelta
-      return toDate(b.createdAt) - toDate(a.createdAt)
-    })
+    return [...list].sort((a, b) => toDate(b.createdAt) - toDate(a.createdAt))
   }, [
-    reports,
+    managedReports,
     categoryFilter,
     statusFilter,
     search,
@@ -265,10 +263,10 @@ export default function Admin() {
             theme="brand"
           />
           <StatTile
-            icon={IconSiren}
-            label={t('admin.stats.emergencies')}
-            value={stats.emergencies}
-            theme="emergency"
+            icon={IconCheckCircle}
+            label={t('data.resolvedReports')}
+            value={stats.resolved}
+            theme="success"
           />
           <StatTile
             icon={IconClock}
@@ -416,8 +414,8 @@ export default function Admin() {
 
 const STAT_THEME = {
   brand: 'bg-brand-600/10 text-brand-700',
-  emergency: 'bg-emergency-500/10 text-emergency-600',
   accent: 'bg-accent-500/10 text-accent-600',
+  success: 'bg-success-500/10 text-success-600',
 }
 
 function StatTile({ icon: Icon, label, value, theme }) {

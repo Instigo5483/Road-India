@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '../context/AdminAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
-import { CATEGORIES, STATUSES } from '../data/categoryTypes'
+import { CATEGORIES, STATUSES, normalizeCategoryId } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
 import Logo from '../components/Logo'
 import { IconLogOut, IconChevronLeft } from '../components/Icons'
@@ -40,7 +40,7 @@ export default function AdminAnalytics() {
         id: c.id,
         label: t(c.labelKey),
         theme: c.theme,
-        count: reports.filter((r) => r.category === c.id).length,
+        count: reports.filter((r) => normalizeCategoryId(r.category) === c.id).length,
       })),
     [reports, t]
   )

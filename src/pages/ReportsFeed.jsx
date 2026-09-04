@@ -7,12 +7,14 @@ import ReportCard from '../components/ReportCard'
 import ReportsMapView from '../components/ReportsMapView'
 import EmptyState from '../components/EmptyState'
 import FilterDropdown from '../components/FilterDropdown'
+import MobileBottomNav from '../components/MobileBottomNav'
 import { useReports } from '../context/ReportsContext'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import {
   CATEGORIES,
   STATUSES,
+  normalizeCategoryId,
 } from '../data/categoryTypes'
 import { distanceKm } from '../lib/geo'
 import { toDate } from '../lib/time'
@@ -36,8 +38,6 @@ const SORTS = [
 ]
 
 const PAGE_SIZE = 5
-
-const SUPPORTED_CATEGORY_IDS = new Set(CATEGORIES.map((category) => category.id))
 
 export default function ReportsFeed() {
   const { reports, toggleUpvote } = useReports()
@@ -68,7 +68,7 @@ export default function ReportsFeed() {
     () =>
       reports.filter(
         (report) =>
-          report.status !== 'resolved' && SUPPORTED_CATEGORY_IDS.has(report.category)
+          report.status !== 'resolved' && normalizeCategoryId(report.category) === 'issue'
       ),
     [reports]
   )
@@ -210,7 +210,8 @@ export default function ReportsFeed() {
 
   const filtered = useMemo(() => {
     let list = withDistance
-    if (categoryFilter !== 'all') list = list.filter((r) => r.category === categoryFilter)
+    if (categoryFilter !== 'all')
+      list = list.filter((r) => normalizeCategoryId(r.category) === categoryFilter)
     if (statusFilter !== 'all') list = list.filter((r) => r.status === statusFilter)
     if (search.trim()) {
       const q = search.trim().toLowerCase()
@@ -275,7 +276,9 @@ export default function ReportsFeed() {
   const categoryCounts = useMemo(() => {
     const counts = { all: ongoingReports.length }
     CATEGORIES.forEach((c) => {
-      counts[c.id] = ongoingReports.filter((r) => r.category === c.id).length
+      counts[c.id] = ongoingReports.filter(
+        (r) => normalizeCategoryId(r.category) === c.id
+      ).length
     })
     return counts
   }, [ongoingReports])
@@ -283,7 +286,7 @@ export default function ReportsFeed() {
   const categoryChips = [{ id: 'all', labelKey: 'reports.filter.all' }, ...CATEGORIES]
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
       <Navbar />
       <PageTransition className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -494,7 +497,11 @@ export default function ReportsFeed() {
 
         {viewMode === 'map' ? (
           <div className="mt-4">
-            <ReportsMapView reports={sorted} user={user} onUpvote={(id) => toggleUpvote(id)} />
+            <ReportsMapView
+              reports={sorted}
+              user={user}
+              onUpvote={(id) => (user ? toggleUpvote(id) : navigate('/login'))}
+            />
           </div>
         ) : (
           <>
@@ -506,7 +513,8 @@ export default function ReportsFeed() {
                   index={i}
                   distanceKm={report._distance}
                   upvoted={user ? (report.upvotedBy ?? []).includes(user.uid) : false}
-                  onUpvote={() => toggleUpvote(report.id)}
+                  showUpvote={Boolean(user)}
+                  onUpvote={() => (user ? toggleUpvote(report.id) : navigate('/login'))}
                 />
               ))}
 
@@ -580,6 +588,7 @@ export default function ReportsFeed() {
           </>
         )}
       </PageTransition>
+      <MobileBottomNav />
     </div>
   )
 }
