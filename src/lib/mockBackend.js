@@ -69,6 +69,12 @@ export const mockBackend = {
       }
       users.push(user)
       writeStore(STORAGE_KEYS.users, users)
+    } else if (preferredLanguage && user.preferredLanguage !== preferredLanguage) {
+      user = { ...user, preferredLanguage }
+      users = users.map((storedUser) =>
+        storedUser.uid === user.uid ? user : storedUser
+      )
+      writeStore(STORAGE_KEYS.users, users)
     }
     session = user
     writeStore(STORAGE_KEYS.session, session)

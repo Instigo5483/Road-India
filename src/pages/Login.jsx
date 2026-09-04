@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
@@ -8,171 +8,122 @@ import { generateRandomName } from '../lib/randomName'
 import Button from '../components/Button'
 import Logo from '../components/Logo'
 import LanguageSelector from '../components/LanguageSelector'
-import authBackground from '../assets/auth/auth-background.jpg'
 import {
-  IconShieldCheck,
-  IconChevronLeft,
   IconAlertCircle,
+  IconArrowRight,
+  IconChevronLeft,
   IconFingerprint,
   IconLockCloud,
-  IconLoader,
+  IconShieldCheck,
   IconUser,
-  IconArrowRight,
 } from '../components/Icons'
 
-const OPTION_BUTTON =
-  'group flex w-full items-center justify-between rounded-xl border border-ink-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-accent-400 hover:bg-accent-50/40'
+const DIGILOCKER_ID_KEY = 'road_india_mock_digilocker_id'
 
 function formatId(raw) {
   const digits = raw.replace(/\D/g, '').slice(0, 12)
   return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
 }
 
-function isValidId(raw) {
-  return raw.replace(/\D/g, '').length === 12
+function plainId(value) {
+  return value.replace(/\D/g, '')
 }
 
-function generateId() {
-  let digits = ''
-  for (let i = 0; i < 12; i++) digits += Math.floor(Math.random() * 10)
-  return digits
+function randomTwelveDigits() {
+  return Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('')
 }
 
-const METHODS = [
-  {
-    id: 'aadhaar',
-    icon: IconFingerprint,
-    labelKey: 'auth.method.aadhaar.label',
-    descKey: 'auth.method.aadhaar.desc',
-  },
-  {
-    id: 'digilocker',
-    icon: IconLockCloud,
-    labelKey: 'auth.method.digilocker.label',
-    descKey: 'auth.method.digilocker.desc',
-  },
-]
-
-// The public login entry point offers citizen and administrator access.
-// Citizen login continues into the Aadhaar/DigiLocker flow, while admin
-// authentication is handled by its own route and context.
-const ROLES = [
-  {
-    id: 'user',
-    icon: IconUser,
-    labelKey: 'auth.role.user.label',
-    descKey: 'auth.role.user.desc',
-  },
-  {
-    id: 'admin',
-    icon: IconLockCloud,
-    labelKey: 'auth.role.admin.label',
-    descKey: 'auth.role.admin.desc',
-  },
-]
+function getMockDigiLockerId() {
+  try {
+    const saved = localStorage.getItem(DIGILOCKER_ID_KEY)
+    if (saved?.length === 12) return saved
+    const generated = randomTwelveDigits()
+    localStorage.setItem(DIGILOCKER_ID_KEY, generated)
+    return generated
+  } catch {
+    return randomTwelveDigits()
+  }
+}
 
 export default function Login() {
-  const { completeLogin } = useAuth()
-  const { t, lang } = useLanguage()
+  const { completeLogin, logout } = useAuth()
+  const { t, lang, setLang } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname ?? '/home'
 
-  const [stage, setStage] = useState('role') // 'role' | 'method' | 'id' | 'otp' | 'digilocker' | 'profile'
-  const [method, setMethod] = useState('') // 'aadhaar' | 'digilocker' -- which verification path supplied the name
-  const [digilockerId, setDigilockerId] = useState('')
+  const [method, setMethod] = useState('aadhaar')
+  const [aadhaarStage, setAadhaarStage] = useState('number')
+  const [aadhaar, setAadhaar] = useState('')
   const [otp, setOtp] = useState('')
-  const [name, setName] = useState('')
+  const [screen, setScreen] = useState('auth')
+  const [verifiedId, setVerifiedId] = useState('')
+  const [accountName, setAccountName] = useState('')
   const [preferredLanguage, setPreferredLanguage] = useState(lang)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const demoOtp = useMemo(
-    () => String(Math.floor(100000 + Math.random() * 900000)),
-    [stage]
-  )
+  function selectMethod(nextMethod) {
+    setMethod(nextMethod)
+    setAadhaarStage('number')
+    setOtp('')
+    setError('')
+  }
 
-  // A real Aadhaar/DigiLocker verification returns the citizen's name as
-  // part of the identity response -- this app never asks them to type it
-  // themselves (see lib/randomName.js). But it should be *their real*
-  // name, not just any freshly-made-up one: resolving the account here,
-  // right after the ID is verified, means a returning citizen sees their
-  // own existing name on the confirmation screen below, instead of a
-  // brand-new random one that then gets silently swapped out the moment
-  // they click "Enter Road India". The random name is only actually used
-  // if this citizen has genuinely never signed in before.
-  async function resolveIdentity(id) {
-    const previewName = generateRandomName()
+  function handleAadhaarNext(event) {
+    event.preventDefault()
+    if (plainId(aadhaar).length !== 12) {
+      setError(t('auth.error.invalidId'))
+      return
+    }
+    setError('')
+    setAadhaarStage('otp')
+  }
+
+  async function verifyIdentity(id) {
+    setBusy(true)
+    setError('')
     try {
-      const resolved = await completeLogin({
+      const account = await completeLogin({
         digilockerId: id,
-        name: previewName,
-        preferredLanguage,
+        name: generateRandomName(),
+        preferredLanguage: lang,
       })
-      setName(resolved?.name || previewName)
+      setVerifiedId(id)
+      setAccountName(account.name)
+      setPreferredLanguage(account.preferredLanguage || lang)
+      setScreen('profile')
     } catch {
-      // Best-effort here -- if this fails (a real backend hiccup), show
-      // the preview name for now; handleFinish's own completeLogin call
-      // retries the real resolution before actually entering the app.
-      setName(previewName)
-    }
-  }
-
-  // DigiLocker path skips manual ID entry entirely -- a real DigiLocker
-  // OAuth redirect already knows the user's verified identity, so this
-  // simulates that hand-off with a brief "connecting" beat before landing
-  // on the same profile step the Aadhaar path uses.
-  useEffect(() => {
-    if (stage !== 'digilocker') return
-    let cancelled = false
-    const id = generateId()
-    setDigilockerId(id)
-
-    Promise.all([resolveIdentity(id), new Promise((r) => setTimeout(r, 1200))]).then(() => {
-      if (!cancelled) setStage('profile')
-    })
-
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage])
-
-  function handleSendOtp(e) {
-    e.preventDefault()
-    if (!isValidId(digilockerId)) return setError(t('auth.error.invalidId'))
-    setError('')
-    setBusy(true)
-    setTimeout(() => {
-      setBusy(false)
-      setStage('otp')
-    }, 700)
-  }
-
-  async function handleVerifyOtp(e) {
-    e.preventDefault()
-    if (otp.trim().length !== 6) return setError(t('auth.error.invalidOtp'))
-    setError('')
-    setBusy(true)
-    try {
-      await new Promise((r) => setTimeout(r, 700))
-      await resolveIdentity(digilockerId.replace(/\D/g, ''))
-      setStage('profile')
+      setError(t('auth.error.loginFailed'))
     } finally {
       setBusy(false)
     }
   }
 
-  async function handleFinish(e) {
-    e.preventDefault()
+  async function handleOtpSubmit(event) {
+    event.preventDefault()
+    if (otp.length !== 6) {
+      setError(t('auth.error.invalidOtp'))
+      return
+    }
+    await verifyIdentity(plainId(aadhaar))
+  }
+
+  async function handleDigiLockerLogin() {
+    await verifyIdentity(getMockDigiLockerId())
+  }
+
+  async function handleProfileFinish(event) {
+    event.preventDefault()
     setBusy(true)
     setError('')
     try {
       await completeLogin({
-        digilockerId: digilockerId.replace(/\D/g, ''),
-        name: name.trim(),
+        digilockerId: verifiedId,
+        name: accountName,
         preferredLanguage,
       })
+      setLang(preferredLanguage)
       navigate(from, { replace: true })
     } catch {
       setError(t('auth.error.loginFailed'))
@@ -181,259 +132,183 @@ export default function Login() {
     }
   }
 
-  function selectMethod(methodId) {
+  async function chooseAnotherAccount() {
+    await logout()
+    setScreen('auth')
+    setAadhaarStage('number')
+    setAadhaar('')
+    setOtp('')
+    setVerifiedId('')
+    setAccountName('')
     setError('')
-    setMethod(methodId)
-    if (methodId === 'aadhaar') {
-      setStage('id')
-    } else {
-      setStage('digilocker')
-    }
-  }
-
-  function selectRole(roleId) {
-    if (roleId === 'admin') {
-      navigate('/admin/login')
-    } else {
-      setStage('method')
-    }
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-50 px-4 py-10 md:px-8">
-      <div className="absolute inset-0 z-0">
-        <img src={authBackground} alt="" className="h-full w-full object-cover opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-br from-white/85 to-ink-50/90" />
-      </div>
-
-      <div className="relative z-10 grid w-full max-w-5xl items-center gap-10 md:grid-cols-2">
-        <div className="hidden flex-col gap-6 text-left md:flex">
-          <div className="flex items-center gap-3">
-            <Logo className="h-12 w-12" />
-            <h1 className="font-display text-4xl font-bold tracking-tight text-ink-900">
-              {t('common.appName')}
-            </h1>
+    <div className="min-h-screen bg-ink-50">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-ink-100 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+          <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-left">
+            <Logo className="h-8 w-8" />
+            <span className="font-display text-lg font-bold tracking-tight text-brand-900">{t('common.appName')}</span>
+          </button>
+          <div className="flex items-center gap-2">
+            <LanguageSelector variant="neutral" />
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-700 text-white">
+              <IconUser className="h-4 w-4" />
+            </span>
           </div>
-          <p className="max-w-md text-lg text-ink-500">{t('auth.brandingSubtitle')}</p>
+        </div>
+      </header>
+
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pb-8 pt-20 sm:px-6 lg:justify-center lg:py-24">
+        <button type="button" onClick={() => navigate('/')} className="mb-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-ink-500 transition-colors hover:text-accent-700">
+          <IconChevronLeft className="h-4 w-4" />
+          {t('auth.back')}
+        </button>
+
+        <div className="mb-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-accent-700">{t('auth.portalLabel')}</p>
+          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-ink-900">
+            {screen === 'profile' ? t('auth.profile.title') : t('auth.title')}
+          </h1>
+          <p className="mt-1 text-sm leading-relaxed text-ink-500">
+            {screen === 'profile' ? t('auth.profile.subtitle') : t('auth.subtitle')}
+          </p>
         </div>
 
-        <div className="mx-auto w-full max-w-md md:mx-0 md:ml-auto">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
-          >
-            <IconChevronLeft className="h-4 w-4" />
-            {t('auth.back')}
-          </button>
+        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-ink-200 bg-white p-4 shadow-card sm:p-5">
+          {screen === 'auth' ? (
+            <>
+              <p className="mb-2 text-sm font-bold text-ink-900">{t('auth.role.select')}</p>
+              <div className="grid grid-cols-2 rounded-lg bg-ink-100 p-1">
+                <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-md bg-white text-sm font-semibold text-accent-800 shadow-sm">
+                  <IconUser className="h-4 w-4" /> {t('auth.role.user.label')}
+                </button>
+                <button type="button" onClick={() => navigate('/admin/login')} className="flex h-10 items-center justify-center gap-2 rounded-md text-sm font-semibold text-ink-500 transition-colors hover:text-ink-900">
+                  <IconLockCloud className="h-4 w-4" /> {t('auth.role.admin.label')}
+                </button>
+              </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="overflow-hidden rounded-2xl border border-white/60 bg-white/95 shadow-card-hover backdrop-blur-md"
-          >
-            <div className="flex flex-col items-center gap-2 px-6 pt-6 text-center md:hidden">
-              <Logo className="h-9 w-9" />
-              <h1 className="font-display text-xl font-bold text-ink-900">{t('common.appName')}</h1>
-            </div>
+              <div className="mt-4 grid grid-cols-2 rounded-lg bg-ink-100 p-1">
+                <button type="button" onClick={() => selectMethod('aadhaar')} className={`min-h-11 rounded-md px-2 text-xs font-semibold transition-all ${method === 'aadhaar' ? 'bg-white text-accent-800 shadow-sm' : 'text-ink-500'}`}>
+                  {t('auth.method.aadhaar.label')} + OTP
+                </button>
+                <button type="button" onClick={() => selectMethod('digilocker')} className={`min-h-11 rounded-md px-2 text-xs font-semibold transition-all ${method === 'digilocker' ? 'bg-white text-brand-700 shadow-sm' : 'text-ink-500'}`}>
+                  {t('auth.method.digilocker.label')}
+                </button>
+              </div>
 
-            <div className="flex items-center justify-end px-6 pt-6 md:pt-6">
-              <LanguageSelector variant="neutral" />
-            </div>
-
-            <div className="px-6 pb-6 pt-2">
-              <motion.div
-                key={stage}
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.22 }}
-              >
-                {stage === 'role' && (
-                  <div className="space-y-3">
-                    <div className="mb-1">
-                      <h2 className="text-lg font-bold text-ink-900">{t('auth.role.title')}</h2>
-                      <p className="mt-1 text-sm text-ink-500">{t('auth.subtitle')}</p>
-                    </div>
-                    {ROLES.map((role) => (
-                      <button
-                        key={role.id}
-                        type="button"
-                        onClick={() => selectRole(role.id)}
-                        className={OPTION_BUTTON}
-                      >
-                        <span className="flex items-center gap-3.5">
-                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink-100 text-ink-500 transition-colors group-hover:bg-accent-100 group-hover:text-accent-700">
-                            <role.icon className="h-5 w-5" />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold text-ink-900">
-                              {t(role.labelKey)}
-                            </span>
-                            <span className="block text-xs text-ink-500">
-                              {t(role.descKey)}
-                            </span>
-                          </span>
-                        </span>
-                        <IconArrowRight className="h-4 w-4 shrink-0 text-ink-300 transition-colors group-hover:text-accent-600" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {stage === 'method' && (
-                  <div className="space-y-3">
-                    <h2 className="mb-1 text-lg font-bold text-ink-900">{t('auth.method.title')}</h2>
-                    {METHODS.map((method) => (
-                      <button
-                        key={method.id}
-                        type="button"
-                        onClick={() => selectMethod(method.id)}
-                        className={OPTION_BUTTON}
-                      >
-                        <span className="flex items-center gap-3.5">
-                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-ink-100 text-ink-500 transition-colors group-hover:bg-accent-100 group-hover:text-accent-700">
-                            <method.icon className="h-5 w-5" />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold text-ink-900">
-                              {t(method.labelKey)}
-                            </span>
-                            <span className="block text-xs text-ink-500">
-                              {t(method.descKey)}
-                            </span>
-                          </span>
-                        </span>
-                        <IconArrowRight className="h-4 w-4 shrink-0 text-ink-300 transition-colors group-hover:text-accent-600" />
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setStage('role')}
-                      className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
-                    >
-                      {t('auth.role.chooseDifferent')}
-                    </button>
-                  </div>
-                )}
-
-              {stage === 'id' && (
-                <form onSubmit={handleSendOtp} className="space-y-4">
-                  <Field label={t('auth.digilockerId.label')}>
+              <motion.div key={`${method}-${aadhaarStage}`} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}>
+            {method === 'aadhaar' && aadhaarStage === 'number' && (
+              <form onSubmit={handleAadhaarNext} className="mt-5 space-y-4">
+                <Field label={t('auth.digilockerId.label')}>
+                  <div className="relative">
+                    <IconFingerprint className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
-                      value={digilockerId}
-                      onChange={(e) =>
-                        setDigilockerId(formatId(e.target.value))
-                      }
+                      value={aadhaar}
+                      onChange={(event) => { setAadhaar(formatId(event.target.value)); setError('') }}
                       placeholder={t('auth.digilockerId.placeholder')}
                       inputMode="numeric"
-                      className="input-field"
+                      autoComplete="off"
                       autoFocus
+                      className="input-field h-12 pl-10 font-mono tracking-wider"
                     />
-                  </Field>
-                  <ErrorText message={error} />
-                  <Button type="submit" className="w-full" loading={busy}>
-                    {busy ? t('auth.sendingOtp') : t('auth.sendOtp')}
-                  </Button>
-                  <p className="text-center text-xs text-ink-400">
-                    {t('auth.consent.text')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setStage('method')}
-                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
-                  >
-                    {t('auth.method.chooseDifferent')}
-                  </button>
-                </form>
-              )}
-
-              {stage === 'otp' && (
-                <form onSubmit={handleVerifyOtp} className="space-y-4">
-                  <Field label={t('auth.otp.label')}>
-                    <input
-                      value={otp}
-                      onChange={(e) =>
-                        setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
-                      }
-                      placeholder="••••••"
-                      inputMode="numeric"
-                      className="input-field tracking-[0.5em]"
-                      autoFocus
-                    />
-                  </Field>
-                  <p className="rounded-xl bg-brand-50 px-3 py-2 text-xs font-medium text-brand-700">
-                    {t('auth.otp.hint', { otp: demoOtp })}
-                  </p>
-                  <ErrorText message={error} />
-                  <Button type="submit" className="w-full" loading={busy}>
-                    {busy ? t('auth.verifying') : t('auth.verify')}
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => setStage('id')}
-                    className="w-full text-center text-xs font-medium text-ink-400 hover:text-brand-700"
-                  >
-                    {t('auth.switchAccount')}
-                  </button>
-                </form>
-              )}
-
-              {stage === 'digilocker' && (
-                <div className="flex flex-col items-center gap-4 py-6 text-center">
-                  <span className="grid h-14 w-14 place-items-center rounded-full bg-brand-600/10 text-brand-700">
-                    <IconLoader className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-ink-900">
-                      {t('auth.digilocker.connecting')}
-                    </p>
-                    <p className="mt-1 text-xs text-ink-500">
-                      {t('auth.digilocker.subtitle')}
-                    </p>
                   </div>
+                </Field>
+                <MockNotice icon={IconShieldCheck} text={t('auth.mock.aadhaarHint')} />
+                <ErrorText message={error} />
+                <Button type="submit" className="w-full" icon={<IconArrowRight className="h-4 w-4" />}>
+                  {t('auth.aadhaar.next')}
+                </Button>
+              </form>
+            )}
+
+            {method === 'aadhaar' && aadhaarStage === 'otp' && (
+              <form onSubmit={handleOtpSubmit} className="mt-5 space-y-4">
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-ink-900">{t('auth.otp.label')}</p>
+                      <p className="mt-1 text-xs text-ink-500">{t('auth.otp.sentTo', { id: aadhaar.slice(-4) })}</p>
+                    </div>
+                    <button type="button" onClick={() => { setAadhaarStage('number'); setOtp(''); setError('') }} className="text-xs font-semibold text-accent-700 hover:text-accent-800">
+                      {t('auth.otp.change')}
+                    </button>
+                  </div>
+                  <input
+                    value={otp}
+                    onChange={(event) => { setOtp(event.target.value.replace(/\D/g, '').slice(0, 6)); setError('') }}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    aria-label={t('auth.otp.label')}
+                    autoFocus
+                    placeholder="• • • • • •"
+                    className="mt-3 h-12 w-full rounded-lg border border-ink-200 bg-ink-50 pl-[0.65em] text-center font-display text-lg font-bold tracking-[0.65em] text-ink-900 outline-none transition placeholder:tracking-[0.35em] focus:border-accent-500 focus:bg-white focus:ring-2 focus:ring-accent-100"
+                  />
                 </div>
-              )}
+                <MockNotice icon={IconShieldCheck} text={t('auth.mock.otpHint')} />
+                <ErrorText message={error} />
+                <Button type="submit" className="w-full" loading={busy} icon={<IconArrowRight className="h-4 w-4" />}>
+                  {busy ? t('auth.verifying') : t('auth.verify')}
+                </Button>
+              </form>
+            )}
 
-              {stage === 'profile' && (
-                <form onSubmit={handleFinish} className="space-y-4">
-                  <p className="flex items-center gap-2 text-sm font-semibold text-success-700">
-                    <IconShieldCheck className="h-4 w-4" />
-                    {t('auth.profile.title')}
-                  </p>
-                  <div>
-                    <span className="mb-1.5 block text-sm font-medium text-ink-700">
-                      {method === 'digilocker'
-                        ? t('auth.profile.name.fromDigilocker')
-                        : t('auth.profile.name.fromAadhaar')}
-                    </span>
-                    <p className="rounded-xl bg-ink-50 px-3.5 py-2.5 text-sm font-semibold text-ink-900">
-                      {name}
-                    </p>
-                  </div>
-                  <Field label={t('auth.profile.language.label')}>
-                    <select
-                      value={preferredLanguage}
-                      onChange={(e) => setPreferredLanguage(e.target.value)}
-                      className="input-field"
-                    >
-                      {LANGUAGES.map((l) => (
-                        <option key={l.code} value={l.code}>
-                          {l.nativeLabel}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <ErrorText message={error} />
-                  <Button type="submit" className="w-full" loading={busy}>
-                    {t('auth.profile.finish')}
-                  </Button>
-                </form>
-              )}
-            </motion.div>
-          </div>
-        </motion.div>
-        </div>
-      </div>
+            {method === 'digilocker' && (
+              <div className="mt-5">
+                <div className="rounded-xl bg-brand-50 p-4 text-center">
+                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white text-brand-700 shadow-sm">
+                    <IconLockCloud className="h-6 w-6" />
+                  </span>
+                  <h2 className="mt-3 text-sm font-bold text-ink-900">{t('auth.digilocker.directTitle')}</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-ink-500">{t('auth.digilocker.directBody')}</p>
+                </div>
+                <MockNotice icon={IconShieldCheck} text={t('auth.mock.digilockerHint')} className="mt-4" />
+                <ErrorText message={error} />
+                <Button type="button" onClick={handleDigiLockerLogin} className="mt-4 w-full" loading={busy} icon={<IconArrowRight className="h-4 w-4" />}>
+                  {t('auth.digilocker.authenticate')}
+                </Button>
+              </div>
+            )}
+              </motion.div>
+            </>
+          ) : (
+            <motion.form key="profile" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }} onSubmit={handleProfileFinish} className="space-y-4">
+              <div className="flex items-center gap-2 rounded-lg bg-success-50 px-3 py-2.5 text-sm font-semibold text-success-700">
+                <IconShieldCheck className="h-4 w-4" />
+                {t('auth.profile.verified')}
+              </div>
+              <div>
+                <span className="mb-1.5 block text-sm font-semibold text-ink-800">
+                  {method === 'digilocker' ? t('auth.profile.name.fromDigilocker') : t('auth.profile.name.fromAadhaar')}
+                </span>
+                <div className="flex items-center gap-3 rounded-xl bg-ink-50 px-3.5 py-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-100 font-display font-bold text-accent-800">
+                    {accountName.charAt(0).toUpperCase()}
+                  </span>
+                  <p className="min-w-0 truncate text-sm font-bold text-ink-900">{accountName}</p>
+                </div>
+              </div>
+              <Field label={t('auth.profile.language.label')}>
+                <select value={preferredLanguage} onChange={(event) => setPreferredLanguage(event.target.value)} className="input-field h-12">
+                  {LANGUAGES.map((language) => (
+                    <option key={language.code} value={language.code}>{language.nativeLabel}</option>
+                  ))}
+                </select>
+              </Field>
+              <ErrorText message={error} />
+              <Button type="submit" className="w-full" loading={busy} icon={<IconArrowRight className="h-4 w-4" />}>
+                {t('auth.profile.finish')}
+              </Button>
+              <button type="button" onClick={chooseAnotherAccount} className="w-full text-center text-xs font-semibold text-ink-400 hover:text-accent-700">
+                {t('auth.profile.useAnother')}
+              </button>
+            </motion.form>
+          )}
+        </motion.section>
+
+        <p className="mt-4 text-center text-[11px] leading-relaxed text-ink-400">{t('auth.consent.text')}</p>
+      </main>
     </div>
   )
 }
@@ -441,18 +316,25 @@ export default function Login() {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink-700">
-        {label}
-      </span>
+      <span className="mb-1.5 block text-sm font-semibold text-ink-800">{label}</span>
       {children}
     </label>
+  )
+}
+
+function MockNotice({ icon: Icon, text, className = '' }) {
+  return (
+    <p className={`flex items-start gap-2 rounded-lg bg-success-50 px-3 py-2.5 text-xs leading-relaxed text-success-700 ${className}`}>
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+      {text}
+    </p>
   )
 }
 
 function ErrorText({ message }) {
   if (!message) return null
   return (
-    <p className="flex items-center gap-1.5 text-xs font-medium text-emergency-600">
+    <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emergency-600">
       <IconAlertCircle className="h-3.5 w-3.5" />
       {message}
     </p>

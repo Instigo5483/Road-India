@@ -97,7 +97,11 @@ export function AuthProvider({ children }) {
         const existing = await getDoc(ref)
 
         const profile = existing.exists()
-          ? { ...existing.data() }
+          ? {
+              ...existing.data(),
+              preferredLanguage:
+                preferredLanguage || existing.data().preferredLanguage || 'en',
+            }
           : {
               digilockerId,
               name,
