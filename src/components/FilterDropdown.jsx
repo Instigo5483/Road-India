@@ -30,7 +30,7 @@ export default function FilterDropdown({
   const isFiltered = value !== options[0]?.value
 
   return (
-    <div className="relative" ref={ref}>
+    <div className={`relative ${open ? 'z-50' : 'z-0'}`} ref={ref}>
       <button
         type="button"
         disabled={disabled}
@@ -56,7 +56,7 @@ export default function FilterDropdown({
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
             role="listbox"
-            className="absolute left-0 z-30 mt-2 max-h-64 w-52 overflow-y-auto rounded-2xl border border-ink-200 bg-white p-1.5 shadow-card-hover"
+            className="absolute left-0 z-50 mt-2 max-h-64 w-52 overflow-y-auto rounded-2xl border border-ink-200 bg-white p-1.5 shadow-card-hover"
           >
             <p className="px-3 pb-1.5 pt-1 text-xs font-medium text-ink-400">
               {label}

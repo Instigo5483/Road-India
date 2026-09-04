@@ -28,3 +28,32 @@ export function formatCoords({ lat, lng }) {
   if (typeof lat !== 'number' || typeof lng !== 'number') return '—'
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
 }
+
+/** Resolve coordinates into the Indian administrative fields used by
+ * report forms and location filters. Nominatim varies its field names by
+ * region, so each level has conservative fallbacks. */
+export async function reverseGeocode(lat, lng) {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+      { headers: { Accept: 'application/json' } }
+    )
+    if (!response.ok) throw new Error('reverse geocode failed')
+    const data = await response.json()
+    const address = data.address ?? {}
+    return {
+      address: data.display_name ?? null,
+      state: address.state ?? null,
+      district: address.state_district ?? address.county ?? address.district ?? null,
+      city:
+        address.city ??
+        address.town ??
+        address.municipality ??
+        address.village ??
+        address.suburb ??
+        null,
+    }
+  } catch {
+    return null
+  }
+}

@@ -7,6 +7,7 @@ import {
   DEFAULT_ZOOM,
   PICKER_ZOOM,
   formatCoords,
+  reverseGeocode,
 } from '../lib/geo'
 import { createPinIcon } from '../lib/mapPin'
 import { IconLocate, IconLoader } from './Icons'
@@ -20,28 +21,6 @@ function ClickHandler({ onPick }) {
     },
   })
   return null
-}
-
-async function reverseGeocode(lat, lng) {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
-      { headers: { Accept: 'application/json' } }
-    )
-    if (!res.ok) throw new Error('reverse geocode failed')
-    const data = await res.json()
-    const a = data.address ?? {}
-    return {
-      address: data.display_name ?? null,
-      // Nominatim's field names vary a bit by region; these fallbacks cover
-      // how Indian addresses typically come back.
-      state: a.state ?? null,
-      district: a.state_district ?? a.county ?? a.district ?? null,
-      city: a.city ?? a.town ?? a.municipality ?? a.village ?? a.suburb ?? null,
-    }
-  } catch {
-    return null
-  }
 }
 
 export default function MapPicker({ value, onChange }) {
