@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
+import MobileBottomNav from '../components/MobileBottomNav'
 import PageTransition from '../components/PageTransition'
 import StepProgress from '../components/StepProgress'
 import Button from '../components/Button'
@@ -166,8 +167,8 @@ export default function ReportFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <Navbar />
+    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
+      <Navbar showMobilePagesMenu={false} />
       <PageTransition className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
         {step !== STEP.SUCCESS && (
           <>
@@ -428,6 +429,7 @@ export default function ReportFlow() {
           )}
         </>
       </PageTransition>
+      <MobileBottomNav />
     </div>
   )
 }

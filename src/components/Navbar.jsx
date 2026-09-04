@@ -148,7 +148,7 @@ function PagesMenu() {
   )
 }
 
-export default function Navbar() {
+export default function Navbar({ showMobilePagesMenu = true }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
   useReportStatusAlerts()
@@ -197,7 +197,7 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2.5">
-          <PagesMenu />
+          {showMobilePagesMenu && <PagesMenu />}
           <UserMenu />
         </div>
       </div>

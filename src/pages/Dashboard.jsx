@@ -27,7 +27,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
-      <Navbar />
+      <Navbar showMobilePagesMenu={false} />
       <PageTransition className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">
           {t('dashboard.title')}
