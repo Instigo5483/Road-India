@@ -2,15 +2,15 @@
   "name": "road-india",
   "private": true,
   "version": "1.0.0",
-  "description": "Report road problems, infrastructure grievances, and emergencies in seconds. Built for the Build What Moves India hackathon.",
+  "description": "Report road problems and infrastructure grievances in seconds. Built for the Build What Moves India hackathon.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx",
+    "test": "node --test",
     "seed": "node scripts/seed.js",
-    "seed:teams": "node scripts/seedTeams.js",
     "clear-data": "node scripts/clearData.js"
   },
   "dependencies": {
@@ -22,6 +22,9 @@
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.24.0"
+  },
+  "overrides": {
+    "undici": "^6.28.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

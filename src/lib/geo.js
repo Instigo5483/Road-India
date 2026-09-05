@@ -1,17 +1,21 @@
 // Small geo helpers used by the map picker and the location filter on the
 // community reports feed. No external dependency needed for either.
 
+import { hasValidLocation } from './reportValidation.js'
+import { fetchJson } from './request.js'
+
 /** Haversine distance in kilometres between two {lat, lng} points. */
 export function distanceKm(a, b) {
-  if (!a || !b) return Infinity
+  if (!hasValidLocation(a) || !hasValidLocation(b)) return Infinity
   const R = 6371
   const dLat = toRad(b.lat - a.lat)
   const dLng = toRad(b.lng - a.lng)
   const lat1 = toRad(a.lat)
   const lat2 = toRad(b.lat)
 
-  const h =
+  const raw =
     Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2)
+  const h = Math.min(1, Math.max(0, raw))
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
@@ -34,12 +38,10 @@ export function formatCoords({ lat, lng }) {
  * region, so each level has conservative fallbacks. */
 export async function reverseGeocode(lat, lng) {
   try {
-    const response = await fetch(
+    const data = await fetchJson(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
       { headers: { Accept: 'application/json' } }
     )
-    if (!response.ok) throw new Error('reverse geocode failed')
-    const data = await response.json()
     const address = data.address ?? {}
     return {
       address: data.display_name ?? null,

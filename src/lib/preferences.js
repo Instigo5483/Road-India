@@ -13,7 +13,13 @@ export function publicName(name, visibility = 'first_initial') {
 export const draftKey = uid => `road_india_draft_${uid}`
 export const historyKey = uid => `road_india_locations_${uid}`
 export function readLocal(key, fallback = null) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key))
+    if (parsed == null) return fallback
+    if (Array.isArray(fallback)) return Array.isArray(parsed) ? parsed : fallback
+    if (fallback && typeof fallback === 'object') return typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback
+    return parsed
+  } catch { return fallback }
 }
 export function downloadJson(name, data) {
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))

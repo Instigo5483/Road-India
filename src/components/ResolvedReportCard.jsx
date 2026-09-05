@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { getTypesLabel, reportTypeIds } from '../data/categoryTypes'
 import { formatDuration, timeAgo, toDate } from '../lib/time'
 import { StarRatingDisplay } from './StarRating'
-import ReportDetailModal from './ReportDetailModal'
+import ReportDetailModal from './LazyReportDetailModal'
 import { IconArrowRight, IconCheckCircle, IconClock, IconMapPin, IconSparkle } from './Icons'
 
 export default function ResolvedReportCard({ report, index = 0 }) {

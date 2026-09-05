@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDoc,
   collection,
@@ -8,30 +8,41 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-  arrayUnion,
-  arrayRemove,
-  increment,
+  runTransaction,
 } from 'firebase/firestore'
 import { isFirebaseConfigured, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { triageReport } from '../lib/triage'
-import { useAuth } from './AuthContext'
+import { useAuth } from './useAppContext'
 import { publicName, DEFAULT_PREFERENCES } from '../lib/preferences'
 import { prepareResolution } from '../lib/resolution'
 
-const ReportsContext = createContext(null)
+import { assertEditable, upvotePatch, validateContent, validateFeedback } from '../lib/reportValidation'
+import { normalizeCategoryId } from '../data/categoryTypes'
+import { useLanguage } from './useAppContext'
+
+import { ReportsContext } from './contexts'
 
 export function ReportsProvider({ children }) {
   const { user } = useAuth()
+  const { lang } = useLanguage()
+  const [loadError, setLoadError] = useState(false)
+  const [retry, setRetry] = useState(0)
+  const pendingVotes = useRef(new Map())
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
+    setLoadError(false)
+    const fail = () => { setLoadError(true); setLoading(false) }
+    const supported = rows => rows.filter(r => normalizeCategoryId(r.category) === 'issue')
     if (!isFirebaseConfigured) {
       let cancelled = false
-      const load = () => mockBackend.listReports().then((r) => !cancelled && setReports(r))
+      const load = () => mockBackend.listReports().then(r => {
+        if (!cancelled) { setReports(supported(r)); setLoading(false) }
+      }).catch(() => { if (!cancelled) fail() })
       load()
-      setLoading(false)
       const unsub = mockBackend.subscribe(load)
       return () => {
         cancelled = true
@@ -41,15 +52,16 @@ export function ReportsProvider({ children }) {
 
     const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'))
     const unsub = onSnapshot(q, (snap) => {
-      setReports(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+      setReports(supported(snap.docs.map(d => ({ ...d.data({ serverTimestamps: 'estimate' }), id: d.id }))))
       setLoading(false)
-    })
+    }, fail)
     return unsub
-  }, [])
+  }, [retry])
 
   const createReport = useCallback(
     async ({ category, types, description, photoUrls, location }) => {
       if (!user) throw new Error('Must be logged in to file a report')
+      validateContent({ description, photoUrls: photoUrls ?? [], location })
 
       // AI-assisted triage (severity, likely department, caseworker summary)
       // -- a real OpenAI call server-side (see api/_triage-core.js), with a
@@ -94,76 +106,79 @@ export function ReportsProvider({ children }) {
     [user]
   )
 
-  const toggleUpvote = useCallback(
-    async (reportId) => {
-      if (!user) throw new Error('Must be logged in to support a report')
-
-      if (!isFirebaseConfigured) {
-        return mockBackend.toggleUpvote(reportId, user.uid)
-      }
-
-      const report = reports.find((r) => r.id === reportId)
-      if (!report) return
-      const already = (report.upvotedBy ?? []).includes(user.uid)
-      await updateDoc(doc(db, 'reports', reportId), {
-        upvotes: increment(already ? -1 : 1),
-        upvotedBy: already ? arrayRemove(user.uid) : arrayUnion(user.uid),
+  const toggleUpvote = useCallback((reportId) => {
+    if (!user) return Promise.reject(new Error('Must be logged in to support a report'))
+    const key = user.uid + ':' + reportId
+    if (pendingVotes.current.has(key)) return pendingVotes.current.get(key)
+    const task = (async () => {
+      if (!isFirebaseConfigured) return mockBackend.toggleUpvote(reportId, user.uid)
+      const ref = doc(db, 'reports', reportId)
+      await runTransaction(db, async transaction => {
+        const snap = await transaction.get(ref)
+        if (!snap.exists()) throw new Error('Report unavailable')
+        transaction.update(ref, upvotePatch(snap.data(), user.uid))
       })
-    },
-    [reports, user]
-  )
+    })().finally(() => pendingVotes.current.delete(key))
+    pendingVotes.current.set(key, task)
+    return task
+  }, [user])
 
-  // Admin-only action -- see context/AdminAuthContext.jsx for the (separate
-  // from citizen login) passcode gate in front of the /admin route that
-  // calls this. Doesn't require a citizen `user`, since admins don't sign
-  // in through the citizen flow at all.
-  //
-  // Also stamps resolvedAt when the status becomes 'resolved' (cleared
-  // otherwise, so a reopened-then-re-resolved report gets a fresh
-  // timestamp) -- src/pages/AdminAnalytics.jsx uses this to compute
-  // average resolution time.
+  // Non-final changes only; closing a report requires resolution evidence.
   const updateReportStatus = useCallback(async (reportId, status) => {
-    const patch = {
-      status,
-      resolvedAt: status === 'resolved' ? (isFirebaseConfigured ? serverTimestamp() : new Date().toISOString()) : null,
-    }
+    if (!['submitted', 'in_review', 'in_progress'].includes(status)) throw new Error('Use resolution proof to close a report')
+    const current = reports.find(r => r.id === reportId)
+    if (!current || current.status === 'resolved') throw new Error('Report unavailable or already resolved')
+    const patch = { status, resolvedAt: null }
     if (!isFirebaseConfigured) {
       return mockBackend.updateReportStatus(reportId, patch)
     }
     await updateDoc(doc(db, 'reports', reportId), patch)
-  }, [])
+  }, [reports])
 
   // Lets a citizen edit their own report's description/photos/location --
   // see ReportDetailModal.jsx / ReportEditForm.jsx for the ownership +
-  // status gating (client-side only, matching this app's existing
+  // status gating (also enforced in the updated rules; matching this app's existing
   // prototype-grade auth caveats), and firestore.rules for the write rule.
   const updateReport = useCallback(
     async (reportId, patch) => {
       if (!user) throw new Error('Must be logged in to edit a report')
+      validateContent(patch)
       if (!isFirebaseConfigured) {
+        assertEditable(reports.find(r => r.id === reportId), user.uid)
         return mockBackend.updateReport(reportId, patch)
       }
-      await updateDoc(doc(db, 'reports', reportId), patch)
+      const ref = doc(db, 'reports', reportId)
+      await runTransaction(db, async transaction => {
+        const snap = await transaction.get(ref)
+        assertEditable(snap.exists() ? snap.data() : null, user.uid)
+        transaction.update(ref, patch)
+      })
     },
-    [user]
+    [user, reports]
   )
 
   // Only the citizen who filed a resolved report can leave feedback on it --
   // see ReportDetailModal.jsx (the only place this is called from) for the
   // ownership + "resolved, no feedback yet" gating, and firestore.rules for
   // the matching write rule (restricted to the report's own createdBy uid,
-  // unlike the more permissive status/assignedTeams rules).
+  // unlike the prototype status permission).
   const submitReportFeedback = useCallback(
     async (reportId, feedback) => {
       if (!user) throw new Error('Must be logged in to leave feedback')
       const citizenFeedback = { ...feedback, submittedAt: new Date().toISOString() }
 
       if (!isFirebaseConfigured) {
+        validateFeedback(reports.find(r => r.id === reportId), user.uid, feedback)
         return mockBackend.setReportFeedback(reportId, citizenFeedback)
       }
-      await updateDoc(doc(db, 'reports', reportId), { citizenFeedback })
+      const ref = doc(db, 'reports', reportId)
+      await runTransaction(db, async transaction => {
+        const snap = await transaction.get(ref)
+        validateFeedback(snap.exists() ? snap.data() : null, user.uid, feedback)
+        transaction.update(ref, { citizenFeedback })
+      })
     },
-    [user]
+    [user, reports]
   )
 
   const myReports = useMemo(
@@ -175,8 +190,12 @@ export function ReportsProvider({ children }) {
     const report = reports.find(r => r.id === reportId)
     const patch = prepareResolution(report, proof)
     if (!isFirebaseConfigured) return mockBackend.updateReportStatus(reportId, patch)
-    patch.resolvedAt = serverTimestamp()
-    await updateDoc(doc(db, 'reports', reportId), patch)
+    const ref = doc(db, 'reports', reportId)
+    await runTransaction(db, async transaction => {
+      const snap = await transaction.get(ref)
+      const current = snap.exists() ? snap.data() : null
+      transaction.update(ref, { ...prepareResolution(current, proof), resolvedAt: serverTimestamp() })
+    })
   }, [reports])
 
   const value = useMemo(
@@ -204,11 +223,11 @@ export function ReportsProvider({ children }) {
     ]
   )
 
-  return <ReportsContext.Provider value={value}>{children}</ReportsContext.Provider>
-}
-
-export function useReports() {
-  const ctx = useContext(ReportsContext)
-  if (!ctx) throw new Error('useReports must be used inside <ReportsProvider>')
-  return ctx
+  return <ReportsContext.Provider value={value}>
+    {children}
+    {loadError && <div role="alert" className="fixed inset-x-4 bottom-24 z-[110] mx-auto max-w-lg rounded-xl border border-red-200 bg-white p-4 text-sm text-red-800 shadow-card">
+      {lang === 'hi' ? 'रिपोर्ट लोड नहीं हो सकीं। कनेक्शन और अनुमतियाँ जाँचें।' : 'Could not load reports. Check your connection and permissions.'}
+      <button type="button" className="ml-3 min-h-10 font-semibold underline" onClick={() => setRetry(n => n + 1)}>{lang === 'hi' ? 'पुनः प्रयास करें' : 'Retry'}</button>
+    </div>}
+  </ReportsContext.Provider>
 }

@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import { createPinIcon } from '../lib/mapPin'
 import { INDIA_CENTER, DEFAULT_ZOOM } from '../lib/geo'
-import ReportDetailModal from './ReportDetailModal'
+import ReportDetailModal from './LazyReportDetailModal'
+
+import { hasValidLocation } from '../lib/reportValidation'
 
 const pinIcon = createPinIcon()
 
@@ -12,8 +14,9 @@ const pinIcon = createPinIcon()
  * weight for it -- see vite.config.js's manualChunks comment). Clicking a
  * pin opens the same shared detail modal every other report view uses. */
 export default function ReportsMapView({ reports, user, onUpvote }) {
-  const [selected, setSelected] = useState(null)
-  const withLocation = reports.filter((r) => r.location?.lat)
+  const [selectedId, setSelectedId] = useState(null)
+  const selected = reports.find(report => report.id === selectedId)
+  const withLocation = useMemo(() => reports.filter(r => hasValidLocation(r.location)), [reports])
 
   const center = withLocation.length
     ? [withLocation[0].location.lat, withLocation[0].location.lng]
@@ -37,7 +40,7 @@ export default function ReportsMapView({ reports, user, onUpvote }) {
             key={report.id}
             position={[report.location.lat, report.location.lng]}
             icon={pinIcon}
-            eventHandlers={{ click: () => setSelected(report) }}
+            eventHandlers={{ click: () => setSelectedId(report.id) }}
           />
         ))}
       </MapContainer>
@@ -45,10 +48,10 @@ export default function ReportsMapView({ reports, user, onUpvote }) {
       {selected && (
         <ReportDetailModal
           report={selected}
-          onClose={() => setSelected(null)}
+          onClose={() => setSelectedId(null)}
           onUpvote={() => onUpvote(selected.id)}
           upvoted={user ? (selected.upvotedBy ?? []).includes(user.uid) : false}
-          showUpvote={Boolean(user)}
+          showUpvote={Boolean(user && onUpvote)}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { toDate } from './time'
+import { toDate } from './time.js'
 
 // A citizen's "Civic Points" score -- always computed live from their own
 // reports, never a stored counter, matching this app's existing rule that
@@ -34,7 +34,7 @@ export function civicPointsForReport(report) {
   }
 
   const upvoteBonus = Math.min(
-    (report.upvotes ?? 0) * CIVIC_POINTS.PER_UPVOTE,
+    Math.max(0, report.upvotes ?? 0) * CIVIC_POINTS.PER_UPVOTE,
     CIVIC_POINTS.MAX_UPVOTE_BONUS_PER_REPORT
   )
   points += upvoteBonus

@@ -1,14 +1,9 @@
 // A tiny in-memory + localStorage-backed mock backend.
 //
-// Road India is wired for a real Firebase backend (see lib/firebase.js and
-// context/AuthContext.jsx / context/ReportsContext.jsx). But so the app is
-// demoable instantly with zero setup -- important for hackathon judging --
-// every read/write goes through this module first, and this module
-// transparently proxies to real Firestore once `isFirebaseConfigured` is
-// true. Nothing else in the app needs to know which mode it's in.
+// Used only when Firebase is not configured; contexts select the backend.
 
-import { isFirebaseConfigured } from './firebase'
-import { seedReports } from '../data/seedReports'
+import { upvotePatch } from './reportValidation.js'
+import { seedReports } from '../data/seedReports.js'
 
 const STORAGE_KEYS = {
   users: 'road_india_users',
@@ -37,7 +32,9 @@ function writeStore(key, value) {
 }
 
 let users = readStore(STORAGE_KEYS.users, [])
+if (!Array.isArray(users)) users = []
 let reports = readStore(STORAGE_KEYS.reports, null) ?? seedReports
+if (!Array.isArray(reports)) reports = seedReports
 let session = readStore(STORAGE_KEYS.session, null)
 
 const listeners = new Set()
@@ -46,7 +43,6 @@ function notify() {
 }
 
 export const mockBackend = {
-  isMock: !isFirebaseConfigured,
 
   subscribe(fn) {
     listeners.add(fn)
@@ -121,12 +117,7 @@ export const mockBackend = {
   async toggleUpvote(reportId, uid) {
     reports = reports.map((r) => {
       if (r.id !== reportId) return r
-      const already = r.upvotedBy.includes(uid)
-      return {
-        ...r,
-        upvotedBy: already ? r.upvotedBy.filter((id) => id !== uid) : [...r.upvotedBy, uid],
-        upvotes: already ? r.upvotes - 1 : r.upvotes + 1,
-      }
+      return { ...r, ...upvotePatch(r, uid) }
     })
     writeStore(STORAGE_KEYS.reports, reports)
     notify()

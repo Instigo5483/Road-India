@@ -1,23 +1,23 @@
 import { Suspense, lazy } from 'react'
+import { MotionConfig } from 'framer-motion'
+import ErrorBoundary from './components/ErrorBoundary'
+import { useReportStatusAlerts } from './lib/useReportStatusAlerts'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
 import { ReportsProvider } from './context/ReportsContext'
 import { AdminAuthProvider } from './context/AdminAuthContext'
-import { TeamAuthProvider } from './context/TeamAuthContext'
 import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
-import TeamProtectedRoute from './components/TeamProtectedRoute'
 import LoadingScreen from './components/LoadingScreen'
 
-import Login from './pages/Login'
+const Login = lazy(() => import('./pages/Login'))
 
-// Route-level code splitting -- a citizen never downloads the admin/team
+// Route-level code splitting -- a citizen never downloads the admin
 // dashboards' JS (and vice versa), and each of these only loads the first
 // time its route is actually visited rather than on initial page load.
-// Login stays eager; the unified public/citizen home and heavier data
-// pages load only when their route is visited.
+// Pages load only when their route is visited.
 const Home = lazy(() => import('./pages/Home'))
 const ReportFlow = lazy(() => import('./pages/ReportFlow'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -27,13 +27,10 @@ const ViewData = lazy(() => import('./pages/ViewData'))
 const Settings = lazy(() => import('./pages/Settings'))
 const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const Admin = lazy(() => import('./pages/Admin'))
-const AdminTeams = lazy(() => import('./pages/AdminTeams'))
-const AdminAddTeam = lazy(() => import('./pages/AdminAddTeam'))
 const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'))
-const TeamLogin = lazy(() => import('./pages/TeamLogin'))
-const TeamDashboard = lazy(() => import('./pages/TeamDashboard'))
 
 function AnimatedRoutes() {
+  useReportStatusAlerts()
   const location = useLocation()
 
   return (
@@ -87,36 +84,11 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/admin/teams"
-          element={
-            <AdminProtectedRoute>
-              <AdminTeams />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/teams/new"
-          element={
-            <AdminProtectedRoute>
-              <AdminAddTeam />
-            </AdminProtectedRoute>
-          }
-        />
-        <Route
           path="/admin/analytics"
           element={
             <AdminProtectedRoute>
               <AdminAnalytics />
             </AdminProtectedRoute>
-          }
-        />
-        <Route path="/team/login" element={<TeamLogin />} />
-        <Route
-          path="/team"
-          element={
-            <TeamProtectedRoute>
-              <TeamDashboard />
-            </TeamProtectedRoute>
           }
         />
         <Route path="*" element={<Home />} />
@@ -127,20 +99,22 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
+    <MotionConfig reducedMotion="user">
     <LanguageProvider>
       <ToastProvider>
         <AuthProvider>
           <AdminAuthProvider>
-            <TeamAuthProvider>
               <ReportsProvider>
                 <BrowserRouter>
                   <AnimatedRoutes />
                 </BrowserRouter>
               </ReportsProvider>
-            </TeamAuthProvider>
           </AdminAuthProvider>
         </AuthProvider>
       </ToastProvider>
     </LanguageProvider>
+    </MotionConfig>
+    </ErrorBoundary>
   )
 }

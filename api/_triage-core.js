@@ -11,10 +11,12 @@
 // -- same "gracefully degrade to mock" pattern the rest of this app uses
 // for Firebase (see src/lib/firebase.js, src/lib/mockBackend.js).
 
+import { fetchJson } from '../src/lib/request.js'
+
 const DEPARTMENT_BY_CATEGORY = {
+  issue: 'Municipal Roads & Infrastructure',
   problem: 'Municipal Roads & Infrastructure',
   corruption: 'Public Works Department (PWD)',
-  emergency: 'Emergency Response / Traffic Police',
 }
 
 function mockTriage({ category, description }) {
@@ -37,7 +39,11 @@ function pickMockSeverity(description) {
   return 'low'
 }
 
-export async function runTriage({ category, types, description, photoUrls }, apiKey) {
+export async function runTriage(payload, apiKey) {
+  const category = typeof payload?.category === 'string' ? payload.category : 'issue'
+  const description = typeof payload?.description === 'string' ? payload.description.slice(0, 5000) : ''
+  const types = Array.isArray(payload?.types) ? payload.types.filter(t => typeof t === 'string').slice(0, 13) : []
+  const photoUrls = Array.isArray(payload?.photoUrls) ? payload.photoUrls : []
   if (!apiKey) return mockTriage({ category, description })
 
   // gpt-4o-mini is multimodal -- when a photo is attached, let the model
@@ -46,7 +52,8 @@ export async function runTriage({ category, types, description, photoUrls }, api
   // signal, not exhaustive visual detail, and keeping it to one image
   // keeps the request small (photos are already client-compressed to
   // ~1280px by PhotoUpload.jsx, but base64 image tokens still add up).
-  const firstPhoto = photoUrls?.[0]
+  const candidate = photoUrls[0]
+  const firstPhoto = typeof candidate === 'string' && candidate.length <= 240000 && /^data:image\/(jpeg|png|webp);base64,/.test(candidate) ? candidate : null
 
   const userContent = [
     {
@@ -59,7 +66,7 @@ export async function runTriage({ category, types, description, photoUrls }, api
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const data = await fetchJson('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -91,18 +98,16 @@ export async function runTriage({ category, types, description, photoUrls }, api
           },
         ],
       }),
-    })
-
-    if (!response.ok) throw new Error(`OpenAI request failed with ${response.status}`)
-
-    const data = await response.json()
+    }, 8000)
     const parsed = JSON.parse(data.choices[0].message.content)
 
-    if (!parsed.severity || !parsed.department || !parsed.summary) {
+    if (!parsed || !['low', 'medium', 'high', 'critical'].includes(parsed.severity) ||
+        typeof parsed.department !== 'string' || !parsed.department.trim() ||
+        typeof parsed.summary !== 'string' || !parsed.summary.trim()) {
       throw new Error('OpenAI response missing expected fields')
     }
 
-    return { ...parsed, aiGenerated: true, photoAnalyzed: Boolean(firstPhoto) }
+    return { severity: parsed.severity, department: parsed.department.slice(0, 150), summary: parsed.summary.slice(0, 500), aiGenerated: true, photoAnalyzed: Boolean(firstPhoto) }
   } catch {
     // Any failure (missing/invalid key, network issue, rate limit, malformed
     // model output) falls back to the mock so a flaky API call never blocks

@@ -1,10 +1,10 @@
-// Deletes every document in the reports, users, and teams collections --
+// Deletes every document in the reports and users collections --
 // used to wipe out test/QA data before a hackathon demo so the seed
-// scripts (seed.js, seedTeams.js) start from a clean slate. Destructive
+// scripts (seed.js) start from a clean slate. Destructive
 // and irreversible; only ever run this deliberately.
 //
 // Usage: same service account key as scripts/seed.js, then:
-//   npm run clear-data
+//   npm run clear-data -- --confirm-project=YOUR_PROJECT_ID
 
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -27,6 +27,11 @@ try {
   process.exit(1)
 }
 
+const confirmation = process.argv.find(arg => arg.startsWith('--confirm-project='))?.split('=')[1]
+if (!confirmation || confirmation !== serviceAccount.project_id) {
+  console.error('Refusing deletion. Pass --confirm-project=' + serviceAccount.project_id + ' only after verifying this is the intended test project.')
+  process.exit(1)
+}
 initializeApp({ credential: cert(serviceAccount) })
 const db = getFirestore()
 
@@ -55,7 +60,7 @@ async function clearCollection(name) {
   return totalDeleted
 }
 
-const collections = ['reports', 'users', 'teams']
+const collections = ['reports', 'users']
 let grandTotal = 0
 for (const name of collections) {
   grandTotal += await clearCollection(name)

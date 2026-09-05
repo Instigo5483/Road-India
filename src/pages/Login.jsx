@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useAuth } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
 import { LANGUAGES } from '../data/languages'
 import { generateRandomName } from '../lib/randomName'
 import Button from '../components/Button'
@@ -50,7 +50,8 @@ export default function Login() {
   const { t, lang, setLang } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = location.state?.from?.pathname ?? '/home'
+  const requestedPath = location.state?.from?.pathname
+  const from = typeof requestedPath === 'string' && /^\/(?:home|dashboard|settings|reports|resolved|data|report\/[^/\\]+)$/.test(requestedPath) ? requestedPath : '/home'
 
   const [method, setMethod] = useState('aadhaar')
   const [aadhaarStage, setAadhaarStage] = useState('number')
@@ -133,7 +134,7 @@ export default function Login() {
   }
 
   async function chooseAnotherAccount() {
-    await logout()
+    try { await logout() } catch { setError(t('auth.error.loginFailed')); return }
     setScreen('auth')
     setAadhaarStage('number')
     setAadhaar('')

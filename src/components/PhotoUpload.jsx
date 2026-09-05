@@ -1,8 +1,8 @@
 import { useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
-import { useAuth } from '../context/AuthContext'
-import { useToast } from '../context/ToastContext'
+import { useLanguage } from '../context/useAppContext'
+import { useAuth } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import { IconCamera, IconX } from './Icons'
 
 const MAX_PHOTOS = 3
@@ -64,17 +64,18 @@ export default function PhotoUpload({ photos, onChange, maxPhotos = MAX_PHOTOS }
   const { showToast } = useToast()
   const inputRef = useRef(null)
 
-  function handleFiles(fileList) {
+  async function handleFiles(fileList) {
     const files = Array.from(fileList).slice(0, maxPhotos - photos.length)
-    files.forEach(async (file) => {
+    for (const file of files) {
       // Reject unsupported/oversized images visibly rather than allowing a
       // payload that Firestore cannot store.
       try {
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 20 * 1024 * 1024) throw new Error('Unsupported or oversized image')
         const src = user?.preferences?.compressPhotos === false ? await readAsDataUrl(file) : await compressImage(file)
         if (src.length > 240000) throw new Error('Image too large')
         onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src }].slice(0, maxPhotos))
       } catch { showToast(t('settings.photoFailed'), 'error') }
-    })
+    }
   }
 
   function removePhoto(id) {
@@ -101,6 +102,7 @@ export default function PhotoUpload({ photos, onChange, maxPhotos = MAX_PHOTOS }
               />
               <button
                 type="button"
+                aria-label={t('common.close')}
                 onClick={() => removePhoto(photo.id)}
                 className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-ink-900/70 text-white"
               >
@@ -129,7 +131,7 @@ export default function PhotoUpload({ photos, onChange, maxPhotos = MAX_PHOTOS }
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         multiple
         capture="environment"
         className="hidden"

@@ -74,7 +74,7 @@ The department is a suggestion for human review, not a confirmed handoff to a go
 
 **Simulated identity:** arbitrary test IDs and OTPs are accepted. No UIDAI/DigiLocker verification occurs. The supplied ID is processed and saved as a profile identifier; never use real identity data. Stable cross-browser test-account lookup requires the server credential and login endpoint. DigiLocker's generated test ID is browser-local.
 
-**Prototype administrator authorization:** a shared client-visible passcode is displayed on the admin sign-in page. Removing its link from citizen login does not secure it. Firestore rules still permit broad authenticated operations; a production deployment needs server-enforced roles. The resolution-proof requirement is enforced by the admin UI workflow, not every possible database mutation. Evidence is public and photos are not automatically geo-verified; earlier resolved records may have no proof.
+**Prototype administrator authorization:** a shared client-visible passcode is displayed on the admin sign-in page. Removing its link from citizen login does not secure it. Status/proof operations still permit any authenticated caller; a production deployment needs server-enforced roles. Updated rules require resolution fields, constrain author editing stages, and validate feedback/votes; they still do not verify a staff role. Evidence is public and photos are not automatically geo-verified; earlier resolved records may have no proof.
 
 **Map scope:** Heatmap uses aggregated quarter-degree circles, not a continuous heat surface. Comparison colors represent unresolved versus resolved counts per area: red, green, or yellow for a tie. The public map follows its selected reporting period; the admin map includes all reports supplied to admin analytics. Both start over India but allow worldwide navigation, load tiles as needed, and exclude records without valid coordinates.
 
@@ -82,7 +82,7 @@ The department is a suggestion for human review, not a confirmed handoff to a go
 
 **Not connected:** government repair workflows, contractor penalties, guaranteed SLAs, WhatsApp automation, and emergency dispatch as part of the current citizen journey. Hotline links lead to external services.
 
-**Legacy repository caveat:** response-team routes, dispatch code, scripts, and rules still exist. They are not advertised as current core features and have not been fully removed or security-isolated.
+**Retired functionality:** response-team routes, emergency dispatch, notification worker, and related helpers/seeding are removed. Existing database records were not deleted. Current views exclude old emergency reports while retaining compatibility with old road-problem/corruption records.
 
 ## Why these choices?
 
@@ -110,8 +110,10 @@ These are design goals and implemented capabilities, not measured claims about o
 - [ ] Add teammate details if applicable.
 - [ ] Confirm the organizer's current eligibility, submission window, and required fields directly before submitting.
 
+The repository includes isolated regression tests; see [AUDIT.md](AUDIT.md) for verified coverage, dependency advisories, and deployment checks.
+
 This document describes the repository; it does not certify the current live deployment or every hackathon requirement.
 
 ## Production follow-up
 
-Replace mock identity and client-side role gates; restrict report mutations server-side; add validation, rate limiting, moderation, and automated regression tests; review public identifiers and photo retention; remove unused legacy routes; and complete privacy/security review before collecting real citizen information.
+Replace mock identity and client-side role gates; verify all report mutations with server-enforced roles; add rate limiting, moderation, and Firebase integration tests; review public identifiers and photo retention; plan the remaining dependency major-version migrations; and complete privacy/security review before collecting real citizen information.

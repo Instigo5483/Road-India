@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { StarRatingInput } from './StarRating'
 import Button from './Button'
+import { useToast } from '../context/useAppContext'
 
 /** Shown inside ReportDetailModal to the report's own author once their
  * report is resolved and they haven't left feedback yet -- a 1-5 star
@@ -10,6 +11,7 @@ import Button from './Button'
  * firestore.rules for how/why this is restricted to the real author. */
 export default function ReportFeedbackForm({ onSubmit }) {
   const { t } = useLanguage()
+  const { showToast } = useToast()
   const [rating, setRating] = useState(0)
   const [confirmedResolved, setConfirmedResolved] = useState(null)
   const [review, setReview] = useState('')
@@ -19,11 +21,11 @@ export default function ReportFeedbackForm({ onSubmit }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!canSubmit) return
+    if (!canSubmit || busy) return
     setBusy(true)
     try {
       await onSubmit({ rating, confirmedResolved, review: review.trim() })
-    } finally {
+    } catch { showToast(t('toast.reportUpdateFailed'), 'error') } finally {
       setBusy(false)
     }
   }
@@ -91,6 +93,7 @@ export default function ReportFeedbackForm({ onSubmit }) {
           value={review}
           onChange={(e) => setReview(e.target.value)}
           rows={2}
+          maxLength={2000}
           placeholder={t('feedback.reviewPlaceholder')}
           className="input-field resize-none text-sm"
         />

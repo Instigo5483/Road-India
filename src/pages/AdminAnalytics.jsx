@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { useReports } from '../context/ReportsContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useReports } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
 import { CATEGORIES, STATUSES, normalizeCategoryId } from '../data/categoryTypes'
-import { toDate } from '../lib/time'
+import { toDate, averageResolution } from '../lib/time'
 import AdminLayout from '../components/AdminLayout'
 import ReportMapSection from '../components/ReportMapSection'
 
@@ -49,16 +49,8 @@ export default function AdminAnalytics() {
   )
 
   const avgResolutionHours = useMemo(() => {
-    const resolved = reports.filter(
-      (r) => r.status === 'resolved' && r.resolvedAt
-    )
-    if (resolved.length === 0) return null
-    const totalMs = resolved.reduce(
-      (sum, r) =>
-        sum + (toDate(r.resolvedAt).getTime() - toDate(r.createdAt).getTime()),
-      0
-    )
-    return totalMs / resolved.length / (1000 * 60 * 60)
+    const ms = averageResolution(reports.filter(r => r.status === 'resolved'))
+    return ms === null ? null : ms / 3600000
   }, [reports])
 
   const topLocations = useMemo(() => {
@@ -95,7 +87,7 @@ export default function AdminAnalytics() {
     return days
   }, [reports])
 
-  const maxDailyCount = Math.max(...dailyCounts.map((d) => d.count), 1)
+  const maxDailyCount = dailyCounts.reduce((max, d) => Math.max(max, d.count), 1)
   const maxCategoryCount = Math.max(...byCategory.map((c) => c.count), 1)
   const maxStatusCount = Math.max(...byStatus.map((s) => s.count), 1)
 
@@ -131,11 +123,11 @@ export default function AdminAnalytics() {
           </h2>
           <div className="mt-4 flex h-32 items-end gap-1.5">
             {dailyCounts.map((day, i) => (
-              <div key={i} className="flex flex-1 flex-col items-center gap-1">
+              <div key={i} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
                 <div
                   className="w-full rounded-t bg-brand-600"
                   style={{
-                    height: `${Math.max((day.count / maxDailyCount) * 100, day.count > 0 ? 6 : 2)}%`,
+                    height: `${Math.max((day.count / maxDailyCount) * 104, day.count > 0 ? 6 : 2)}px`,
                   }}
                   title={`${day.count}`}
                 />

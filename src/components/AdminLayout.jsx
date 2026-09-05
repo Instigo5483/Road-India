@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useAdminAuth } from '../context/AdminAuthContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useAdminAuth } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
 import Logo from './Logo'
 import LanguageSelector from './LanguageSelector'
 import { IconLogOut, IconShieldCheck, IconChartBar } from './Icons'

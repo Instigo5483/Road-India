@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
-import { useReportStatusAlerts } from '../lib/useReportStatusAlerts'
+import { useLanguage } from '../context/useAppContext'
 import UserMenu from './UserMenu'
 import Logo from './Logo'
 import { IconMenu, IconChevronDown } from './Icons'
@@ -88,7 +87,6 @@ function PagesMenu() {
 export default function Navbar({ showMobilePagesMenu = true }) {
   const { t } = useLanguage()
   const navigate = useNavigate()
-  useReportStatusAlerts()
 
   return (
     <header className="sticky top-0 z-20 bg-white/90 shadow-[0_1px_8px_rgba(0,0,0,0.06)] backdrop-blur-xl">

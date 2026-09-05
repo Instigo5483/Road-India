@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Circle, MapContainer, TileLayer, Tooltip, Marker, useMap, useMapEvents } from 'react-leaflet'
 import { createPinIcon } from '../lib/mapPin'
-import ReportDetailModal from './ReportDetailModal'
-import { useLanguage } from '../context/LanguageContext'
+import ReportDetailModal from './LazyReportDetailModal'
+import { useLanguage } from '../context/useAppContext'
+
+import { hasValidLocation } from '../lib/reportValidation'
 
 const pinIcon = createPinIcon()
-function hasValidLocation(report) {
-  const { lat, lng } = report.location || {}
-  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
-}
 
 const HEAT_COLOR = '#dc2626'
 const RESOLVED_COLOR = '#16a34a'
@@ -60,7 +58,7 @@ function makeCells(reports) {
 export default function ReportHeatMap({ reports, mode, label, comparisonLabel, displayMode = 'heatmap' }) {
   const { t } = useLanguage()
   const [selectedId, setSelectedId] = useState(null)
-  const locatedReports = useMemo(() => reports.filter(hasValidLocation), [reports])
+  const locatedReports = useMemo(() => reports.filter(report => hasValidLocation(report.location)), [reports])
   const cells = useMemo(() => makeCells(locatedReports), [locatedReports])
   const selected = locatedReports.find(r => r.id === selectedId)
 

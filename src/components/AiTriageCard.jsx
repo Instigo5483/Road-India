@@ -1,13 +1,8 @@
 import { motion } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { IconSparkle, IconCamera } from './Icons'
 
-export const SEVERITY_THEME = {
-  low: 'bg-success-50 text-success-700',
-  medium: 'bg-warning-50 text-warning-600',
-  high: 'bg-accent-50 text-accent-700',
-  critical: 'bg-emergency-50 text-emergency-600',
-}
+import { SEVERITY_THEME } from '../data/severity'
 
 /** Full AI-triage summary shown right after a report is filed -- severity,
  * the department it was routed to, and the model's one-line caseworker

@@ -1,4 +1,4 @@
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { getStatus } from '../data/categoryTypes'
 
 const DOT_STYLES = {

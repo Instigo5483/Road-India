@@ -1,8 +1,8 @@
 export function prepareResolution(report, proof, now = new Date()) {
   if (!report || report.status === 'resolved') throw new Error('Report unavailable or already resolved')
   if (!Array.isArray(proof.photoUrls) || proof.photoUrls.length !== 1 ||
-      typeof proof.photoUrls[0] !== 'string' || !proof.photoUrls[0].startsWith('data:image/') ||
-      !proof.officer?.trim() || !proof.notes?.trim() || proof.certified !== true) {
+      typeof proof.photoUrls[0] !== 'string' || !proof.photoUrls[0].match(/^data:image\/(jpeg|png|webp);base64,/) ||
+      typeof proof.officer !== 'string' || !proof.officer.trim() || typeof proof.notes !== 'string' || !proof.notes.trim() || proof.certified !== true) {
     throw new Error('Complete the photo and sign-off fields')
   }
   const resolutionProof = {

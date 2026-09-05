@@ -1,30 +1,31 @@
 import { useEffect } from 'react'
-import { useReports } from '../context/ReportsContext'
-import { useLanguage } from '../context/LanguageContext'
-import { useToast } from '../context/ToastContext'
+import { useReports } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import { reportTypeIds, getTypesLabel, getStatus } from '../data/categoryTypes'
+
+import { useAuth } from '../context/useAppContext'
 
 const SEEN_STATUS_KEY = 'road_india_seen_statuses'
 
-function loadSeenStatuses() {
+function loadSeenStatuses(uid) {
   try {
-    return JSON.parse(localStorage.getItem(SEEN_STATUS_KEY)) ?? {}
+    return JSON.parse(localStorage.getItem(SEEN_STATUS_KEY + ':' + uid)) ?? {}
   } catch {
     return {}
   }
 }
 
-function saveSeenStatuses(map) {
+function saveSeenStatuses(uid, map) {
   try {
-    localStorage.setItem(SEEN_STATUS_KEY, JSON.stringify(map))
+    localStorage.setItem(SEEN_STATUS_KEY + ':' + uid, JSON.stringify(map))
   } catch {
     // Non-fatal -- just means a status change might get re-announced later.
   }
 }
 
 /** Watches the citizen's own reports for a status change since they were
- * last seen, and toasts about it -- mounted in Navbar (present on every
- * citizen page) rather than just Dashboard, so a change is caught
+ * last seen, and toasts about it -- mounted once at the application root, so a change is caught
  * wherever the citizen happens to be, not only when they check My
  * Reports. No push infrastructure needed: it just diffs against what was
  * last recorded in localStorage on every reports update. The first time
@@ -33,12 +34,13 @@ function saveSeenStatuses(map) {
  * first time a citizen visits after this shipped. */
 export function useReportStatusAlerts() {
   const { myReports, loading } = useReports()
+  const { user } = useAuth()
   const { t } = useLanguage()
   const { showToast } = useToast()
 
   useEffect(() => {
-    if (loading) return
-    const seen = loadSeenStatuses()
+    if (loading || !user) return
+    const seen = loadSeenStatuses(user.uid)
     const next = { ...seen }
     let announced = false
 
@@ -60,9 +62,7 @@ export function useReportStatusAlerts() {
     })
 
     if (announced || Object.keys(next).length !== Object.keys(seen).length) {
-      saveSeenStatuses(next)
+      saveSeenStatuses(user.uid, next)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myReports, loading])
+  }, [myReports, loading, user, t, showToast])
 }
-

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
-import { useAuth } from '../context/AuthContext'
-import { useReports } from '../context/ReportsContext'
-import { useToast } from '../context/ToastContext'
+import { useLanguage } from '../context/useAppContext'
+import { useAuth } from '../context/useAppContext'
+import { useReports } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import {
   reportTypeIds,
   getTypesLabel,
@@ -13,7 +13,7 @@ import { timeAgo, formatTimestamp } from '../lib/time'
 import { computeCivicPoints } from '../lib/civicPoints'
 import StatusBadge from './StatusBadge'
 import AiTriageCard from './AiTriageCard'
-import ReportLocationMap from './ReportLocationMap'
+import { ReportLocationMap } from './LazyMaps'
 import ReportFeedbackForm from './ReportFeedbackForm'
 import ReportEditForm from './ReportEditForm'
 import FeedbackBadge from './FeedbackBadge'
@@ -25,7 +25,7 @@ import { IconMapPin, IconThumbsUp, IconX, IconEdit } from './Icons'
 // picked up -- once work has started (in_progress) or it's resolved, the
 // details are locked to avoid changing the record out from under whoever
 // is handling it. Client-side gate only, matching this app's existing
-// prototype-grade auth caveats -- firestore.rules just checks authorship.
+// prototype-grade auth caveats; updated rules also enforce the editable stage.
 const EDITABLE_STATUSES = ['submitted', 'in_review']
 
 /** Full-detail popup for a single report -- opened by clicking a
@@ -34,7 +34,7 @@ const EDITABLE_STATUSES = ['submitted', 'in_review']
  * class already fixed elsewhere in this app (Login.jsx, ReportFlow.jsx,
  * App.jsx) for why that combination is avoided here too. */
 export default function ReportDetailModal({
-  report,
+  report: initialReport,
   onClose,
   onUpvote,
   upvoted,
@@ -45,6 +45,10 @@ export default function ReportDetailModal({
   const { user } = useAuth()
   const { submitReportFeedback, updateReport, reports } = useReports()
   const { showToast } = useToast()
+  const dialogRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const report = reports.find(r => r.id === initialReport.id) ?? initialReport
   const [editing, setEditing] = useState(() => initialEditing && user?.uid === report.createdBy && EDITABLE_STATUSES.includes(report.status))
 
   // Only the citizen who filed this report can rate it, and only once
@@ -70,22 +74,40 @@ export default function ReportDetailModal({
     }
   }
 
-  function handleUpvoteClick() {
-    onUpvote()
-    showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+  async function handleUpvoteClick() {
+    try {
+      await onUpvote?.()
+      showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+    } catch { showToast(t('toast.reportUpdateFailed'), 'error') }
   }
 
   useEffect(() => {
+    const previousFocus = document.activeElement
+    const previousOverflow = document.body.style.overflow
+    const focusable = () => [...(dialogRef.current?.querySelectorAll('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]') ?? [])]
+      .filter(element => element.getClientRects().length)
+    focusable()[0]?.focus({ preventScroll: true })
     function onKeyDown(e) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') { e.stopPropagation(); onCloseRef.current() }
+      if (e.key !== 'Tab') return
+      const items = focusable()
+      const first = items[0]
+      const last = items.at(-1)
+      if (!first) { e.preventDefault(); return }
+      if (!dialogRef.current?.contains(document.activeElement) || (!e.shiftKey && document.activeElement === last)) {
+        e.preventDefault(); first.focus()
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus()
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = ''
+      document.body.style.overflow = previousOverflow
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true })
     }
-  }, [onClose])
+  }, [])
 
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
 
@@ -102,10 +124,15 @@ export default function ReportDetailModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-ink-950/60 p-4"
       onClick={handleBackdropClick}
     >
       <motion.div
+        ref={dialogRef}
+        onKeyDown={event => { if (event.key !== 'Escape' && event.key !== 'Tab') event.stopPropagation() }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={typeLabel || report.id}
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.2 }}
@@ -145,7 +172,7 @@ export default function ReportDetailModal({
         </div>
 
         <div className="space-y-4 p-5">
-          {editing ? (
+          {editing && canEdit ? (
             <ReportEditForm
               report={report}
               onSave={handleEditSave}

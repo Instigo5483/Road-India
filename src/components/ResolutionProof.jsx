@@ -1,4 +1,4 @@
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { formatTimestamp } from '../lib/time'
 
 export default function ResolutionProof({ proof }) {

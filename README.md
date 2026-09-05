@@ -6,7 +6,7 @@
 
 **Report it. Fix it faster.** A mobile-first civic reporting website for road damage and infrastructure complaints, built for Build What Moves India.
 
-[Live website](https://road-india.vercel.app/) · [Submission notes](SUBMISSION.md) · [MIT license](LICENSE)
+[Live website](https://road-india.vercel.app/) · [Submission notes](SUBMISSION.md) · [Maintenance audit](AUDIT.md) · [MIT license](LICENSE)
 
 Citizens can select multiple issues, attach photos, pin the location, and follow a report through review and resolution. Public feeds and analytics make progress visible; citizen feedback distinguishes an administrative closure from a confirmed fix.
 
@@ -40,7 +40,7 @@ The Heatmap option is an aggregated circle-density visualization, not a continuo
 
 Report Management and Analytics share the admin navigation, including a desktop sidebar. Admin login has no citizen-role selector. Analytics includes report totals, average resolution time, category/status breakdowns, recent reporting activity, top locations, and the interactive map above.
 
-The status dropdown offers **Submitted**, **In Review**, and **In Progress**. To close a report through the admin UI, use **Resolve report** and submit:
+The status dropdown offers **Submitted**, **In Review**, and **In Progress** for open reports; closed reports cannot be reopened through it. To close a report through the admin UI, use **Resolve report** and submit:
 
 - One after-repair photo.
 - An inspection officer/display name and resolution notes.
@@ -49,7 +49,7 @@ The status dropdown offers **Submitted**, **In Review**, and **In Progress**. To
 
 Successful submission saves the proof, resolution timestamp, and Resolved status together. Evidence appears in report details; older resolved records may have no proof. **Save Draft** stores an unfinished resolution form in the current tab's session storage, not across devices. Photos are not automatically geo-verified, and public evidence must not include private identity information.
 
-This proof requirement is an admin-UI workflow, not comprehensive server-enforced authorization; see the security limitations below.
+The updated rules require proof fields when transitioning to Resolved, enforce the author's editable stages, validate one-time ratings, and restrict support updates to the caller's vote. They still do not establish verified administrator roles; see the security limitations below.
 
 ### Settings
 
@@ -80,13 +80,13 @@ Offline drafts and location history default to **off**. Drafts are not encrypted
 | Data | Firebase Authentication and Cloud Firestore; localStorage mock fallback |
 | Server | Vercel Node functions, Firebase Admin SDK |
 | AI | OpenAI `gpt-4o-mini` through `POST /api/triage` |
-| Quality checks | ESLint and Vite production build |
+| Quality checks | Node regression tests, source/import checks, ESLint, Vite production build |
 
-Photos are stored inline in Firestore, not Firebase Storage. Compression caps individual image data URLs to leave room for three photos and report fields within document-size limits.
+Photos accept JPEG, PNG, and WebP (up to 20 MB input before compression); descriptions are limited to 5,000 characters and citizen reviews to 2,000. Photos are stored inline in Firestore, not Firebase Storage. Compression caps individual image data URLs to leave room for three photos and report fields within document-size limits.
 
 ## Run locally
 
-Install a Node.js version compatible with Vite 5 and npm, then:
+Use Node.js 20 or newer and npm, then:
 
 ```bash
 npm install
@@ -96,10 +96,13 @@ npm run dev
 Use the local URL printed by Vite. Without Firebase configuration, the app uses seeded reports and a localStorage-backed mock backend. This is intended for evaluation, not sensitive information.
 
 ```bash
+npm test
 npm run lint
 npm run build
 npm run preview
 ```
+
+`npm test` runs isolated tests without contacting Firebase or OpenAI and without modifying browser or live data.
 
 `npm run dev` mirrors the API handlers through Vite middleware. `npm run preview` serves the static build; it is not a substitute for the Vercel serverless runtime.
 
@@ -140,14 +143,16 @@ The admin sign-in page displays the configured evaluation passcode. Hiding its l
 
 | Variable | Purpose |
 | --- | --- |
-| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Web app configuration |
+| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` | Firebase Web app configuration |
 | `FIREBASE_SERVICE_ACCOUNT` | Server-only base64 Firebase Admin credential for stable test login |
 | `OPENAI_API_KEY` | Server-only OpenAI credential |
 | `VITE_ADMIN_PASSCODE` | Client-visible evaluation gate, not a secret or role system |
 
-`.env.example` also contains legacy Storage/Messaging configuration. Storage is not used for report photos; the current citizen flow does not require team push notifications.
+Firebase Storage, Cloud Messaging, emergency dispatch, and response-team routes are not used. Their retired code and configuration have been removed. Existing database records are not deleted by this cleanup.
 
-Optional seed scripts exist under `scripts/`. Inspect their data and target project before running them. `npm run clear-data` is destructive and is **not** a required setup step. Never reset a shared database merely to test the UI.
+The seed script uses the same fictional road-issue fixtures as the mock backend. `npm run seed` creates fixed-ID records and refuses to overwrite existing documents. Inspect its target before running it.
+
+`npm run clear-data -- --confirm-project=YOUR_PROJECT_ID` irreversibly deletes the **reports and users Firestore collections** in the explicitly confirmed test project. It does not delete Firebase Auth accounts or old team documents. This is **not** a required setup step; never reset a shared database merely to test the UI.
 
 ## OpenAI integration
 
@@ -156,6 +161,8 @@ Optional seed scripts exist under `scripts/`. Inspect their data and target proj
 - Severity: low, medium, high, or critical.
 - Suggested department.
 - A short caseworker summary.
+
+Only the first photo is transmitted to the triage endpoint. Upstream requests time out after 8 seconds; client requests time out after 12 seconds. Model output fields and severity values are validated before saving.
 
 Successful model responses include `aiGenerated: true`; photo requests include `photoAnalyzed: true`. Without a key or after a handled upstream failure, the server uses a rule-based result. A failed client request can leave the report without a triage result.
 
@@ -180,26 +187,27 @@ This is an evaluation prototype, not production-ready identity or municipal infr
 
 - Citizen identity verification is mocked. Knowing a test ID is sufficient to access its test account.
 - Admin authentication is a client-side passcode gate; the passcode is client-visible and shown for evaluation.
-- Current rules allow broad authenticated status/upvote operations. UI-only edit-stage restrictions are not equivalent to server-enforced authorization.
+- Updated rules constrain content edits, feedback, support mutations, and resolution fields, but status/proof operations still lack verified admin-role checks.
 - Reports are publicly readable. Public-name settings change presentation fields, not ownership IDs, historical exports, or previously downloaded copies.
 - Duplicate prevention is a client-side heuristic, not server-side rate limiting.
 - No official contractor penalties, guaranteed repair SLA, or government dispatch integration is implemented.
-- **Legacy code remains:** team routes (`/team`, `/team/login`, `/admin/teams`, `/admin/teams/new`), dispatch code, and related rules/scripts still exist in the repository. They are not part of the current unified citizen-reporting experience; do not describe them as fully removed or rely on hidden navigation to disable them.
+- Retired emergency/team routes, APIs, notification worker, helpers, and seed script are removed. Old emergency records are excluded from current report views but are not erased from storage; old Road Problem/Corruption records remain compatible.
 
-Before collecting real citizen data, replace simulated identity and passcode gates, enforce roles and validation server-side, review public fields and photo storage, and add abuse protection and automated tests.
+Before collecting real citizen data, replace simulated identity and passcode gates, enforce roles and validation server-side, review public fields and photo storage, and add server-side abuse protection and Firebase integration/security tests. See [AUDIT.md](AUDIT.md) for the remaining dependency advisories and verification limits.
 
 ## Main project files
 
 ```text
-api/                  Server handlers for login/triage; legacy dispatch
+api/                  Server handlers for login and triage
 src/pages/            Home, Login, ReportFlow, ReportsFeed, ResolvedReports,
-                      ViewData, Dashboard, Settings, admin and legacy team pages
+                      ViewData, Dashboard, Settings, Admin and AdminAnalytics
 src/components/       Navigation, reports, maps, charts, filters and feedback UI
 src/context/          Authentication, reports, languages and notifications
 src/lib/              Firebase/mock data, preferences, exports, geo and helpers
 src/i18n/             English/Hindi dictionaries
 public/               Road India logo and favicon
-firestore.rules       Database access rules, including presentation updates
+tests/                Isolated behavior, mock-backend, import and translation checks
+firestore.rules       Database validation/access rules (deploy separately)
 vercel.json           SPA routing
 scripts/              Seeding and database maintenance utilities
 ```

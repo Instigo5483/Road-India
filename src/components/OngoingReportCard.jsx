@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
-import { useToast } from '../context/ToastContext'
+import { useLanguage } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import { getTypesLabel, reportTypeIds } from '../data/categoryTypes'
 import { timeAgo } from '../lib/time'
 import StatusBadge from './StatusBadge'
-import ReportDetailModal from './ReportDetailModal'
+import ReportDetailModal from './LazyReportDetailModal'
 import {
   IconArrowRight,
   IconCamera,
@@ -40,10 +40,12 @@ export default function OngoingReportCard({
     setDetailOpen(true)
   }
 
-  function handleUpvote(event) {
+  async function handleUpvote(event) {
     event.stopPropagation()
-    onUpvote()
-    if (canUpvote) showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+    try {
+      await onUpvote()
+      if (canUpvote) showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+    } catch { showToast(t('toast.reportUpdateFailed'), 'error') }
   }
 
   return (

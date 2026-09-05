@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import { motion } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import {
   INDIA_CENTER,
   DEFAULT_ZOOM,
@@ -12,12 +12,14 @@ import {
 import { createPinIcon } from '../lib/mapPin'
 import { IconLocate, IconLoader } from './Icons'
 
+import { hasValidLocation } from '../lib/reportValidation'
+
 const pinIcon = createPinIcon()
 
 function ClickHandler({ onPick }) {
   useMapEvents({
     click(e) {
-      onPick({ lat: e.latlng.lat, lng: e.latlng.lng })
+      onPick({ lat: e.latlng.lat, lng: e.latlng.wrap().lng })
     },
   })
   return null
@@ -28,12 +30,18 @@ export default function MapPicker({ value, onChange }) {
   const [locating, setLocating] = useState(false)
   const [resolvingAddress, setResolvingAddress] = useState(false)
   const mapRef = useRef(null)
+  const requestId = useRef(0)
+  const picked = useRef(hasValidLocation(value))
+  useEffect(() => () => { requestId.current += 1 }, [])
 
   const setLocation = useCallback(
     async (coords) => {
-      onChange({ ...value, ...coords, address: value?.address })
+      const id = ++requestId.current
+      picked.current = true
+      onChange({ ...coords, address: formatCoords(coords), state: null, district: null, city: null })
       setResolvingAddress(true)
       const resolved = await reverseGeocode(coords.lat, coords.lng)
+      if (id !== requestId.current) return
       setResolvingAddress(false)
       onChange((prev) => ({
         ...(prev ?? coords),
@@ -44,16 +52,18 @@ export default function MapPicker({ value, onChange }) {
         city: resolved?.city ?? null,
       }))
     },
-    [onChange, value]
+    [onChange]
   )
 
   const handleUseCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) return
+    const id = requestId.current
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setLocating(false)
+        if (id !== requestId.current) return
         mapRef.current?.flyTo(coords, PICKER_ZOOM, { duration: 0.8 })
         setLocation(coords)
       },
@@ -63,20 +73,21 @@ export default function MapPicker({ value, onChange }) {
   }, [setLocation])
 
   useEffect(() => {
-    handleUseCurrentLocation()
+    if (!picked.current) handleUseCurrentLocation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const center = value?.lat
+  const center = hasValidLocation(value)
     ? [value.lat, value.lng]
     : [INDIA_CENTER.lat, INDIA_CENTER.lng]
-  const zoom = value?.lat ? PICKER_ZOOM : DEFAULT_ZOOM
+  const zoom = hasValidLocation(value) ? PICKER_ZOOM : DEFAULT_ZOOM
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-ink-200 shadow-card">
       <MapContainer
         center={center}
         zoom={zoom}
+        worldCopyJump
         scrollWheelZoom
         className="h-72 w-full sm:h-96"
         ref={mapRef}
@@ -86,7 +97,7 @@ export default function MapPicker({ value, onChange }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <ClickHandler onPick={setLocation} />
-        {value?.lat && (
+        {hasValidLocation(value) && (
           <Marker
             position={[value.lat, value.lng]}
             icon={pinIcon}
@@ -94,7 +105,7 @@ export default function MapPicker({ value, onChange }) {
             eventHandlers={{
               dragend: (e) => {
                 const pos = e.target.getLatLng()
-                setLocation({ lat: pos.lat, lng: pos.lng })
+                setLocation({ lat: pos.lat, lng: pos.wrap().lng })
               },
             }}
           />

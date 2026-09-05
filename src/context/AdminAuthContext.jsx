@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { signInAnonymously } from 'firebase/auth'
 import { isFirebaseConfigured, auth } from '../lib/firebase'
 
@@ -14,13 +14,13 @@ const STORAGE_KEY = 'road_india_admin_session'
 // Exported so AdminLogin.jsx can display it next to the form for
 // evaluators/judges who need a working passcode without it being emailed
 // around separately -- see that page's "test credentials" panel.
-export const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'roadindia-admin'
+import { ADMIN_PASSCODE } from '../lib/adminAccess'
 
-const AdminAuthContext = createContext(null)
+import { AdminAuthContext } from './contexts'
 
 export function AdminAuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(
-    () => typeof window !== 'undefined' && window.sessionStorage.getItem(STORAGE_KEY) === 'true'
+    () => { try { return window.sessionStorage.getItem(STORAGE_KEY) === 'true' } catch { return false } }
   )
 
   const value = useMemo(
@@ -38,13 +38,13 @@ export function AdminAuthProvider({ children }) {
           await signInAnonymously(auth)
         }
 
-        window.sessionStorage.setItem(STORAGE_KEY, 'true')
+        try { window.sessionStorage.setItem(STORAGE_KEY, 'true') } catch { /* Keep the session in memory. */ }
         setIsAdmin(true)
         return true
       },
 
       logoutAdmin() {
-        window.sessionStorage.removeItem(STORAGE_KEY)
+        try { window.sessionStorage.removeItem(STORAGE_KEY) } catch { /* Clear in-memory access below. */ }
         setIsAdmin(false)
       },
     }),
@@ -52,10 +52,4 @@ export function AdminAuthProvider({ children }) {
   )
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>
-}
-
-export function useAdminAuth() {
-  const ctx = useContext(AdminAuthContext)
-  if (!ctx) throw new Error('useAdminAuth must be used inside <AdminAuthProvider>')
-  return ctx
 }

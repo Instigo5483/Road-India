@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { IconGlobe, IconCheck, IconChevronDown } from './Icons'
 
 export default function LanguageSelector({ variant = 'light' }) {

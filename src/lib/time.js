@@ -6,12 +6,14 @@
  * `serverTimestamp()` field comes back as once read from a snapshot).
  */
 export function toDate(value) {
+  if (value == null || value === '') return new Date(NaN)
   if (value && typeof value.toDate === 'function') return value.toDate()
   return value instanceof Date ? value : new Date(value)
 }
 
 export function timeAgo(isoString, locale = 'en-IN') {
   const date = toDate(isoString)
+  if (!Number.isFinite(date.getTime())) return '—'
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
 
   const ranges = [
@@ -39,6 +41,7 @@ export function timeAgo(isoString, locale = 'en-IN') {
 
 export function formatTimestamp(isoString, locale = 'en-IN') {
   const date = toDate(isoString)
+  if (!Number.isFinite(date.getTime())) return '—'
   return date.toLocaleString(locale, {
     day: '2-digit',
     month: 'short',
@@ -48,30 +51,12 @@ export function formatTimestamp(isoString, locale = 'en-IN') {
   })
 }
 
-/**
- * Live progress of a Blinkit/Zepto-style ETA window: given when the report
- * was created and how many minutes the response team was promised in, how
- * much of that window has elapsed right now.
- *
- * There's no real dispatch backend behind this (see EmergencyTracker /
- * EmergencyEtaBadge) -- it's a purely time-based simulation, computed
- * fresh from `createdAt` every time it's called, so every viewer (and
- * every re-render) sees a consistent, ever-advancing countdown with no
- * extra state to keep in sync.
- */
-export function getEtaProgress(createdAt, etaMinutes) {
-  const totalMs = etaMinutes * 60 * 1000
-  const elapsedMs = Date.now() - toDate(createdAt).getTime()
-  const remainingMs = Math.max(totalMs - elapsedMs, 0)
-  const fraction = Math.min(Math.max(elapsedMs / totalMs, 0), 1)
-  return { totalMs, elapsedMs, remainingMs, fraction, arrived: remainingMs <= 0 }
-}
-
 /** Compact "how long did this take" label -- minutes under an hour, hours
  * under two days, otherwise days. Used for the real resolvedAt-createdAt
  * turnaround shown on resolved reports (see ReportCard, ResolvedReports),
  * never a fabricated SLA figure. */
 export function formatDuration(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return '—'
   const minutes = Math.max(Math.round(ms / 60000), 1)
   if (minutes < 60) return `${minutes} min`
 
@@ -82,9 +67,23 @@ export function formatDuration(ms) {
   return `${days} day${days === 1 ? '' : 's'}`
 }
 
-export function formatCountdown(ms) {
-  const totalSeconds = Math.max(Math.ceil(ms / 1000), 0)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}:${String(seconds).padStart(2, '0')}`
+export function resolutionDuration(report) {
+  if (!report.createdAt || !report.resolvedAt) return null
+  const ms = toDate(report.resolvedAt) - toDate(report.createdAt)
+  return Number.isFinite(ms) && ms >= 0 ? ms : null
+}
+
+export function averageResolution(reports) {
+  let total = 0
+  let count = 0
+  reports.forEach(report => {
+    const ms = resolutionDuration(report)
+    if (ms !== null) { total += ms; count += 1 }
+  })
+  return count ? total / count : null
+}
+
+export function timestampIso(value) {
+  const date = toDate(value)
+  return Number.isFinite(date.getTime()) ? date.toISOString() : ''
 }

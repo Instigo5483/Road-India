@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useAuth } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
 import { maskAadhaarId } from '../lib/format'
 import {
   IconUser,

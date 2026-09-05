@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   onAuthStateChanged,
   signInAnonymously,
@@ -18,7 +18,7 @@ import { isFirebaseConfigured, auth, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { fetchLoginToken } from '../lib/authToken'
 
-const AuthContext = createContext(null)
+import { AuthContext } from './contexts'
 
 /**
  * Wraps either the real Firebase Auth + Firestore user profile, or the
@@ -47,6 +47,7 @@ export function AuthProvider({ children }) {
     let unsubProfile = () => {}
     const unsubAuth = onAuthStateChanged(auth, (fbUser) => {
       unsubProfile()
+      setUser(null)
       if (!fbUser) {
         setUser(null)
         setLoading(false)
@@ -54,10 +55,12 @@ export function AuthProvider({ children }) {
       }
       unsubProfile = onSnapshot(doc(db, 'users', fbUser.uid), (snap) => {
         if (snap.exists()) {
-          setUser({ uid: fbUser.uid, ...snap.data() })
+          setUser({ ...snap.data(), uid: fbUser.uid })
+        } else {
+          setUser(null)
         }
         setLoading(false)
-      })
+      }, () => { setUser(null); setLoading(false) })
     })
 
     return () => {
@@ -70,7 +73,6 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       loading,
-      isMockBackend: !isFirebaseConfigured,
 
       async savePreferences(settings, preferredLanguage) {
         if (!user) throw new Error('Sign in first')
@@ -108,8 +110,9 @@ export function AuthProvider({ children }) {
         // profile or reports. Falls back to a plain anonymous session if
         // the endpoint is unavailable (e.g. FIREBASE_SERVICE_ACCOUNT isn't
         // set) so login still works, just without that guarantee.
-        const token = await fetchLoginToken({ digilockerId })
-        const cred = token
+        const sameAccount = user?.digilockerId === digilockerId && auth.currentUser?.uid === user.uid
+        const token = sameAccount ? null : await fetchLoginToken({ digilockerId })
+        const cred = sameAccount ? { user: auth.currentUser } : token
           ? await signInWithCustomToken(auth, token)
           : await signInAnonymously(auth)
         const uid = cred.user.uid
@@ -144,10 +147,4 @@ export function AuthProvider({ children }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
-  return ctx
 }

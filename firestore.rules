@@ -2,115 +2,91 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Each user can only read/write their own profile document.
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
+      allow read, create, update: if request.auth != null && request.auth.uid == userId;
       allow delete: if false;
     }
 
-    // Reports are publicly readable (the community feed requires no
-    // account to be transparent about what's already reported), but only
-    // signed-in users may create them, only the author may edit their own
-    // report's content, and upvotes are the only field anyone else may
-    // touch, one vote per user, enforced by requiring their own uid in
-    // upvotedBy.
+    function validLocation(location) {
+      return location.lat is number && location.lng is number &&
+        location.lat >= -90 && location.lat <= 90 && location.lng >= -180 && location.lng <= 180;
+    }
+
+    function validContent(data) {
+      return data.description is string && data.description.size() > 0 && data.description.size() <= 5000 &&
+        data.photoUrls is list && data.photoUrls.size() <= 3 && validLocation(data.location);
+    }
+
     match /reports/{reportId} {
       allow read: if true;
-      allow create: if request.auth != null
-                    && request.resource.data.createdBy == request.auth.uid
-                    && (request.resource.data.status == 'submitted'
-                        || (request.resource.data.category == 'emergency'
-                            && request.resource.data.status == 'in_progress'))
-                    && request.resource.data.upvotes == 0;
+      allow create: if request.auth != null &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.category == 'issue' &&
+        request.resource.data.status == 'submitted' &&
+        request.resource.data.upvotes == 0 &&
+        request.resource.data.upvotedBy == [] &&
+        validContent(request.resource.data);
 
+      // Prototype limitation: status/proof writes require authentication,
+      // not a verified staff role. Replace this with admin custom claims
+      // before collecting real citizen data.
       allow update: if request.auth != null && (
-        // Evaluation-only admin gate: replace with custom-claims authorization for production.
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolutionProof']) &&
+        (resource.data.status != 'resolved' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolutionProof']) &&
           request.resource.data.status == 'resolved' &&
+          request.resource.data.resolvedAt == request.time &&
           request.resource.data.resolutionProof.photoUrls is list &&
           request.resource.data.resolutionProof.photoUrls.size() == 1 &&
+          request.resource.data.resolutionProof.photoUrls[0] is string &&
           request.resource.data.resolutionProof.officer is string &&
+          request.resource.data.resolutionProof.officer.size() > 0 &&
           request.resource.data.resolutionProof.notes is string &&
+          request.resource.data.resolutionProof.notes.size() > 0 &&
           request.resource.data.resolutionProof.certified == true) ||
+
+        (resource.data.status != 'resolved' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt']) &&
+          request.resource.data.status in ['submitted', 'in_review', 'in_progress'] &&
+          request.resource.data.resolvedAt == null) ||
+
         (resource.data.createdBy == request.auth.uid &&
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['createdByName', 'showCitizenBadge', 'showCivicRank']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['createdByName', 'showCitizenBadge', 'showCivicRank']) &&
           request.resource.data.createdByName is string &&
           request.resource.data.showCitizenBadge is bool &&
           request.resource.data.showCivicRank is bool) ||
-        // Report author can edit their own report's fields, but not status.
+
         (resource.data.createdBy == request.auth.uid &&
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['description', 'photoUrls', 'location'])) ||
-        // Only the real author (not just "some authenticated user", unlike
-        // the status/assignedTeams rules below) can leave one-time feedback
-        // -- a 1-5 star rating + "was it really resolved?" + optional review
-        // -- once their own report is resolved (src/components/
-        // ReportFeedbackForm.jsx via submitReportFeedback in
-        // ReportsContext.jsx). Can't be added twice or before resolution.
+          resource.data.status in ['submitted', 'in_review'] &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'photoUrls', 'location']) &&
+          validContent(request.resource.data)) ||
+
         (resource.data.createdBy == request.auth.uid &&
           resource.data.status == 'resolved' &&
           !('citizenFeedback' in resource.data) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['citizenFeedback'])) ||
-        // Any signed-in user may toggle their own upvote.
-        (request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['upvotes', 'upvotedBy'])) ||
-        // Status is moved by the admin dashboard (src/pages/Admin.jsx) or by
-        // a response team marking a job complete (src/pages/TeamDashboard.jsx).
-        // Both are client-side passcode gates, not a real role/permission
-        // system (see context/AdminAuthContext.jsx, TeamAuthContext.jsx) --
-        // so this rule can only check "is *some* authenticated Firebase
-        // user", not "is a verified admin/team". Add custom claims + a real
-        // rule check here before handling real citizen data.
-        // resolvedAt is stamped alongside status in the same write (see
-        // updateReportStatus in ReportsContext.jsx) -- used by
-        // pages/AdminAnalytics.jsx to compute average resolution time.
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])) ||
-        // assignedTeams is changed by the admin dashboard's team-reassignment
-        // control (src/components/AdminReportRow.jsx via reassignReportTeam
-        // in src/lib/teams.js) -- same "any authenticated Firebase user, not
-        // a verified admin" caveat as the status rule above. (The initial
-        // auto-dispatch write to this same field comes from api/_dispatch-core.js
-        // via the Admin SDK, which bypasses these rules entirely.)
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedTeams']))
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['citizenFeedback']) &&
+          request.resource.data.citizenFeedback.rating is int &&
+          request.resource.data.citizenFeedback.rating >= 1 &&
+          request.resource.data.citizenFeedback.rating <= 5 &&
+          request.resource.data.citizenFeedback.confirmedResolved is bool &&
+          request.resource.data.citizenFeedback.review is string &&
+          request.resource.data.citizenFeedback.review.size() <= 2000) ||
+
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'upvotedBy']) &&
+          request.resource.data.upvotedBy is list &&
+          request.resource.data.upvotedBy.toSet().size() == request.resource.data.upvotedBy.size() &&
+          request.resource.data.upvotes >= 0 &&
+          (
+            (!(request.auth.uid in resource.data.get('upvotedBy', [])) &&
+              request.resource.data.upvotedBy.toSet() == resource.data.get('upvotedBy', []).toSet().union([request.auth.uid].toSet()) &&
+              request.resource.data.upvotes == resource.data.get('upvotes', 0) + 1) ||
+            (request.auth.uid in resource.data.get('upvotedBy', []) &&
+              request.resource.data.upvotedBy.toSet() == resource.data.get('upvotedBy', []).toSet().difference([request.auth.uid].toSet()) &&
+              request.resource.data.upvotes == resource.data.get('upvotes', 0) - 1)
+          ))
       );
 
       allow delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
     }
-
-    // Response teams (src/pages/TeamDashboard.jsx, api/_dispatch-core.js).
-    // Created from the admin dashboard (src/components/AddTeamForm.jsx,
-    // src/lib/teams.js) or seeded directly via scripts/seedTeams.js -- never
-    // created by a citizen or by a team itself. Team login
-    // (context/TeamAuthContext.jsx) signs in anonymously purely to satisfy
-    // `request.auth != null` here, then checks the passcode field itself
-    // client-side -- same "no real per-identity access control" limitation
-    // as the `status` field rule above and the create rule below, documented
-    // rather than pretended away: any authenticated Firebase user (not just
-    // a verified admin) can create or update a team through these rules.
-    // Add custom claims + a real rule check here before handling this beyond
-    // a prototype. The dispatch endpoint (a Vercel serverless function, not
-    // a Firebase Cloud Function -- see api/_dispatch-core.js for why) uses
-    // the Admin SDK, which bypasses these rules entirely, so it can always
-    // assign jobs regardless.
-    match /teams/{teamId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.resource.data.keys().hasOnly(
-                         ['name', 'type', 'location', 'passcode', 'status', 'fcmToken', 'currentReportId'])
-                    && request.resource.data.name is string
-                    && request.resource.data.type is string
-                    && request.resource.data.passcode is string
-                    && request.resource.data.status == 'available'
-                    && request.resource.data.fcmToken == null
-                    && request.resource.data.currentReportId == null;
-      allow update: if request.auth != null
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['status', 'location', 'fcmToken', 'currentReportId']);
-      allow delete: if false;
-    }
+    // No response-team collection access; retired routes/API are removed.
   }
 }

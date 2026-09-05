@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import PhotoUpload from './PhotoUpload'
-import MapPicker from './MapPicker'
+import { MapPicker } from './LazyMaps'
 import Button from './Button'
+import { hasValidLocation } from '../lib/reportValidation'
 
 /** Inline edit form shown inside ReportDetailModal for a report's own
  * author -- see that file for the isOwner/status gating. Reuses the same
@@ -19,7 +20,7 @@ export default function ReportEditForm({ report, onSave, onCancel }) {
   const [location, setLocation] = useState(report.location ?? null)
   const [saving, setSaving] = useState(false)
 
-  const canSave = description.trim() && location?.lat
+  const canSave = description.trim() && hasValidLocation(location)
 
   async function handleSave(e) {
     e.preventDefault()
@@ -54,6 +55,7 @@ export default function ReportEditForm({ report, onSave, onCancel }) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
+          maxLength={5000}
           className="input-field resize-none text-sm"
         />
       </label>

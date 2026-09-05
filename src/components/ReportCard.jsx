@@ -1,17 +1,17 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguage } from '../context/LanguageContext'
-import { useToast } from '../context/ToastContext'
+import { useLanguage } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import {
   reportTypeIds,
   getTypesLabel,
 } from '../data/categoryTypes'
 import { timeAgo, toDate, formatDuration } from '../lib/time'
 import StatusBadge from './StatusBadge'
-import ReportDetailModal from './ReportDetailModal'
+import ReportDetailModal from './LazyReportDetailModal'
 import FeedbackBadge from './FeedbackBadge'
 import CategoryIcon from './CategoryIcon'
-import { SEVERITY_THEME } from './AiTriageCard'
+import { SEVERITY_THEME } from '../data/severity'
 import { IconMapPin, IconThumbsUp, IconSparkle, IconClock } from './Icons'
 
 export default function ReportCard({
@@ -27,10 +27,12 @@ export default function ReportCard({
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const [detailOpen, setDetailOpen] = useState(false)
 
-  function handleUpvoteClick(e) {
+  async function handleUpvoteClick(e) {
     e.stopPropagation()
-    onUpvote()
-    showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+    try {
+      await onUpvote()
+      showToast(upvoted ? t('toast.unupvoted') : t('toast.upvoted'))
+    } catch { showToast(t('toast.reportUpdateFailed'), 'error') }
   }
 
   return (
@@ -91,13 +93,6 @@ export default function ReportCard({
           {typeof distanceKm === 'number' && isFinite(distanceKm) && (
             <span className="font-medium text-brand-600">
               {t('reports.distanceAway', { distance: distanceKm.toFixed(1) })}
-            </span>
-          )}
-          {report.assignedTeams?.length > 0 && (
-            <span className="font-medium text-emergency-600">
-              {t('reports.dispatched', {
-                teams: report.assignedTeams.map((a) => a.teamName).join(', '),
-              })}
             </span>
           )}
           {report.status === 'resolved' && report.resolvedAt && (

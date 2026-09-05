@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { runTriage } from './api/_triage-core.js'
-import { runDispatch } from './api/_dispatch-core.js'
 import { mintLoginToken } from './api/_auth-core.js'
 
 /** Mirrors a POST-only Vercel serverless endpoint under api/ as dev-server
@@ -20,8 +19,14 @@ function apiDevMiddleware(path, handler) {
         let body = ''
         req.on('data', (chunk) => {
           body += chunk
+          if (Buffer.byteLength(body) > 1048576) {
+            res.statusCode = 413
+            res.end(JSON.stringify({ error: 'Payload too large' }))
+            req.destroy()
+          }
         })
         req.on('end', async () => {
+          if (res.writableEnded) return
           try {
             const payload = body ? JSON.parse(body) : {}
             const result = await handler(payload)
@@ -45,24 +50,14 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       apiDevMiddleware('/api/triage', (payload) => runTriage(payload, env.OPENAI_API_KEY)),
-      apiDevMiddleware('/api/dispatch', (payload) => runDispatch(payload, env.FIREBASE_SERVICE_ACCOUNT)),
       apiDevMiddleware('/api/login', (payload) => mintLoginToken(payload, env.FIREBASE_SERVICE_ACCOUNT)),
     ],
     server: {
       port: 5173,
     },
     build: {
-      // Vite's default modulePreload injects <link rel="modulepreload">
-      // for every vendor chunk reachable anywhere in the app -- including
-      // ones only ever reached through a React.lazy() route, like
-      // `leaflet` (only used by map components on ReportFlow/ReportsFeed/
-      // report-detail) and `firebase-messaging` (only TeamDashboard). That
-      // silently defeats the whole point of lazy-loading those routes:
-      // every visitor's very first page load -- Landing, Login, all of
-      // it -- would eagerly fetch ~90KB+ gzip of map/push-notification
-      // code they may never touch. Disabling it makes those chunks load
-      // only when their owning route's dynamic import() actually runs.
-      modulePreload: false,
+      // Vite preloads dependencies of a lazy route when that route is requested.
+      modulePreload: true,
       rollupOptions: {
         output: {
           // Split heavy third-party libraries into their own chunks,
@@ -84,13 +79,6 @@ export default defineConfig(({ mode }) => {
             if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
               return 'vendor-react'
             }
-            // Kept separate from the firebase chunk below deliberately:
-            // it's only ever imported by lib/messaging.js, which only
-            // TeamDashboard.jsx (a lazy-loaded route) touches. Grouping it
-            // with auth/firestore -- which load eagerly for every visitor,
-            // logged in or not -- would ship push-notification code to
-            // every citizen who never goes near /team.
-            if (id.includes('firebase/messaging')) return 'firebase-messaging'
             if (id.includes('/firebase/') || id.includes('@firebase')) return 'firebase'
             if (id.includes('leaflet')) return 'leaflet'
             if (id.includes('framer-motion')) return 'framer-motion'

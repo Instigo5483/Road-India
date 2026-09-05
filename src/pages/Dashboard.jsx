@@ -7,13 +7,12 @@ import UserMenu from '../components/UserMenu'
 import Logo from '../components/Logo'
 import EmptyState from '../components/EmptyState'
 import FilterDropdown from '../components/FilterDropdown'
-import ReportDetailModal from '../components/ReportDetailModal'
+import ReportDetailModal from '../components/LazyReportDetailModal'
 import StatusBadge from '../components/StatusBadge'
 import FeedbackBadge from '../components/FeedbackBadge'
-import { useReportStatusAlerts } from '../lib/useReportStatusAlerts'
-import { useReports } from '../context/ReportsContext'
-import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useReports } from '../context/useAppContext'
+import { useAuth } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
 import { STATUSES, getTypesLabel, reportTypeIds, normalizeCategoryId } from '../data/categoryTypes'
 import { computeCivicPoints } from '../lib/civicPoints'
 import { timeAgo, toDate, formatTimestamp } from '../lib/time'
@@ -60,7 +59,6 @@ export default function Dashboard() {
   const { user } = useAuth()
   const { t, lang } = useLanguage()
   const navigate = useNavigate()
-  useReportStatusAlerts()
   const [statusFilter, setStatusFilter] = useState('all')
   const [search,setSearch] = useState('')
   const [filtersOpen,setFiltersOpen] = useState(false)

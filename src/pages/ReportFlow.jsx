@@ -7,15 +7,16 @@ import PageTransition from '../components/PageTransition'
 import StepProgress from '../components/StepProgress'
 import Button from '../components/Button'
 import PhotoUpload from '../components/PhotoUpload'
-import MapPicker from '../components/MapPicker'
+import { MapPicker } from '../components/LazyMaps'
 import AiTriageCard from '../components/AiTriageCard'
-import { useLanguage } from '../context/LanguageContext'
-import { useReports } from '../context/ReportsContext'
-import { useToast } from '../context/ToastContext'
+import { useLanguage } from '../context/useAppContext'
+import { useReports } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import { getCategory, normalizeCategoryId } from '../data/categoryTypes'
 import { formatTimestamp } from '../lib/time'
 import { distanceKm } from '../lib/geo'
-import { useAuth } from '../context/AuthContext'
+import { hasValidLocation } from '../lib/reportValidation'
+import { useAuth } from '../context/useAppContext'
 import { draftKey, historyKey, readLocal } from '../lib/preferences'
 import {
   IconChevronLeft,
@@ -33,10 +34,7 @@ const STEP = { DETAILS: 1, LOCATION: 2, SUCCESS: 3 }
 // upvote an existing report instead of filing a duplicate.
 const NEARBY_RADIUS_KM = 0.3
 
-// Client-side spam/duplicate guard -- there's no server-side rate limiting
-// (no Cloud Functions in this project, see api/_dispatch-core.js's header
-// comment for why), so this is a best-effort deterrent against accidental
-// double-submits and rapid-fire filing, not real abuse prevention.
+// Best-effort client-side duplicate guard, not server-side abuse prevention.
 const MIN_SECONDS_BETWEEN_REPORTS = 10
 const DUPLICATE_WINDOW_SECONDS = 60
 const LAST_REPORT_KEY = 'road_india_last_report'
@@ -77,7 +75,7 @@ export default function ReportFlow() {
   // already resolved -- surfaced so the citizen can support an existing
   // report instead of filing a near-duplicate.
   const nearbyReports = useMemo(() => {
-    if (!location?.lat || !category) return []
+    if (!hasValidLocation(location) || !category) return []
     return reports
       .filter(
         (r) =>
@@ -119,6 +117,7 @@ export default function ReportFlow() {
       if (!raw) return null
       const last = JSON.parse(raw)
       const secondsSince = (Date.now() - last.at) / 1000
+      if (last.uid !== user.uid) return null
       if (secondsSince < MIN_SECONDS_BETWEEN_REPORTS) return t('toast.tooFast')
       if (
         secondsSince < DUPLICATE_WINDOW_SECONDS &&
@@ -134,13 +133,17 @@ export default function ReportFlow() {
   }
 
   async function handleNearbyUpvote(reportId) {
-    await toggleUpvote(reportId)
-    setUpvotedIds((prev) => [...prev, reportId])
-    showToast(t('toast.upvoted'))
+    try {
+      if ((reports.find(r => r.id === reportId)?.upvotedBy ?? []).includes(user.uid)) return
+      await toggleUpvote(reportId)
+      setUpvotedIds(prev => [...prev, reportId])
+      showToast(t('toast.upvoted'))
+    } catch { showToast(t('toast.reportUpdateFailed'), 'error') }
   }
 
   async function handleSubmit() {
-    if (!location?.lat) {
+    if (submitting) return
+    if (!hasValidLocation(location)) {
       setErrors({ location: t('report.step2.error.location') })
       return
     }
@@ -165,6 +168,7 @@ export default function ReportFlow() {
           LAST_REPORT_KEY,
           JSON.stringify({
             at: Date.now(),
+            uid: user.uid,
             category: category.id,
             description: description.trim(),
           })
@@ -284,6 +288,7 @@ export default function ReportFlow() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t('report.step1.details.placeholder')}
                   rows={4}
+                  maxLength={5000}
                   className="input-field resize-none"
                 />
                 <FieldError message={errors.description} />
@@ -372,7 +377,7 @@ export default function ReportFlow() {
                           type="button"
                           size="sm"
                           variant="secondary"
-                          disabled={upvotedIds.includes(nearby.id)}
+                          disabled={upvotedIds.includes(nearby.id) || (nearby.upvotedBy ?? []).includes(user.uid)}
                           onClick={() => handleNearbyUpvote(nearby.id)}
                           icon={<IconThumbsUp className="h-3.5 w-3.5" />}
                         >
@@ -391,7 +396,7 @@ export default function ReportFlow() {
                 size="lg"
                 onClick={handleSubmit}
                 loading={submitting}
-                disabled={!location?.lat}
+                disabled={!hasValidLocation(location)}
               >
                 {submitting
                   ? t('report.step2.submitting')

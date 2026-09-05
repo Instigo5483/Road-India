@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useLanguage } from '../context/LanguageContext'
-import ReportHeatMap from './ReportHeatMap'
+import { useLanguage } from '../context/useAppContext'
+import { ReportHeatMap } from './LazyMaps'
 
 /** Shared map and controls keep public and admin analytics consistent. */
 export default function ReportMapSection({ reports }) {

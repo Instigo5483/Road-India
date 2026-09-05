@@ -6,15 +6,15 @@
 // configured (no FIREBASE_SERVICE_ACCOUNT) -- AuthContext falls back to
 // signInAnonymously() in that case, so login still works (with the old
 // per-session-identity caveat) rather than failing outright.
+import { fetchJson } from './request.js'
+
 export async function fetchLoginToken({ digilockerId }) {
   try {
-    const res = await fetch('/api/login', {
+    const { token } = await fetchJson('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ digilockerId }),
     })
-    if (!res.ok) return null
-    const { token } = await res.json()
     return token ?? null
   } catch {
     return null

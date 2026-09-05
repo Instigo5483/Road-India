@@ -18,20 +18,6 @@ function Svg({ children, className, strokeWidth = 1.8, ...props }) {
   )
 }
 
-export function IconSiren(props) {
-  return (
-    <Svg {...props}>
-      <path d="M9 18v-6a3 3 0 0 1 6 0v6" />
-      <path d="M6 18h12v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2Z" />
-      <path d="M12 2v2" />
-      <path d="M5 8l1.5 1" />
-      <path d="M19 8l-1.5 1" />
-      <path d="M4 12h2" />
-      <path d="M18 12h2" />
-    </Svg>
-  )
-}
-
 export function IconCamera(props) {
   return (
     <Svg {...props}>
@@ -102,14 +88,6 @@ export function IconMenu(props) {
       <path d="M4 6h16" />
       <path d="M4 12h16" />
       <path d="M4 18h16" />
-    </Svg>
-  )
-}
-
-export function IconChevronRight(props) {
-  return (
-    <Svg {...props}>
-      <path d="M9 6l6 6-6 6" />
     </Svg>
   )
 }

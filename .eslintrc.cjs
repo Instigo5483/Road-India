@@ -14,16 +14,7 @@ module.exports = {
   rules: {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     'react/prop-types': 'off',
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
   },
-  overrides: [
-    {
-      // Runs as a Firebase Cloud Messaging service worker, not a normal
-      // browser script -- `importScripts` and the `firebase` compat-SDK
-      // global it loads are only defined in that environment.
-      files: ['public/firebase-messaging-sw.js'],
-      env: { serviceworker: true },
-      globals: { firebase: 'readonly' },
-    },
-  ],
+
 }

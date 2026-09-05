@@ -7,10 +7,10 @@ import UserMenu from '../components/UserMenu'
 import Logo from '../components/Logo'
 import PublicNameSelect from '../components/PublicNameSelect'
 import { StarRatingInput } from '../components/StarRating'
-import { useAuth } from '../context/AuthContext'
-import { useReports } from '../context/ReportsContext'
-import { useLanguage } from '../context/LanguageContext'
-import { useToast } from '../context/ToastContext'
+import { useAuth } from '../context/useAppContext'
+import { useReports } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
+import { useToast } from '../context/useAppContext'
 import { computeCivicPoints } from '../lib/civicPoints'
 import { maskAadhaarId } from '../lib/format'
 import { DEFAULT_PREFERENCES, publicName, draftKey, historyKey, readLocal, downloadJson } from '../lib/preferences'
@@ -48,8 +48,10 @@ export default function Settings() {
     setBusy(true)
     try {
       await savePreferences(preferences, lang)
-      if (!preferences.offlineDrafts) localStorage.removeItem(draftKey(user.uid))
-      if (!preferences.geoHistory) localStorage.removeItem(historyKey(user.uid))
+      try {
+        if (!preferences.offlineDrafts) localStorage.removeItem(draftKey(user.uid))
+        if (!preferences.geoHistory) localStorage.removeItem(historyKey(user.uid))
+      } catch { showToast(say('Preferences saved, but local drafts/history could not be cleared.', 'सेटिंग्स सहेजी गईं, पर स्थानीय ड्राफ्ट/इतिहास नहीं हट सके।'), 'error') }
       setCacheBytes(cacheSize())
       showToast(say('Preferences saved.', 'प्राथमिकताएँ सहेजी गईं।'))
     } catch {

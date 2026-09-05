@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { IconCheckCircle, IconAlertCircle, IconX } from '../components/Icons'
 
-const ToastContext = createContext(null)
+import { ToastContext } from './contexts'
 let idCounter = 0
 
 const ICONS = {
@@ -26,22 +26,30 @@ const STYLES = {
  * during an exit transition; a toast has no such logic. */
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
+  const timers = useRef(new Map())
+  useEffect(() => {
+    const active = timers.current
+    return () => { active.forEach(clearTimeout); active.clear() }
+  }, [])
 
   const dismiss = useCallback((id) => {
+    clearTimeout(timers.current.get(id))
+    timers.current.delete(id)
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }, [])
 
   const showToast = useCallback(
     (message, type = 'success') => {
       const id = ++idCounter
-      setToasts((prev) => [...prev, { id, message, type }])
-      setTimeout(() => dismiss(id), 3500)
+      setToasts((prev) => [...prev.slice(-4), { id, message, type }])
+      timers.current.set(id, setTimeout(() => dismiss(id), 3500))
     },
     [dismiss]
   )
 
+  const value = useMemo(() => ({ showToast }), [showToast])
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] flex flex-col items-center gap-2 px-4">
         <AnimatePresence>
@@ -75,10 +83,4 @@ export function ToastProvider({ children }) {
       </div>
     </ToastContext.Provider>
   )
-}
-
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used inside <ToastProvider>')
-  return ctx
 }

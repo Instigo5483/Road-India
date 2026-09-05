@@ -6,11 +6,11 @@ import LanguageSelector from '../components/LanguageSelector'
 import UserMenu from '../components/UserMenu'
 import Logo from '../components/Logo'
 import ReportMapSection from '../components/ReportMapSection'
-import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
-import { useReports } from '../context/ReportsContext'
+import { useAuth } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
+import { useReports } from '../context/useAppContext'
 import { CATEGORIES, normalizeCategoryId, reportTypeIds } from '../data/categoryTypes'
-import { toDate, formatDuration } from '../lib/time'
+import { toDate, formatDuration, averageResolution as average, timestampIso } from '../lib/time'
 import { IconCheckCircle, IconClock, IconListChecks, IconChartBar, IconUser } from '../components/Icons'
 
 const TIME_WINDOWS = [
@@ -23,15 +23,6 @@ const TIME_WINDOWS = [
 ]
 const CHART_COLORS = ['#f97316', '#006398', '#191c1d', '#7c3aed', '#0891b2', '#db2777', '#ca8a04', '#4f46e5', '#059669', '#ea580c', '#0284c7', '#9333ea', '#64748b']
 
-function duration(report) {
-  if (!report.createdAt || !report.resolvedAt) return null
-  const ms = toDate(report.resolvedAt) - toDate(report.createdAt)
-  return Number.isFinite(ms) && ms >= 0 ? ms : null
-}
-function average(reports) {
-  const values = reports.map(duration).filter(value => value !== null)
-  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
-}
 function TrendChart({ points, lang, t }) {
   const [active, setActive] = useState(null)
   const maximum = Math.max(1, ...points.flatMap(p => [p.filed, p.resolved]))
@@ -74,7 +65,7 @@ function CategoryDonut({ data, t }) {
   const activeItem = data.find((item) => item.id === activeId)
   const centerLabel = activeItem?.label ?? t('data.reports')
   // The doughnut centre is deliberately small. Splitting labels such as
-  // “Road Emergency” into two centred lines preserves clear spacing instead
+  // “Incomplete road work” into two centred lines preserves clear spacing instead
   // of letting a long category run into the ring.
   const centerLabelLines = centerLabel.split(/\s+/).reduce(
     (lines, word) => {
@@ -135,9 +126,9 @@ export default function ViewData() {
   const bounds = useMemo(() => {
     const end = Date.now()
     const dates = supported.map(r => toDate(r.createdAt).getTime()).filter(Number.isFinite)
-    return { end, start: range.ms ? end - range.ms : Math.min(end - 86400000, ...dates) }
+    return { end, start: range.ms ? end - range.ms : dates.reduce((min, date) => Math.min(min, date), end - 86400000) }
   }, [supported, range])
-  const scopedReports = useMemo(() => supported.filter(r => toDate(r.createdAt).getTime() >= bounds.start), [supported, bounds])
+  const scopedReports = useMemo(() => supported.filter(r => toDate(r.createdAt).getTime() >= bounds.start && toDate(r.createdAt).getTime() <= bounds.end), [supported, bounds])
   const resolvedReports = useMemo(() => scopedReports.filter(r => r.status === 'resolved'), [scopedReports])
   const rate = scopedReports.length ? Math.round(resolvedReports.length / scopedReports.length * 100) : 0
   const avg = useMemo(() => average(resolvedReports), [resolvedReports])
@@ -163,7 +154,10 @@ export default function ViewData() {
     const groups = new Map()
     scopedReports.forEach(r => {
       const name = r.location?.city || r.location?.state || r.location?.address
-      if (name) groups.set(name, [...(groups.get(name) || []), r])
+      if (name) {
+        if (!groups.has(name)) groups.set(name, [])
+        groups.get(name).push(r)
+      }
     })
     return [...groups].map(([name, rows]) => {
       const closed = rows.filter(r => r.status === 'resolved')
@@ -172,7 +166,7 @@ export default function ViewData() {
   }, [scopedReports])
 
   function exportData(format) {
-    const rows = scopedReports.map(r => ({ id: r.id, types: reportTypeIds(r).join('; '), status: r.status, city: r.location?.city || '', state: r.location?.state || '', createdAt: toDate(r.createdAt).toISOString(), resolvedAt: r.resolvedAt ? toDate(r.resolvedAt).toISOString() : '', lat: r.location?.lat, lng: r.location?.lng }))
+    const rows = scopedReports.map(r => ({ id: r.id, types: reportTypeIds(r).join('; '), status: r.status, city: r.location?.city || '', state: r.location?.state || '', createdAt: timestampIso(r.createdAt), resolvedAt: timestampIso(r.resolvedAt), lat: r.location?.lat, lng: r.location?.lng }))
     const csvCell = value => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replaceAll('"', '""') + '"'
     const fields = ['id','types','status','city','state','createdAt','resolvedAt','lat','lng']
     const content = format === 'csv' ? [fields.join(','), ...rows.map(row => fields.map(key => csvCell(row[key])).join(','))].join('\r\n')

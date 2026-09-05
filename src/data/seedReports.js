@@ -8,30 +8,8 @@
 
 export const seedReports = [
   {
-    id: 'seed-1',
-    category: 'emergency',
-    type: 'accident',
-    description:
-      'Two-vehicle collision near the flyover entrance. One person injured, traffic backing up both directions.',
-    photoUrls: [],
-    location: {
-      lat: 28.6139,
-      lng: 77.209,
-      address: 'ITO Junction, New Delhi',
-      state: 'Delhi',
-      district: 'Central Delhi',
-      city: 'New Delhi',
-    },
-    status: 'in_progress',
-    upvotes: 41,
-    upvotedBy: [],
-    createdBy: 'seed-user-1',
-    createdByName: 'Aarav S.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
-  },
-  {
     id: 'seed-2',
-    category: 'problem',
+    category: 'issue',
     type: 'pothole',
     description:
       'Deep pothole right in the middle lane, already caused two scooters to skid this week.',
@@ -53,7 +31,7 @@ export const seedReports = [
   },
   {
     id: 'seed-3',
-    category: 'corruption',
+    category: 'issue',
     type: 'no_footpath',
     description:
       'Entire stretch outside the school has no footpath, kids are forced to walk on the road during peak traffic.',
@@ -75,7 +53,7 @@ export const seedReports = [
   },
   {
     id: 'seed-4',
-    category: 'problem',
+    category: 'issue',
     type: 'waterlogging',
     description: 'Knee-deep waterlogging every time it rains, drains clearly haven’t been cleaned.',
     photoUrls: [],
@@ -97,7 +75,7 @@ export const seedReports = [
   },
   {
     id: 'seed-5',
-    category: 'corruption',
+    category: 'issue',
     type: 'incomplete_road_work',
     description:
       'Road widening work started 8 months ago, left half-finished with exposed rebar sticking out.',
@@ -118,31 +96,8 @@ export const seedReports = [
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
   },
   {
-    id: 'seed-6',
-    category: 'emergency',
-    type: 'vehicle_breakdown',
-    description: 'Truck broken down blocking one full lane on the highway service road, need a tow.',
-    photoUrls: [],
-    location: {
-      lat: 23.0225,
-      lng: 72.5714,
-      address: 'SG Highway, Ahmedabad',
-      state: 'Gujarat',
-      district: 'Ahmedabad',
-      city: 'Ahmedabad',
-    },
-    // Filed 8 minutes ago against a 10-minute ETA -- shows the live
-    // "arriving in ~2 min" badge in the feed as a working demo of it.
-    status: 'in_progress',
-    upvotes: 9,
-    upvotedBy: [],
-    createdBy: 'seed-user-6',
-    createdByName: 'Meera P.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-  },
-  {
     id: 'seed-7',
-    category: 'problem',
+    category: 'issue',
     type: 'broken_speed_breaker',
     description: 'Speed breaker has crumbled into loose chunks of concrete, sharp edges exposed.',
     photoUrls: [],
@@ -163,7 +118,7 @@ export const seedReports = [
   },
   {
     id: 'seed-8',
-    category: 'corruption',
+    category: 'issue',
     type: 'missing_signs',
     description: 'Blind curve on the ghat road with zero warning signage, two near-misses this month.',
     photoUrls: [],
@@ -184,7 +139,7 @@ export const seedReports = [
   },
   {
     id: 'seed-9',
-    category: 'problem',
+    category: 'issue',
     type: 'open_manhole',
     description: 'Open manhole right next to a bus stop, no barricade or warning around it at night.',
     photoUrls: [],
@@ -205,7 +160,7 @@ export const seedReports = [
   },
   {
     id: 'seed-10',
-    category: 'corruption',
+    category: 'issue',
     type: 'no_streetlight',
     description: 'Entire lane near the market has had no working streetlight for over two months.',
     photoUrls: [],

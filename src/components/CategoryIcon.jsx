@@ -97,68 +97,10 @@ function RoadCorruptionIcon({ className }) {
   )
 }
 
-function RoadEmergencyIcon({ className }) {
-  const gradId = `road-emergency-bg-${useId()}`
-  return (
-    <svg
-      viewBox="0 0 72 72"
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFF1F2" />
-          <stop offset="100%" stopColor="#FFE4E6" />
-        </linearGradient>
-      </defs>
-
-      <rect width="72" height="72" rx="20" fill={`url(#${gradId})`} />
-
-      <path
-        d="M19 23C13 29 13 41 19 47"
-        fill="none"
-        stroke="#E11D48"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M53 23C59 29 59 41 53 47"
-        fill="none"
-        stroke="#E11D48"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M24 28C21 32 21 38 24 42"
-        fill="none"
-        stroke="#E11D48"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M48 28C51 32 51 38 48 42"
-        fill="none"
-        stroke="#E11D48"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-
-      <circle cx="36" cy="35" r="10" fill="#E11D48" />
-      <path
-        d="M36 29V41M30 35H42"
-        stroke="#FFFFFF"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
 const CATEGORY_ICON_COMPONENTS = {
   issue: RoadProblemIcon,
   problem: RoadProblemIcon,
   corruption: RoadCorruptionIcon,
-  emergency: RoadEmergencyIcon,
 }
 
 /** New reports use `issue`; legacy records retain their original ids. */

@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import PageTransition from '../components/PageTransition'
 import OngoingReportCard from '../components/OngoingReportCard'
-import ReportsMapView from '../components/ReportsMapView'
+import { ReportsMapView } from '../components/LazyMaps'
 import EmptyState from '../components/EmptyState'
 import FilterDropdown from '../components/FilterDropdown'
 import MobileBottomNav from '../components/MobileBottomNav'
 import Logo from '../components/Logo'
 import LanguageSelector from '../components/LanguageSelector'
 import UserMenu from '../components/UserMenu'
-import { useReports } from '../context/ReportsContext'
-import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
+import { useReports } from '../context/useAppContext'
+import { useAuth } from '../context/useAppContext'
+import { useLanguage } from '../context/useAppContext'
 import {
   CATEGORIES,
   STATUSES,
@@ -317,7 +317,7 @@ export default function ReportsFeed() {
   }
 
   function supportReport(reportId) {
-    if (user) toggleUpvote(reportId)
+    if (user) return toggleUpvote(reportId)
     else navigate('/login')
   }
 

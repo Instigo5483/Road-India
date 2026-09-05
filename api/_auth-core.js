@@ -1,7 +1,7 @@
 // Shared login-token logic used by both the Vercel serverless endpoint
 // (api/login.js) and the local Vite dev-server middleware (vite.config.js)
 // -- same "one implementation, two entry points" pattern as
-// api/_triage-core.js / api/_dispatch-core.js.
+// api/_triage-core.js.
 //
 // signInAnonymously() mints a brand-new, unrelated Firebase Auth identity
 // on every call -- there is no way to "sign back in" as a previous

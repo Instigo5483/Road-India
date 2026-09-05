@@ -1,4 +1,4 @@
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { StarRatingDisplay } from './StarRating'
 
 /** Compact "citizen confirmed/disputed resolution" summary shown on report

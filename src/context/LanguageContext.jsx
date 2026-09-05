@@ -1,18 +1,21 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { translate } from '../i18n'
 import { LANGUAGES } from '../data/languages'
 
-const LanguageContext = createContext(null)
+import { LanguageContext } from './contexts'
 const STORAGE_KEY = 'road_india_lang'
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
     if (typeof window === 'undefined') return 'en'
-    return window.localStorage.getItem(STORAGE_KEY) || 'en'
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY)
+      return LANGUAGES.some(language => language.code === saved) ? saved : 'en'
+    } catch { return 'en' }
   })
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, lang)
+    try { window.localStorage.setItem(STORAGE_KEY, lang) } catch { /* In-memory language still works. */ }
     document.documentElement.lang = lang
   }, [lang])
 
@@ -30,10 +33,4 @@ export function LanguageProvider({ children }) {
   )
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
-}
-
-export function useLanguage() {
-  const ctx = useContext(LanguageContext)
-  if (!ctx) throw new Error('useLanguage must be used inside <LanguageProvider>')
-  return ctx
 }

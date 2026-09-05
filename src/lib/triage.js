@@ -4,17 +4,15 @@
 // Returns null on any failure so a broken/slow triage call never blocks a
 // citizen from filing a report -- ReportFlow just files the report without
 // an AI assessment attached rather than showing an error.
+import { fetchJson } from './request.js'
+
 export async function triageReport({ category, types, description, photoUrls }) {
   try {
-    const res = await fetch('/api/triage', {
+    return await fetchJson('/api/triage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Only the first photo actually gets used (see api/_triage-core.js),
-      // but the whole array is harmless to send through.
-      body: JSON.stringify({ category, types, description, photoUrls }),
+      body: JSON.stringify({ category, types, description, photoUrls: photoUrls?.slice(0, 1) }),
     })
-    if (!res.ok) return null
-    return await res.json()
   } catch {
     return null
   }

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { STATUSES } from '../data/categoryTypes'
-import { useLanguage } from '../context/LanguageContext'
+import { useLanguage } from '../context/useAppContext'
 import { IconCheck, IconChevronDown } from './Icons'
 
 // Resolution requires the proof workflow, never a direct dropdown choice.
