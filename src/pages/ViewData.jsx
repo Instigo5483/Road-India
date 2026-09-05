@@ -5,7 +5,7 @@ import MobileBottomNav from '../components/MobileBottomNav'
 import LanguageSelector from '../components/LanguageSelector'
 import UserMenu from '../components/UserMenu'
 import Logo from '../components/Logo'
-import ReportHeatMap from '../components/ReportHeatMap'
+import ReportMapSection from '../components/ReportMapSection'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useReports } from '../context/ReportsContext'
@@ -129,7 +129,6 @@ export default function ViewData() {
   const { t, lang } = useLanguage()
   const navigate = useNavigate()
   const [rangeId, setRangeId] = useState('30d')
-  const [heatMode, setHeatMode] = useState('reported')
   const [scale, setScale] = useState('weekly')
   const range = TIME_WINDOWS.find(item => item.id === rangeId)
   const supported = useMemo(() => reports.filter(r => normalizeCategoryId(r.category) === 'issue'), [reports])
@@ -203,14 +202,7 @@ export default function ViewData() {
         <Metric icon={IconCheckCircle} label={t('data.mobile.resolved')} value={resolvedReports.length} sub={`${rate}% ${t('data.mobile.fixRate')}`} />
         <Metric icon={IconClock} label={t('data.mobile.avg')} value={avg === null ? '—' : formatDuration(avg)} sub={t('data.mobile.turnaround')} />
       </div>
-      <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
-        <SectionTitle eyebrow={t('data.mobile.spatial')} title={t('data.mobile.heat')} />
-        <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-ink-100 p-1">
-          {['reported','resolved','compare'].map(mode => <button type="button" key={mode} aria-pressed={heatMode === mode} onClick={() => setHeatMode(mode)} className={`min-h-10 rounded-md px-1 text-[11px] font-semibold ${heatMode === mode ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500'}`}>{t('data.heat.' + mode)}</button>)}
-        </div>
-        <div className="relative z-0 mt-3"><ReportHeatMap reports={heatMode === 'resolved' ? resolvedReports : scopedReports} mode={heatMode} label={t('data.heat.tooltip')} comparisonLabel={t('data.heat.comparisonTooltip')} /></div>
-        <p className="mt-3 text-[11px] leading-relaxed text-ink-500">{t(heatMode === 'compare' ? 'data.mobile.compareLegend' : 'data.mobile.densityLegend')}</p>
-      </section>
+      <ReportMapSection reports={scopedReports} />
       <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
         <SectionTitle eyebrow={t('data.mobile.velocity')} title={t('data.mobile.trend')} />
         <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-ink-100 p-1">{['daily','weekly','monthly'].map(value => <button key={value} type="button" aria-pressed={scale === value} onClick={() => setScale(value)} className={`min-h-9 rounded-md text-xs font-semibold ${scale === value ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500'}`}>{t('data.mobile.' + value)}</button>)}</div>

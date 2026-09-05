@@ -1,4 +1,12 @@
 export default {
+  'data.map.display': 'मानचित्र दृश्य',
+  'data.map.heatmap': 'हीटमैप',
+  'data.map.pins': 'पिन',
+  'data.map.both': 'दोनों',
+  'data.map.reset': 'दृश्य रीसेट करें',
+  'data.map.empty': 'इस चयन में मान्य स्थान वाली कोई रिपोर्ट नहीं है।',
+  'data.map.region': 'मानचित्र को खींचकर या ज़ूम करके पूरी दुनिया देखें। विवरण के लिए पिन दबाएँ।',
+  'admin.backToDashboard': 'व्यवस्थापक डैशबोर्ड पर वापस जाएँ',
   'settings.publicBadge': 'नागरिक खाता',
   'settings.draftFailed': 'इस डिवाइस पर ड्राफ्ट सहेजा नहीं गया। स्टोरेज भर गया हो सकता है।',
   'settings.submitFailed': 'रिपोर्ट जमा नहीं हुई। कनेक्शन जाँचकर फिर प्रयास करें।',

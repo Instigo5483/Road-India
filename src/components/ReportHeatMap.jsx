@@ -1,18 +1,38 @@
-import { useEffect, useMemo } from 'react'
-import { Circle, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet'
-import { DEFAULT_ZOOM, INDIA_CENTER } from '../lib/geo'
+import { useEffect, useMemo, useState } from 'react'
+import { Circle, MapContainer, TileLayer, Tooltip, Marker, useMap, useMapEvents } from 'react-leaflet'
+import { createPinIcon } from '../lib/mapPin'
+import ReportDetailModal from './ReportDetailModal'
+import { useLanguage } from '../context/LanguageContext'
+
+const pinIcon = createPinIcon()
+function hasValidLocation(report) {
+  const { lat, lng } = report.location || {}
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+}
 
 const HEAT_COLOR = '#dc2626'
 const RESOLVED_COLOR = '#16a34a'
 
 function ResizeMap() {
   const map = useMap()
+  const { t } = useLanguage()
   useEffect(() => {
-    const observer = new ResizeObserver(() => map.invalidateSize())
+    const resize = () => {
+      map.invalidateSize()
+    }
+    resize()
+    const observer = new ResizeObserver(resize)
     observer.observe(map.getContainer())
     return () => observer.disconnect()
   }, [map])
-  return null
+  return <button type="button" onClick={() => map.setView([22, 82], 4)} className="absolute right-3 top-3 z-[1000] min-h-10 rounded-lg border border-ink-200 bg-white px-3 text-xs font-semibold text-ink-700 shadow">{t('data.map.reset')}</button>
+}
+
+function VisiblePins({ reports, onSelect }) {
+  const map = useMap()
+  const [bounds, setBounds] = useState(() => map.getBounds())
+  useMapEvents({ moveend: () => setBounds(map.getBounds()), resize: () => setBounds(map.getBounds()) })
+  return reports.filter(r => bounds.contains([r.location.lat, r.location.lng])).map(report => <Marker key={report.id} position={[report.location.lat, report.location.lng]} icon={pinIcon} title={`#${report.id}`} eventHandlers={{ click: () => onSelect(report.id) }}><Tooltip>#{report.id} · {report.description}</Tooltip></Marker>)
 }
 
 /** Aggregates nearby reports into quarter-degree cells so the map communicates
@@ -37,15 +57,23 @@ function makeCells(reports) {
   }))
 }
 
-export default function ReportHeatMap({ reports, mode, label, comparisonLabel }) {
-  const cells = useMemo(() => makeCells(reports), [reports])
-  const center = cells.length ? [cells[0].lat, cells[0].lng] : [INDIA_CENTER.lat, INDIA_CENTER.lng]
+export default function ReportHeatMap({ reports, mode, label, comparisonLabel, displayMode = 'heatmap' }) {
+  const { t } = useLanguage()
+  const [selectedId, setSelectedId] = useState(null)
+  const locatedReports = useMemo(() => reports.filter(hasValidLocation), [reports])
+  const cells = useMemo(() => makeCells(locatedReports), [locatedReports])
+  const selected = locatedReports.find(r => r.id === selectedId)
 
   return (
+    <div>
     <div className="overflow-hidden rounded-2xl border border-ink-200 shadow-card">
       <MapContainer
-        center={center}
-        zoom={cells.length ? 5 : DEFAULT_ZOOM}
+        center={[22, 82]}
+        zoom={4}
+        minZoom={1}
+        worldCopyJump
+        maxZoom={18}
+        preferCanvas
         scrollWheelZoom
         className="h-80 w-full sm:h-96"
       >
@@ -53,8 +81,10 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel })
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          keepBuffer={1}
+          updateWhenIdle
         />
-        {cells.map((cell) => {
+        {displayMode !== 'pins' && cells.map((cell) => {
           const unresolved = cell.count - cell.resolved
           const compared = mode === 'compare'
           const resolvedDominates = cell.resolved > unresolved
@@ -91,7 +121,11 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel })
             </Circle>
           )
         })}
+        {displayMode !== 'heatmap' && <VisiblePins reports={locatedReports} onSelect={setSelectedId} />}
       </MapContainer>
+    </div>
+    {!locatedReports.length && <p role="status" className="mt-2 text-xs text-ink-500">{t('data.map.empty')}</p>}
+    {selected && <ReportDetailModal report={selected} onClose={() => setSelectedId(null)} showUpvote={false} />}
     </div>
   )
 }

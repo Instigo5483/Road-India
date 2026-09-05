@@ -58,21 +58,21 @@ function readAsDataUrl(file) {
   })
 }
 
-export default function PhotoUpload({ photos, onChange }) {
+export default function PhotoUpload({ photos, onChange, maxPhotos = MAX_PHOTOS }) {
   const { t } = useLanguage()
   const { user } = useAuth()
   const { showToast } = useToast()
   const inputRef = useRef(null)
 
   function handleFiles(fileList) {
-    const files = Array.from(fileList).slice(0, MAX_PHOTOS - photos.length)
+    const files = Array.from(fileList).slice(0, maxPhotos - photos.length)
     files.forEach(async (file) => {
       // Reject unsupported/oversized images visibly rather than allowing a
       // payload that Firestore cannot store.
       try {
         const src = user?.preferences?.compressPhotos === false ? await readAsDataUrl(file) : await compressImage(file)
         if (src.length > 240000) throw new Error('Image too large')
-        onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src }].slice(0, MAX_PHOTOS))
+        onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src }].slice(0, maxPhotos))
       } catch { showToast(t('settings.photoFailed'), 'error') }
     })
   }
@@ -110,7 +110,7 @@ export default function PhotoUpload({ photos, onChange }) {
           ))}
         </AnimatePresence>
 
-        {photos.length < MAX_PHOTOS && (
+        {photos.length < maxPhotos && (
           <motion.button
             type="button"
             whileHover={{ scale: 1.04 }}

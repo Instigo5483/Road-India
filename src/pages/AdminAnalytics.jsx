@@ -1,12 +1,10 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAdminAuth } from '../context/AdminAuthContext'
 import { useReports } from '../context/ReportsContext'
 import { useLanguage } from '../context/LanguageContext'
 import { CATEGORIES, STATUSES, normalizeCategoryId } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
-import Logo from '../components/Logo'
-import { IconLogOut, IconChevronLeft } from '../components/Icons'
+import AdminLayout from '../components/AdminLayout'
+import ReportMapSection from '../components/ReportMapSection'
 
 const BAR_THEME = {
   brand: 'bg-brand-600',
@@ -24,15 +22,9 @@ const DAYS_TO_SHOW = 14
  * bundle for a handful of bar charts (see vite.config.js's manualChunks
  * comment on why bundle size gets deliberate attention in this project). */
 export default function AdminAnalytics() {
-  const { logoutAdmin } = useAdminAuth()
   const { reports } = useReports()
   const { t, lang } = useLanguage()
-  const navigate = useNavigate()
 
-  function handleLogout() {
-    logoutAdmin()
-    navigate('/admin/login', { replace: true })
-  }
 
   const byCategory = useMemo(
     () =>
@@ -108,31 +100,7 @@ export default function AdminAnalytics() {
   const maxStatusCount = Math.max(...byStatus.map((s) => s.count), 1)
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-          <button
-            type="button"
-            onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-1 text-sm font-medium text-ink-500 hover:text-brand-700"
-          >
-            <IconChevronLeft className="h-4 w-4" />
-            {t('admin.teams.backToDashboard')}
-          </button>
-          <div className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900">
-            <Logo className="h-8 w-8" />
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-3.5 py-2 text-sm font-medium text-ink-600 transition-colors hover:border-emergency-300 hover:text-emergency-600"
-          >
-            <IconLogOut className="h-4 w-4" />
-            {t('admin.logout')}
-          </button>
-        </div>
-      </header>
-
+    <AdminLayout>
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-3xl">
           {t('admin.analytics.title')}
@@ -154,6 +122,8 @@ export default function AdminAnalytics() {
             value={reports.filter((r) => r.status === 'resolved').length}
           />
         </div>
+
+        <ReportMapSection reports={reports} />
 
         <section className="mt-8 rounded-2xl border border-ink-200 bg-white p-5 sm:p-6">
           <h2 className="text-sm font-bold uppercase tracking-wide text-ink-500">
@@ -240,7 +210,7 @@ export default function AdminAnalytics() {
           </div>
         </section>
       </main>
-    </div>
+    </AdminLayout>
   )
 }
 

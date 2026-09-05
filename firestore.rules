@@ -27,6 +27,14 @@ service cloud.firestore {
                     && request.resource.data.upvotes == 0;
 
       allow update: if request.auth != null && (
+        // Evaluation-only admin gate: replace with custom-claims authorization for production.
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolutionProof']) &&
+          request.resource.data.status == 'resolved' &&
+          request.resource.data.resolutionProof.photoUrls is list &&
+          request.resource.data.resolutionProof.photoUrls.size() == 1 &&
+          request.resource.data.resolutionProof.officer is string &&
+          request.resource.data.resolutionProof.notes is string &&
+          request.resource.data.resolutionProof.certified == true) ||
         (resource.data.createdBy == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['createdByName', 'showCitizenBadge', 'showCivicRank']) &&

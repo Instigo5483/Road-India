@@ -1,4 +1,12 @@
 export default {
+  'data.map.display': 'Map view',
+  'data.map.heatmap': 'Heatmap',
+  'data.map.pins': 'Pins',
+  'data.map.both': 'Both',
+  'data.map.reset': 'Reset view',
+  'data.map.empty': 'No reports with valid locations for this selection.',
+  'data.map.region': 'Explore the world by dragging or zooming the map. Tap a pin to open report details.',
+  'admin.backToDashboard': 'Back to admin dashboard',
   'settings.publicBadge': 'Citizen account',
   'settings.draftFailed': 'Could not save the draft on this device. Storage may be full.',
   'settings.submitFailed': 'Could not submit the report. Please check your connection and try again.',

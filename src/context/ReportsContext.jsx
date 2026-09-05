@@ -17,6 +17,7 @@ import { mockBackend } from '../lib/mockBackend'
 import { triageReport } from '../lib/triage'
 import { useAuth } from './AuthContext'
 import { publicName, DEFAULT_PREFERENCES } from '../lib/preferences'
+import { prepareResolution } from '../lib/resolution'
 
 const ReportsContext = createContext(null)
 
@@ -170,6 +171,14 @@ export function ReportsProvider({ children }) {
     [reports, user]
   )
 
+  const resolveWithProof = useCallback(async (reportId, proof) => {
+    const report = reports.find(r => r.id === reportId)
+    const patch = prepareResolution(report, proof)
+    if (!isFirebaseConfigured) return mockBackend.updateReportStatus(reportId, patch)
+    patch.resolvedAt = serverTimestamp()
+    await updateDoc(doc(db, 'reports', reportId), patch)
+  }, [reports])
+
   const value = useMemo(
     () => ({
       reports,
@@ -180,6 +189,7 @@ export function ReportsProvider({ children }) {
       updateReportStatus,
       updateReport,
       submitReportFeedback,
+      resolveWithProof,
     }),
     [
       reports,
@@ -190,6 +200,7 @@ export function ReportsProvider({ children }) {
       updateReportStatus,
       updateReport,
       submitReportFeedback,
+      resolveWithProof,
     ]
   )
 
