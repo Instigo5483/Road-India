@@ -1,187 +1,114 @@
-# Road India — Build What Moves India submission
+# Road India — Build What Moves India
 
-## Project summary
+## Project summary (under 250 words)
 
-Road India lets any citizen report a pothole, an unfinished road-work site, or
-a live road emergency in under a minute — and shows them exactly what happens
-to it next, instead of a black-box complaint form.
+Road India turns road complaints into a visible journey from evidence to resolution.
 
-**The problem:** municipal road-issue channels are slow to file into (long
-forms, no location precision), give no visibility after submission, and treat
-every complaint identically — a life-threatening accident enters the same
-queue as a faded lane marking.
+Citizens can report potholes, waterlogging, damaged roads, missing footpaths, or unfinished infrastructure through one mobile-first flow. They select multiple issues, attach photos, and pin the exact location. OpenAI-assisted triage analyzes the description and first photo to suggest severity, a responsible department, and a concise review summary.
 
-**What we built:** a mobile-first flow — pick a category, select every issue
-that applies, add a photo, drop a precise map pin, done. Every report is
-triaged in real time by an OpenAI model that looks at the photo as well as
-the text (severity, department, caseworker summary — shown to the citizen,
-not hidden). Emergency reports automatically dispatch to the nearest
-available response team (ambulance/doctor/fire/police/tow) through a live
-Firestore-backed matching system with push notifications; the team sees the
-job on their own dashboard, navigates, and marks it resolved — the citizen's
-"arriving in" countdown stops the instant that happens, not on a fixed timer.
-A citizen can edit their own report before work starts, gets notified the
-moment its status changes, and rates the resolution once it's marked done —
-that verdict shows as a badge everywhere the report appears. A separate admin
-dashboard lets staff search/filter every report, update status, reassign
-teams, and see live analytics (resolution time, volume by category/day/
-location). A public, upvotable feed — with a map view, not just a list — and
-an in-flow "reports nearby" nudge steer citizens toward supporting an
-existing report instead of filing a duplicate.
+Instead of leaving citizens with an opaque complaint number, Road India provides searchable public feeds, live progress tracking, and a resolved-report archive. Nearby-report suggestions and community support help reduce duplicate complaints. When administrators mark a report resolved, its author can rate the work and confirm or dispute the outcome—making closure more accountable.
 
-**What's mocked:** identity verification (a simulated Aadhaar/DigiLocker OTP
-flow — no real UIDAI integration) and the admin/team sign-in (a shared
-passcode per role, not a per-person identity system yet). Everything else —
-AI triage, the reporting flow, live dispatch, the feed, tracking — runs
-end-to-end against a real Firebase backend.
+Public analytics show reporting trends, resolution performance, issue distribution, and geographic concentration. English/Hindi support and mobile bottom navigation make the experience accessible on a phone. Settings provide public-name preferences, optional local drafts, data export, and feedback.
 
-**At scale:** swap simulated auth for real DigiLocker OAuth, add custom-claims
--based roles for admin/team accounts, and connect dispatch to existing
-municipal/112 infrastructure.
+Built with React, Vite, Tailwind CSS, Firebase, and Vercel server functions, Road India connects citizen evidence, administrative review, and public transparency in one browser-based experience.
 
----
+Identity verification and administrator access are explicitly evaluation-only. The project demonstrates a practical reporting and accountability workflow, not a live government service or emergency-dispatch system.
 
-## Who is facing the problem?
+## Reviewer access
 
-Any Indian resident who has tried to report a road issue — a pothole that
-damaged their vehicle, a road-work site abandoned for months, a live accident
-or hazard — through an existing municipal channel and found it slow, opaque,
-or not built for a phone. Municipal staff who have to triage and route those
-reports by hand also face this, with no help prioritizing what's urgent.
+- **Public website:** [road-india.vercel.app](https://road-india.vercel.app/)
+- **Repository:** [Instigo5483/Road-India](https://github.com/Instigo5483/Road-India)
+- **Citizen login:** open `/login`; use test ID `123456789012`, then any six-digit OTP such as `123456`. Review the account name, select a preferred language, and continue.
+- **DigiLocker:** simulated browser-local test identity; no government OAuth is performed.
+- **Admin:** open `/admin` directly. It redirects to `/admin/login` if needed. The default passcode is `roadindia-admin`; the page displays the deployment's configured evaluation passcode.
+- **Video:** add the final public video link before submitting.
+- **Team:** add the partner's registered email only if submitting as a registered pair.
 
-## What is difficult about the current experience?
+No installation is required. Public home, ongoing reports, resolved reports, and analytics can be viewed without citizen login. Please use fictional identity information only.
 
-- Most municipal complaint portals are desktop-first, form-heavy, and require
-  typing an address rather than pointing at a map.
-- There's no confirmation of what happens after you submit, and no way to see
-  if someone else already reported the same thing.
-- Urgent issues (an active hazard, an accident) go through the same process
-  as routine maintenance complaints — no triage happens up front, and no one
-  is actually dispatched.
+## Suggested two-minute demonstration
 
-## What did we change?
+### First minute — citizen experience
 
-- A 3-category, multi-issue flow (Road Problem / Road Corruption / Road
-  Emergency) that takes under a minute: pick every issue type that applies
-  (e.g. "Accident" + "Fire hazard" on one report), add a photo and a couple
-  of lines, drop a pin on a map (reverse-geocoded address, "use my current
-  location"), submit.
-- Real-time AI triage on every submission — severity, suggested department,
-  and a formal one-line summary — shown to the citizen immediately.
-- **Live emergency dispatch**: filing an emergency report finds the nearest
-  available response team of every required type and pushes them a
-  notification; the team's own web dashboard shows the job with a map, a
-  one-tap "Navigate," and "Mark completed" when done.
-- A staff admin dashboard: search by report ID/description/address/reporter,
-  filter by category/status/time/location, update status, and see or change
-  which team is assigned to an emergency — plus a separate page to provision
-  new response teams (admin picks the team's own ID/passcode and its city).
-- A public "Ongoing Reports" feed with search (by report ID, description, or
-  address), filters, sort, a map-view toggle, and upvoting, so duplicate
-  reports consolidate into community support instead of duplicating effort —
-  plus a full detail popup (photos, AI triage, an embedded map of the exact
-  location) available to citizens, admins, and response teams alike. Report
-  IDs are visible on every report, everywhere it appears.
-- A "reports nearby" nudge while filing — surfaces existing unresolved
-  reports of the same category within ~300m so a citizen can support one
-  instead of filing a near-duplicate — plus a client-side guard against
-  accidental double-submits and rapid duplicate filing (emergencies are
-  exempt from it).
-- A personal dashboard tracking each report's status
-  (Submitted → In Review → In Progress → Resolved), with dynamic homepage
-  stats computed live from real report counts rather than hardcoded numbers.
-  A citizen can edit their own report's description, photos, or location
-  while it's still awaiting review, and gets an in-app notification the
-  moment one of their reports changes status — wherever in the app they
-  happen to be. Once a report is marked Resolved, the citizen who filed it
-  rates it and confirms (or disputes) it's actually fixed; that verdict shows
-  as a badge on the report in the feed, dashboard, and admin view alike.
-- Live admin analytics (average resolution time, resolved-report count, and
-  category/status/day-by-day breakdowns), computed from the same data the
-  rest of the app uses — not a separate fixture.
+1. Show the unified home page and mobile navigation.
+2. Sign in with a test ID, then select multiple road issues and attach evidence.
+3. Pin the location and submit; point out AI-assisted severity and summary.
+4. Open My Reports to show the report ID, progress tracker, and map.
+5. Show an existing resolved report and its citizen-confirmation/review.
 
-## Why is this version better?
+Use prepared test records for completed statuses rather than implying an actual repair happened during the recording.
 
-It's faster to file (under a minute, on a phone, in Hindi or English), honest
-about what happens next (visible AI triage and live dispatch status instead
-of a black box), and it treats urgency as a first-class signal — an emergency
-report doesn't just get logged, it actually finds and notifies the nearest
-real response team.
+### Second minute — implementation and choices
 
-## What works today, and what is still mocked?
+1. Explain React/Vite/Tailwind for a responsive browser interface.
+2. Show that Firebase-backed pages share the same reports and live status updates.
+3. Explain the server-side OpenAI text/photo triage and its fallback.
+4. Show public analytics and admin review as the accountability loop.
+5. Clearly distinguish the functioning workflow from mock identity, prototype authorization, and absent municipal integration.
 
-**Works live, end-to-end, against a real Firebase backend:**
-- The full 3-category, multi-issue reporting flow, including the Leaflet map
-  picker with real OpenStreetMap reverse geocoding.
-- AI-assisted triage via a real OpenAI API call (`api/triage.js`,
-  `gpt-4o-mini`), server-side only — falls back to a rule-based mock if no
-  API key is configured, so the journey still completes without one.
-- **Emergency dispatch**: a Vercel serverless function (`api/dispatch.js`)
-  matches every emergency report to the nearest `available` response team(s)
-  by real distance to seeded/admin-created team locations, marks them busy,
-  and (if a push token is registered) sends a Firebase Cloud Messaging
-  notification — this is a real matching and status system, not a simulated
-  countdown.
-- The response-team web dashboard (`/team`) — receives the live job, shows an
-  embedded map and AI triage summary, marks jobs complete.
-- The admin dashboard (`/admin`) — search/filter/status-update on every real
-  report, plus seeing and reassigning which team is on an emergency.
-- Response team management (`/admin/teams`, `/admin/teams/new`) — a real
-  Firestore-backed roster; admins choose each team's ID, passcode, and base
-  city themselves.
-- The community feed (search/filter/sort/upvote/map view), personal
-  dashboard, and report detail popup with map.
-- Citizen report editing, the resolution rating/feedback loop, live
-  status-change notifications, the "reports nearby" duplicate-avoidance
-  nudge, and admin analytics — all reading and writing the same live
-  Firestore data as everything else, enforced by `firestore.rules` (e.g. only
-  the report's actual author can edit it or leave feedback, and only while
-  it's in the right status).
-- Firebase Auth/Firestore as the real backend when configured (the app also
-  runs on a local in-memory/localStorage mock with zero setup for fast
-  demoing — see `src/lib/mockBackend.js`). Login identity is a real,
-  server-minted Firebase custom auth token keyed to a one-way hash of the
-  (simulated) Aadhaar/DigiLocker ID, not a throwaway anonymous session — so
-  the same ID reliably resolves back to the same account and report history
-  on every future login, from any device.
+## What the project implements
 
-**Explicitly mocked, not real:**
-- Identity verification: a simulated Aadhaar/DigiLocker-style ID → OTP →
-  profile flow. No real Aadhaar, DigiLocker, or UIDAI system is contacted, and
-  no real government data is requested, transmitted, or stored anywhere in
-  this codebase.
-- Admin and response-team sign-in are shared passcode gates, not a real
-  per-person identity/role system — anyone who knows the admin passcode or a
-  team's credentials can act as that role. Firestore's security rules
-  document this limitation explicitly (see `firestore.rules`).
-- The "arriving in X:XX" countdown shown to the citizen is a client-side
-  estimate from the category's promised response window, not a real ETA fed
-  by the dispatched team's live location — though it does stop the moment
-  the report is actually marked resolved, rather than always running to
-  zero. The UI tells users to call 112 directly for real emergencies.
-- The duplicate-submission guard (rapid double-submits, same-report refiling)
-  is a client-side `localStorage` heuristic, not a server-enforced check — a
-  real deployment would need this re-implemented server-side (e.g. in the
-  triage/dispatch functions) since a client can always be bypassed.
+| Area | Current implementation |
+| --- | --- |
+| Reporting | One combined road/infrastructure flow with multi-select issues, photos and location |
+| Discovery | Public search/filtering, support counts and nearby-report suggestions |
+| Tracking | Submitted → In Review → In Progress → Resolved; report IDs and map details |
+| Accountability | Author editing before work starts in the UI; one resolution rating and confirmation/dispute |
+| Resolved archive | Public completed records, filters and average resolution time |
+| Analytics | Time-based metrics, interactive charts, density/comparison maps, location rankings, CSV/GeoJSON export |
+| Settings | Read-only identity, public display preferences, optional device drafts/history, compression, JSON export, rating and help |
+| Administration | Direct-URL sign-in, report search/filtering, status changes and analytics |
+| Accessibility | Mobile-first layouts, English/Hindi, keyboard-operable public-name selector |
 
-## How could this work safely at a larger scale?
+## How AI is used
 
-- Replace the simulated auth with real DigiLocker OAuth (the UI is already
-  structured as a method choice between Aadhaar-OTP and DigiLocker redirect,
-  so swapping the DigiLocker branch for a real OAuth flow is a contained
-  change).
-- Replace the admin/team passcode gates with real per-person accounts and
-  Firebase custom claims, so `firestore.rules` can check "is a verified
-  admin/team member" instead of "is any authenticated user."
-- Put a human moderation queue in front of AI triage output before it routes
-  to a real department — the model assists prioritization, it shouldn't be
-  the final authority on what a municipal team acts on.
-- Move the duplicate/rapid-submission guard server-side (it's currently a
-  client-side heuristic — see above) and expand the "nearby reports" nudge's
-  geohash + category matching into the actual creation path, not just a
-  pre-submit suggestion.
-- Feed the dispatched team's live GPS location into the citizen-facing ETA
-  instead of a static per-category estimate, and connect the emergency path
-  to real municipal/112 dispatch infrastructure where it exists.
-- Move photo handling and Firestore security rules through a formal privacy
-  review before handling real citizen-submitted photos/locations at scale.
+Report creation calls `POST /api/triage`. The shared server handler uses OpenAI `gpt-4o-mini` with the issue types, description, and first attached photo. It returns severity, a suggested department, and a short caseworker summary.
+
+The key is stored server-side as `OPENAI_API_KEY`, never in the frontend bundle. A rule-based fallback is used when the key is absent or the upstream request fails. If the client request fails, a report can be filed without triage. Verify real-model operation on the final deployment before demonstrating it; a fallback result is not evidence of an OpenAI call.
+
+The department is a suggestion for human review, not a confirmed handoff to a government agency.
+
+## Implemented versus simulated
+
+**Implemented, subject to configuration:** Firestore-backed reporting and updates, custom-token test login, text/photo AI triage, filtering, maps, report details, citizen feedback, public analytics, and preference persistence. With no Firebase configuration, a localStorage mock backend supports local evaluation instead.
+
+**Simulated identity:** arbitrary test IDs and OTPs are accepted. No UIDAI/DigiLocker verification occurs. The supplied ID is processed and saved as a profile identifier; never use real identity data. Stable cross-browser test-account lookup requires the server credential and login endpoint. DigiLocker's generated test ID is browser-local.
+
+**Prototype administrator authorization:** a shared client-visible passcode is displayed on the admin sign-in page. Removing its link from citizen login does not secure it. Firestore rules still permit broad authenticated operations; a production deployment needs server-enforced roles.
+
+**Local-only features:** drafts and opted-in location history remain on the device, are not encrypted, and do not submit automatically. Cache clearing covers those records, not browser-managed map tiles. The experience rating is saved to the user's profile; it is not a separate support-ticket system.
+
+**Not connected:** government repair workflows, contractor penalties, guaranteed SLAs, WhatsApp automation, and emergency dispatch as part of the current citizen journey. Hotline links lead to external services.
+
+**Legacy repository caveat:** response-team routes, dispatch code, scripts, and rules still exist. They are not advertised as current core features and have not been fully removed or security-isolated.
+
+## Why these choices?
+
+- A website lets reviewers and citizens use the same public URL without an app download.
+- One multi-issue form avoids requiring citizens to decide between road damage and infrastructure corruption before reporting.
+- GPS-assisted maps and photos make location/evidence more useful than an address-only complaint.
+- Firebase listeners connect status changes to the public and personal views.
+- AI assists initial review while leaving administrative status decisions to people.
+- Citizen confirmation distinguishes a marked resolution from a fix the reporter actually accepts.
+- Public analytics make the shared dataset inspectable rather than hiding it behind an admin login.
+
+These are design goals and implemented capabilities, not measured claims about outperforming every existing municipal portal.
+
+## Before final submission
+
+- [ ] Push the intended code and verify the public deployment.
+- [ ] Deploy the current `firestore.rules`, including author-owned public-presentation updates.
+- [ ] Verify `FIREBASE_SERVICE_ACCOUNT` and `OPENAI_API_KEY` in the server environment.
+- [ ] Check public URLs in a fresh browser and at mobile width.
+- [ ] Test repeat login, report submission, admin status update, resolution review, and preference saving.
+- [ ] Use fictional records and avoid exposing credentials or sensitive identity/photo data in recordings.
+- [ ] Attach a publicly accessible video no longer than two minutes.
+- [ ] Paste the project summary above into the form.
+- [ ] Add teammate details if applicable.
+- [ ] Confirm the organizer's current eligibility, submission window, and required fields directly before submitting.
+
+This document describes the repository; it does not certify the current live deployment or every hackathon requirement.
+
+## Production follow-up
+
+Replace mock identity and client-side role gates; restrict report mutations server-side; add validation, rate limiting, moderation, and automated regression tests; review public identifiers and photo retention; remove unused legacy routes; and complete privacy/security review before collecting real citizen information.
