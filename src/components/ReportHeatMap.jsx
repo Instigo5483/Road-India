@@ -1,9 +1,19 @@
-import { useMemo } from 'react'
-import { Circle, MapContainer, TileLayer, Tooltip } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import { Circle, MapContainer, TileLayer, Tooltip, useMap } from 'react-leaflet'
 import { DEFAULT_ZOOM, INDIA_CENTER } from '../lib/geo'
 
 const HEAT_COLOR = '#dc2626'
 const RESOLVED_COLOR = '#16a34a'
+
+function ResizeMap() {
+  const map = useMap()
+  useEffect(() => {
+    const observer = new ResizeObserver(() => map.invalidateSize())
+    observer.observe(map.getContainer())
+    return () => observer.disconnect()
+  }, [map])
+  return null
+}
 
 /** Aggregates nearby reports into quarter-degree cells so the map communicates
  * density instead of rendering a misleading one-pin-per-report view. */
@@ -37,8 +47,9 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel })
         center={center}
         zoom={cells.length ? 5 : DEFAULT_ZOOM}
         scrollWheelZoom
-        className="h-[25rem] w-full sm:h-[30rem]"
+        className="h-80 w-full sm:h-96"
       >
+        <ResizeMap />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

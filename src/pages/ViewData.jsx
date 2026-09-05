@@ -3,119 +3,63 @@ import { useNavigate } from 'react-router-dom'
 import PageTransition from '../components/PageTransition'
 import MobileBottomNav from '../components/MobileBottomNav'
 import LanguageSelector from '../components/LanguageSelector'
+import UserMenu from '../components/UserMenu'
 import Logo from '../components/Logo'
-import Button from '../components/Button'
 import ReportHeatMap from '../components/ReportHeatMap'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useReports } from '../context/ReportsContext'
 import { CATEGORIES, normalizeCategoryId, reportTypeIds } from '../data/categoryTypes'
-import { toDate } from '../lib/time'
-import { IconCheckCircle, IconMapPin, IconSiren, IconSparkle } from '../components/Icons'
+import { toDate, formatDuration } from '../lib/time'
+import { IconCheckCircle, IconClock, IconListChecks, IconChartBar, IconUser } from '../components/Icons'
 
 const TIME_WINDOWS = [
-  { id: '24h', ms: 24 * 60 * 60 * 1000, labelKey: 'reports.time.24h' },
-  { id: '48h', ms: 48 * 60 * 60 * 1000, labelKey: 'data.time.48h' },
-  { id: '7d', ms: 7 * 24 * 60 * 60 * 1000, labelKey: 'reports.time.7d' },
-  { id: '30d', ms: 30 * 24 * 60 * 60 * 1000, labelKey: 'reports.time.30d' },
+  { id: '24h', ms: 86400000, labelKey: 'reports.time.24h' },
+  { id: '48h', ms: 172800000, labelKey: 'data.time.48h' },
+  { id: '7d', ms: 7 * 86400000, labelKey: 'reports.time.7d' },
+  { id: '30d', ms: 30 * 86400000, labelKey: 'reports.time.30d' },
+  { id: '90d', ms: 90 * 86400000, labelKey: 'data.mobile.90d' },
   { id: 'all', ms: null, labelKey: 'reports.time.all' },
 ]
+const CHART_COLORS = ['#f97316', '#006398', '#191c1d', '#7c3aed', '#0891b2', '#db2777', '#ca8a04', '#4f46e5', '#059669', '#ea580c', '#0284c7', '#9333ea', '#64748b']
 
-const CHART_COLORS = ['#f97316', '#2563eb', '#16a34a', '#7c3aed', '#0891b2', '#db2777', '#ca8a04', '#4f46e5', '#059669', '#ea580c', '#0284c7', '#9333ea', '#64748b']
-
-function dateKey(date) {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+function duration(report) {
+  if (!report.createdAt || !report.resolvedAt) return null
+  const ms = toDate(report.resolvedAt) - toDate(report.createdAt)
+  return Number.isFinite(ms) && ms >= 0 ? ms : null
 }
-
-function getTrend(reports, range) {
-  const now = new Date()
-  const days = range.ms ? Math.max(1, Math.ceil(range.ms / 86400000)) : 14
-  const points = Array.from({ length: Math.min(days, 14) }, (_, index) => {
-    const date = new Date(now)
-    date.setHours(0, 0, 0, 0)
-    date.setDate(date.getDate() - (Math.min(days, 14) - 1 - index))
-    return { date, filed: 0, resolved: 0 }
-  })
-  const byDate = new Map(points.map((point) => [dateKey(point.date), point]))
-  reports.forEach((report) => {
-    const filedPoint = byDate.get(dateKey(toDate(report.createdAt)))
-    if (filedPoint) filedPoint.filed += 1
-    if (report.status === 'resolved') {
-      const resolvedPoint = byDate.get(dateKey(toDate(report.resolvedAt ?? report.createdAt)))
-      if (resolvedPoint) resolvedPoint.resolved += 1
-    }
-  })
-  return points
+function average(reports) {
+  const values = reports.map(duration).filter(value => value !== null)
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
 }
-
 function TrendChart({ points, lang, t }) {
-  const [hover, setHover] = useState(null)
-  const width = 680
-  const height = 220
-  const pad = { top: 14, right: 18, bottom: 36, left: 35 }
-  const max = Math.max(...points.flatMap((point) => [point.filed, point.resolved]), 1)
-  const x = (index) => pad.left + (index * (width - pad.left - pad.right)) / Math.max(points.length - 1, 1)
-  const y = (value) => height - pad.bottom - (value / max) * (height - pad.top - pad.bottom)
-  const line = (key) => points.map((point, index) => `${index ? 'L' : 'M'} ${x(index)} ${y(point[key])}`).join(' ')
-  const tickIndexes = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])]
-  const activePoint = hover ? points[hover.index] : null
-  const tooltipWidth = 132
-  const tooltipX = activePoint
-    ? Math.min(Math.max(x(hover.index) + 10, pad.left + 4), width - pad.right - tooltipWidth)
-    : 0
-
-  function setHoveredPoint(event, series) {
-    const svg = event.currentTarget.ownerSVGElement
-    const bounds = svg.getBoundingClientRect()
-    const svgX = ((event.clientX - bounds.left) / bounds.width) * width
-    const index = Math.max(
-      0,
-      Math.min(
-        points.length - 1,
-        Math.round(((svgX - pad.left) / (width - pad.left - pad.right)) * (points.length - 1))
-      )
-    )
-    setHover({ series, index })
-  }
-
-  return (
-    <div className="mt-4 overflow-x-auto">
-      <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[34rem] w-full" role="img" aria-label={t('data.trend.ariaLabel')}>
-        <title>{t('data.trend.title')}</title>
-        {[0, max / 2, max].map((value) => (
-          <g key={value}>
-            <line x1={pad.left} x2={width - pad.right} y1={y(value)} y2={y(value)} stroke="#e2e8f0" />
-            <text x={pad.left - 8} y={y(value) + 4} textAnchor="end" className="fill-ink-400 text-[10px]">{Math.round(value)}</text>
-          </g>
-        ))}
-        {tickIndexes.map((index) => (
-          <text key={index} x={x(index)} y={height - 12} textAnchor="middle" className="fill-ink-400 text-[10px]">
-            {points[index].date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}
-          </text>
-        ))}
-        {hover && <line x1={x(hover.index)} x2={x(hover.index)} y1={pad.top} y2={height - pad.bottom} stroke="#94a3b8" strokeDasharray="3 4" />}
-        {['filed', 'resolved'].map((series) => {
-          const isActive = hover?.series === series
-          const color = series === 'filed' ? '#2563eb' : '#16a34a'
-          return <g key={series}>
-            <path d={line(series)} fill="none" stroke={color} strokeWidth={isActive ? 4.5 : 3} strokeOpacity={hover && !isActive ? 0.22 : 1} strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'stroke-width 180ms ease, stroke-opacity 180ms ease' }} />
-            <path d={line(series)} fill="none" stroke="transparent" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" className="cursor-pointer" onMouseEnter={(event) => setHoveredPoint(event, series)} onMouseMove={(event) => setHoveredPoint(event, series)} onMouseLeave={() => setHover(null)} onFocus={() => setHover({ series, index: 0 })} onBlur={() => setHover(null)} tabIndex={0} aria-label={t(series === 'filed' ? 'data.trend.filed' : 'data.trend.resolved')} />
-          </g>
-        })}
-        {points.map((point, index) => (
-          <g key={dateKey(point.date)}>
-            <circle cx={x(index)} cy={y(point.filed)} r={hover?.series === 'filed' && hover.index === index ? '6' : '3.5'} fill="#2563eb" style={{ transition: 'r 180ms ease' }}><title>{`${t('data.trend.filed')}: ${point.filed}`}</title></circle>
-            <circle cx={x(index)} cy={y(point.resolved)} r={hover?.series === 'resolved' && hover.index === index ? '6' : '3.5'} fill="#16a34a" style={{ transition: 'r 180ms ease' }}><title>{`${t('data.trend.resolved')}: ${point.resolved}`}</title></circle>
-          </g>
-        ))}
-        {activePoint && <g style={{ pointerEvents: 'none' }}><rect x={tooltipX} y={pad.top + 6} width={tooltipWidth} height="58" rx="8" fill="#0f172a" opacity="0.96" /><text x={tooltipX + 10} y={pad.top + 23} fill="white" fontSize="11" fontWeight="600">{activePoint.date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}</text><text x={tooltipX + 10} y={pad.top + 43} fill={hover.series === 'filed' ? '#93c5fd' : '#86efac'} fontSize="12" fontWeight="700">{t(hover.series === 'filed' ? 'data.trend.filed' : 'data.trend.resolved')}: {activePoint[hover.series]}</text></g>}
-      </svg>
-      <div className="mt-2 flex flex-wrap gap-4 text-xs font-medium text-ink-500">
-        <span className={`inline-flex items-center gap-1.5 transition-opacity ${hover && hover.series !== 'filed' ? 'opacity-40' : ''}`}><i className="h-2.5 w-2.5 rounded-full bg-brand-600" />{t('data.trend.filed')}</span>
-        <span className={`inline-flex items-center gap-1.5 transition-opacity ${hover && hover.series !== 'resolved' ? 'opacity-40' : ''}`}><i className="h-2.5 w-2.5 rounded-full bg-success-600" />{t('data.trend.resolved')}</span>
+  const [active, setActive] = useState(null)
+  const maximum = Math.max(1, ...points.flatMap(p => [p.filed, p.resolved]))
+  const point = points[active]
+  return <div className="mt-4">
+    <div aria-live="polite" className="mb-3 min-h-10 rounded-lg bg-ink-50 px-3 py-2 text-xs text-ink-600">
+      {point ? `${point.date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}: ${point.filed} ${t('data.trend.filed')} · ${point.resolved} ${t('data.trend.resolved')}` : t('data.mobile.chartHint')}
+    </div>
+    <div className="overflow-x-auto pb-2">
+      <div className="relative flex h-48 items-end gap-2 border-b border-ink-200 pt-4" style={{ minWidth: Math.max(260, points.length * 38) }}>
+        {[0.25, 0.5, 0.75, 1].map(level => <div key={level} className="pointer-events-none absolute inset-x-0 border-t border-ink-100" style={{ bottom: `${level * 90}%` }} />)}
+        {points.map((p, index) => <button key={p.date.toISOString()} type="button"
+          aria-label={`${p.date.toLocaleDateString()}: ${p.filed} ${t('data.trend.filed')}, ${p.resolved} ${t('data.trend.resolved')}`}
+          onMouseEnter={() => setActive(index)} onFocus={() => setActive(index)} onClick={() => setActive(index)}
+          className="relative flex h-full min-w-7 flex-1 items-end justify-center gap-1 rounded-t-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-500">
+          <span className="w-2/5 rounded-t bg-accent-500 transition-all duration-200" style={{ height: `${p.filed / maximum * 90}%`, minHeight: p.filed ? 3 : 0, opacity: active === null || active === index ? 1 : 0.4 }} />
+          <span className="w-2/5 rounded-t bg-[#006398] transition-all duration-200" style={{ height: `${p.resolved / maximum * 90}%`, minHeight: p.resolved ? 3 : 0, opacity: active === null || active === index ? 1 : 0.4 }} />
+        </button>)}
+      </div>
+      <div className="mt-2 flex gap-2" style={{ minWidth: Math.max(260, points.length * 38) }}>
+        {points.map(p => <span key={p.date.toISOString()} className="min-w-7 flex-1 text-center text-[9px] text-ink-500">{p.date.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short' })}</span>)}
       </div>
     </div>
-  )
+    <div className="mt-3 flex justify-center gap-5 text-xs text-ink-500">
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-accent-500" />{t('data.trend.filed')}</span>
+      <span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#006398]" />{t('data.trend.resolved')}</span>
+    </div>
+  </div>
 }
 
 function CategoryDonut({ data, t }) {
@@ -124,7 +68,7 @@ function CategoryDonut({ data, t }) {
   let current = 0
   const slices = data.map((item) => {
     const start = current
-    current += (item.count / total) * 360
+    current += (item.count / total) * 359.999
     return { ...item, start, end: current }
   })
   const activeItem = data.find((item) => item.id === activeId)
@@ -158,9 +102,9 @@ function CategoryDonut({ data, t }) {
   }
   return (
     <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row">
-      <svg viewBox="0 0 160 160" className="h-40 w-40 shrink-0 overflow-visible" role="img" aria-label={t('data.category.ariaLabel')} onMouseLeave={() => setActiveId(null)}>
+      <svg viewBox="0 0 160 160" className="h-36 w-36 shrink-0 overflow-visible" role="img" aria-label={t('data.category.title')} onMouseLeave={() => setActiveId(null)}>
         <title>{t('data.category.title')}</title>
-        {slices.map((slice) => <path key={slice.id} d={slicePath(slice.start, slice.end)} fill={slice.color} onMouseEnter={() => setActiveId(slice.id)} onFocus={() => setActiveId(slice.id)} onBlur={() => setActiveId(null)} tabIndex={0} aria-label={`${slice.label}: ${slice.count}`} style={{ cursor: 'pointer', transformOrigin: '80px 80px', transform: activeId === slice.id ? 'scale(1.08)' : 'scale(1)', opacity: activeId && activeId !== slice.id ? 0.35 : 1, transition: 'transform 180ms ease, opacity 180ms ease' }} />)}
+        {slices.map((slice) => <path key={slice.id} d={slicePath(slice.start, slice.end)} fill={slice.color} onClick={() => setActiveId(slice.id)} onMouseEnter={() => setActiveId(slice.id)} onFocus={() => setActiveId(slice.id)} onBlur={() => setActiveId(null)} tabIndex={0} aria-label={`${slice.label}: ${slice.count}`} style={{ cursor: 'pointer', transformOrigin: '80px 80px', transform: activeId === slice.id ? 'scale(1.08)' : 'scale(1)', opacity: activeId && activeId !== slice.id ? 0.35 : 1, transition: 'transform 180ms ease, opacity 180ms ease' }} />)}
         <circle cx="80" cy="80" r="39" fill="white" />
         <text x="80" y={centerLabelLines.length > 1 ? '70' : '75'} textAnchor="middle" className="fill-ink-900 text-[22px] font-bold">{activeItem?.count ?? data.reduce((sum, item) => sum + item.count, 0)}</text>
         {centerLabelLines.map((line, index) => <text key={`${line}-${index}`} x="80" y={centerLabelLines.length > 1 ? 91 + index * 10 : 99} textAnchor="middle" className="fill-ink-500 text-[8px] font-medium">{line}</text>)}
@@ -177,6 +121,8 @@ function CategoryDonut({ data, t }) {
   )
 }
 
+
+
 export default function ViewData() {
   const { reports } = useReports()
   const { user } = useAuth()
@@ -184,80 +130,116 @@ export default function ViewData() {
   const navigate = useNavigate()
   const [rangeId, setRangeId] = useState('30d')
   const [heatMode, setHeatMode] = useState('reported')
-  const range = TIME_WINDOWS.find((item) => item.id === rangeId) ?? TIME_WINDOWS[3]
-
-  const scopedReports = useMemo(() => {
-    const supported = reports.filter(
-      (report) => normalizeCategoryId(report.category) === 'issue'
-    )
-    if (!range.ms) return supported
-    const cutoff = Date.now() - range.ms
-    return supported.filter((report) => toDate(report.createdAt).getTime() >= cutoff)
-  }, [reports, range])
-  const resolvedReports = useMemo(() => scopedReports.filter((report) => report.status === 'resolved'), [scopedReports])
-  const trend = useMemo(() => getTrend(scopedReports, range), [scopedReports, range])
+  const [scale, setScale] = useState('weekly')
+  const range = TIME_WINDOWS.find(item => item.id === rangeId)
+  const supported = useMemo(() => reports.filter(r => normalizeCategoryId(r.category) === 'issue'), [reports])
+  const bounds = useMemo(() => {
+    const end = Date.now()
+    const dates = supported.map(r => toDate(r.createdAt).getTime()).filter(Number.isFinite)
+    return { end, start: range.ms ? end - range.ms : Math.min(end - 86400000, ...dates) }
+  }, [supported, range])
+  const scopedReports = useMemo(() => supported.filter(r => toDate(r.createdAt).getTime() >= bounds.start), [supported, bounds])
+  const resolvedReports = useMemo(() => scopedReports.filter(r => r.status === 'resolved'), [scopedReports])
+  const rate = scopedReports.length ? Math.round(resolvedReports.length / scopedReports.length * 100) : 0
+  const avg = useMemo(() => average(resolvedReports), [resolvedReports])
+  const trend = useMemo(() => {
+    const step = (scale === 'daily' ? 1 : scale === 'weekly' ? 7 : 30) * 86400000
+    const size = Math.max(step, Math.ceil((bounds.end - bounds.start) / 120))
+    const points = Array.from({ length: Math.max(1, Math.ceil((bounds.end - bounds.start) / size)) }, (_, i) => ({ date: new Date(bounds.start + i * size), filed: 0, resolved: 0 }))
+    const add = (value, key) => {
+      if (!value) return
+      const time = toDate(value).getTime()
+      if (time < bounds.start || time > bounds.end || !Number.isFinite(time)) return
+      const index = Math.min(points.length - 1, Math.floor((time - bounds.start) / size))
+      points[index][key] += 1
+    }
+    supported.forEach(r => { add(r.createdAt, 'filed'); if (r.status === 'resolved') add(r.resolvedAt, 'resolved') })
+    return points
+  }, [supported, bounds, scale])
   const categoryData = useMemo(() => CATEGORIES[0].types.map((type, index) => ({
-    id: type.id,
-    label: t(type.labelKey),
-    color: CHART_COLORS[index % CHART_COLORS.length],
-    count: scopedReports.filter((report) => reportTypeIds(report).includes(type.id)).length,
-  })).filter((item) => item.count > 0), [scopedReports, t])
-  const locationData = useMemo(() => {
-    const counts = new Map()
-    scopedReports.forEach((report) => {
-      const name = report.location?.city || report.location?.state || report.location?.address
-      if (name) counts.set(name, (counts.get(name) ?? 0) + 1)
+    id: type.id, label: t(type.labelKey), color: CHART_COLORS[index],
+    count: scopedReports.filter(r => reportTypeIds(r).includes(type.id)).length,
+  })).filter(item => item.count > 0), [scopedReports, t])
+  const locations = useMemo(() => {
+    const groups = new Map()
+    scopedReports.forEach(r => {
+      const name = r.location?.city || r.location?.state || r.location?.address
+      if (name) groups.set(name, [...(groups.get(name) || []), r])
     })
-    return [...counts.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5)
+    return [...groups].map(([name, rows]) => {
+      const closed = rows.filter(r => r.status === 'resolved')
+      return { name, total: rows.length, closed: closed.length, rate: Math.round(closed.length / rows.length * 100), avg: average(closed) }
+    }).sort((a,b) => b.rate - a.rate || b.total - a.total).slice(0,5)
   }, [scopedReports])
-  const resolutionRate = scopedReports.length ? Math.round((resolvedReports.length / scopedReports.length) * 100) : 0
-  const heatReports = heatMode === 'resolved' ? resolvedReports : scopedReports
 
-  return (
-    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
-      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/95 shadow-card backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <button type="button" onClick={() => navigate(user ? '/home' : '/')} className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-brand-900"><Logo className="h-8 w-8" />{t('common.appName')}</button>
-          <div className="flex items-center gap-2.5"><LanguageSelector variant="neutral" /><Button size="sm" variant="secondary" onClick={() => navigate(user ? '/home' : '/login')}>{user ? t('nav.home') : t('landing.nav.login')}</Button></div>
+  function exportData(format) {
+    const rows = scopedReports.map(r => ({ id: r.id, types: reportTypeIds(r).join('; '), status: r.status, city: r.location?.city || '', state: r.location?.state || '', createdAt: toDate(r.createdAt).toISOString(), resolvedAt: r.resolvedAt ? toDate(r.resolvedAt).toISOString() : '', lat: r.location?.lat, lng: r.location?.lng }))
+    const csvCell = value => '"' + String(value ?? '').replace(/^[=+@-]/, "'$&").replaceAll('"', '""') + '"'
+    const fields = ['id','types','status','city','state','createdAt','resolvedAt','lat','lng']
+    const content = format === 'csv' ? [fields.join(','), ...rows.map(row => fields.map(key => csvCell(row[key])).join(','))].join('\r\n')
+      : JSON.stringify({ type: 'FeatureCollection', features: rows.filter(r => Number.isFinite(r.lat) && Number.isFinite(r.lng)).map(({lat,lng,...properties}) => ({ type: 'Feature', properties, geometry: { type: 'Point', coordinates: [lng,lat] } })) }, null, 2)
+    const url = URL.createObjectURL(new Blob([content], { type: format === 'csv' ? 'text/csv;charset=utf-8' : 'application/geo+json' }))
+    const a = document.createElement('a')
+    a.href = url; a.download = `road-india-${rangeId}.${format}`; a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+  const links = [['/home','nav.home'],['/reports','nav.reports'],['/resolved','nav.resolved'],['/data','nav.data'],['/dashboard','nav.dashboard']]
+  return <div className="min-h-screen bg-[#f8f9fa] pb-20 lg:pb-0">
+    <header className="sticky top-0 z-50 border-b border-ink-100 bg-white/95 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:px-6">
+        <button type="button" onClick={() => navigate('/home')} className="flex min-w-0 items-center gap-2 text-left"><Logo className="h-8 w-8 shrink-0" /><span className="min-w-0"><span className="block truncate text-sm font-bold text-brand-900">Road India</span><span className="block text-[9px] font-bold uppercase tracking-wider text-accent-600">{t('data.mobile.portal')}</span></span></button>
+        <nav className="hidden gap-1 lg:flex">{links.map(([path,key]) => <button key={path} type="button" onClick={() => navigate(path)} className={`rounded-lg px-3 py-2 text-sm font-semibold ${path === '/data' ? 'bg-accent-50 text-accent-700' : 'text-ink-500'}`}>{t(key)}</button>)}</nav>
+        <div className="flex items-center gap-2"><LanguageSelector variant="neutral" />{user ? <UserMenu /> : <button type="button" onClick={() => navigate('/login')} aria-label={t('landing.nav.login')} className="grid h-9 w-9 place-items-center rounded-full bg-brand-800 text-white"><IconUser className="h-4 w-4" /></button>}</div>
+      </div>
+    </header>
+    <PageTransition className="mx-auto max-w-3xl px-4 pb-8 pt-4 sm:px-6">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-accent-700"><IconChartBar className="h-4 w-4" />{t('data.mobile.eyebrow')}</div>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-2"><h1 className="font-display text-[28px] font-bold tracking-tight text-ink-900">{t('data.mobile.title')}</h1><span className="rounded-full bg-brand-50 px-2 py-1 text-[10px] font-semibold text-brand-700">{t('resolved.liveData')}</span></div>
+      <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+        {TIME_WINDOWS.map(item => <button key={item.id} type="button" aria-pressed={rangeId === item.id} onClick={() => setRangeId(item.id)} className={`min-h-9 shrink-0 rounded-full px-3 text-xs font-semibold ${rangeId === item.id ? 'bg-accent-500 text-white shadow-sm' : 'bg-ink-100 text-ink-500'}`}>{t(item.labelKey)}</button>)}
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        <Metric icon={IconListChecks} label={t('data.mobile.total')} value={scopedReports.length} sub={t('data.mobile.selectedPeriod')} />
+        <Metric icon={IconCheckCircle} label={t('data.mobile.resolved')} value={resolvedReports.length} sub={`${rate}% ${t('data.mobile.fixRate')}`} />
+        <Metric icon={IconClock} label={t('data.mobile.avg')} value={avg === null ? '—' : formatDuration(avg)} sub={t('data.mobile.turnaround')} />
+      </div>
+      <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
+        <SectionTitle eyebrow={t('data.mobile.spatial')} title={t('data.mobile.heat')} />
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-ink-100 p-1">
+          {['reported','resolved','compare'].map(mode => <button type="button" key={mode} aria-pressed={heatMode === mode} onClick={() => setHeatMode(mode)} className={`min-h-10 rounded-md px-1 text-[11px] font-semibold ${heatMode === mode ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500'}`}>{t('data.heat.' + mode)}</button>)}
         </div>
-      </header>
-      <PageTransition className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <span className="eyebrow-pill bg-brand-600/10 text-brand-700"><IconSparkle className="h-3.5 w-3.5" />{t('data.eyebrow')}</span>
-            <h1 className="mt-3 font-display text-3xl font-bold text-ink-900 sm:text-4xl">{t('data.title')}</h1>
-            <p className="mt-2 max-w-2xl text-ink-500">{t('data.subtitle')}</p>
-          </div>
-          <div className="max-w-full overflow-x-auto rounded-full bg-ink-100 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex w-max min-w-full gap-1.5">
-              {TIME_WINDOWS.map((item) => <button key={item.id} type="button" onClick={() => setRangeId(item.id)} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${rangeId === item.id ? 'bg-white text-brand-800 shadow-card' : 'text-ink-500'}`}>{t(item.labelKey)}</button>)}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-7 grid gap-3 sm:grid-cols-3">
-          <Metric icon={IconSiren} label={t('data.totalReports')} value={scopedReports.length} color="text-brand-600 bg-brand-600/10" />
-          <Metric icon={IconCheckCircle} label={t('data.resolvedReports')} value={resolvedReports.length} color="text-success-600 bg-success-500/10" />
-          <Metric icon={IconSparkle} label={t('data.resolutionRate')} value={`${resolutionRate}%`} color="text-accent-600 bg-accent-500/10" />
-        </div>
-
-        <section className="mt-8 rounded-2xl border border-ink-200 bg-white p-5 shadow-card sm:p-6">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="font-display text-xl font-bold text-ink-900">{t('data.heat.title')}</h2><p className="mt-1 text-sm text-ink-500">{t('data.heat.subtitle')}</p></div><div className="flex rounded-full bg-ink-100 p-1"><button type="button" onClick={() => setHeatMode('reported')} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${heatMode === 'reported' ? 'bg-white text-brand-800 shadow-card' : 'text-ink-500'}`}>{t('data.heat.reported')}</button><button type="button" onClick={() => setHeatMode('resolved')} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${heatMode === 'resolved' ? 'bg-white text-success-600 shadow-card' : 'text-ink-500'}`}>{t('data.heat.resolved')}</button><button type="button" onClick={() => setHeatMode('compare')} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${heatMode === 'compare' ? 'bg-white text-ink-800 shadow-card' : 'text-ink-500'}`}>{t('data.heat.compare')}</button></div></div>
-          <div className="mt-5"><ReportHeatMap reports={heatReports} mode={heatMode} label={t('data.heat.tooltip')} comparisonLabel={t('data.heat.comparisonTooltip')} /></div>
-        </section>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-          <section className="rounded-2xl border border-ink-200 bg-white p-5 shadow-card sm:p-6"><h2 className="font-display text-xl font-bold text-ink-900">{t('data.trend.title')}</h2><p className="mt-1 text-sm text-ink-500">{t('data.trend.subtitle')}</p><TrendChart points={trend} lang={lang} t={t} /></section>
-          <section className="rounded-2xl border border-ink-200 bg-white p-5 shadow-card sm:p-6"><h2 className="font-display text-xl font-bold text-ink-900">{t('data.category.title')}</h2><p className="mt-1 text-sm text-ink-500">{t('data.category.subtitle')}</p><CategoryDonut data={categoryData} t={t} /></section>
-        </div>
-
-        <section className="mt-6 rounded-2xl border border-ink-200 bg-white p-5 shadow-card sm:p-6"><div className="flex items-center gap-2"><IconMapPin className="h-5 w-5 text-brand-600" /><div><h2 className="font-display text-xl font-bold text-ink-900">{t('data.locations.title')}</h2><p className="mt-1 text-sm text-ink-500">{t('data.locations.subtitle')}</p></div></div><div className="mt-5 space-y-3">{locationData.length ? locationData.map((location) => <div key={location.name}><div className="mb-1 flex justify-between gap-3 text-sm"><span className="truncate text-ink-600">{location.name}</span><span className="font-semibold text-ink-900">{location.count}</span></div><div className="h-2 overflow-hidden rounded-full bg-ink-100"><div className="h-full rounded-full bg-brand-600" style={{ width: `${(location.count / locationData[0].count) * 100}%` }} /></div></div>) : <p className="text-sm text-ink-400">{t('data.noData')}</p>}</div></section>
-      </PageTransition>
-      <MobileBottomNav />
-    </div>
-  )
+        <div className="relative z-0 mt-3"><ReportHeatMap reports={heatMode === 'resolved' ? resolvedReports : scopedReports} mode={heatMode} label={t('data.heat.tooltip')} comparisonLabel={t('data.heat.comparisonTooltip')} /></div>
+        <p className="mt-3 text-[11px] leading-relaxed text-ink-500">{t(heatMode === 'compare' ? 'data.mobile.compareLegend' : 'data.mobile.densityLegend')}</p>
+      </section>
+      <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
+        <SectionTitle eyebrow={t('data.mobile.velocity')} title={t('data.mobile.trend')} />
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-ink-100 p-1">{['daily','weekly','monthly'].map(value => <button key={value} type="button" aria-pressed={scale === value} onClick={() => setScale(value)} className={`min-h-9 rounded-md text-xs font-semibold ${scale === value ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500'}`}>{t('data.mobile.' + value)}</button>)}</div>
+        <TrendChart key={rangeId + scale} points={trend} lang={lang} t={t} />
+      </section>
+      <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
+        <SectionTitle eyebrow={t('data.mobile.classification')} title={t('data.mobile.breakdown')} />
+        {categoryData.length ? <CategoryDonut key={rangeId} data={categoryData} t={t} /> : <p className="py-8 text-center text-sm text-ink-500">{t('data.noData')}</p>}
+      </section>
+      <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
+        <SectionTitle eyebrow={t('data.mobile.ranking')} title={t('data.mobile.leaderboard')} />
+        <div className="mt-4 space-y-2">{locations.map((location,index) => <div key={location.name} className="flex items-center gap-2 rounded-lg bg-ink-50 p-3">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-xs font-bold text-brand-700">#{index+1}</span>
+          <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-ink-900">{location.name}</p><p className="mt-1 text-[10px] text-ink-500">{location.avg === null ? t('data.mobile.noTiming') : `${formatDuration(location.avg)} ${t('data.mobile.avg')}`}</p></div>
+          <div className="shrink-0 text-right"><p className="text-sm font-bold text-[#006398]">{location.rate}%</p><p className="text-[10px] text-ink-500">{location.closed}/{location.total} {t('data.mobile.resolved')}</p></div>
+        </div>)}{!locations.length && <p className="text-sm text-ink-500">{t('data.noData')}</p>}</div>
+      </section>
+      <section className="mt-6 rounded-xl bg-ink-900 p-5 text-white shadow-card">
+        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider"><IconChartBar className="h-5 w-5 text-accent-400" />{t('data.mobile.exportTitle')}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-ink-300">{t('data.mobile.exportDescription')}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2">{['csv','geojson'].map(format => <button key={format} type="button" onClick={() => exportData(format)} className="min-h-12 rounded-lg bg-accent-500 px-2 text-xs font-bold text-white transition-colors hover:bg-accent-600">{t('data.mobile.export')} {format === 'csv' ? 'CSV' : 'GeoJSON'}</button>)}</div>
+      </section>
+    </PageTransition>
+    <MobileBottomNav />
+  </div>
 }
-
-function Metric({ icon: Icon, label, value, color }) {
-  return <div className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-card"><span className={`grid h-10 w-10 place-items-center rounded-xl ${color}`}><Icon className="h-5 w-5" /></span><div><p className="font-display text-2xl font-bold text-ink-900">{value}</p><p className="text-xs text-ink-500">{label}</p></div></div>
+function SectionTitle({ eyebrow, title }) {
+  return <div><p className="text-[10px] font-bold uppercase tracking-widest text-accent-700">{eyebrow}</p><h2 className="mt-1 font-display text-lg font-bold leading-snug text-ink-900">{title}</h2></div>
+}
+function Metric({ icon: Icon, label, value, sub }) {
+  return <div className="min-w-0 rounded-xl bg-white p-3 shadow-card"><p className="flex items-center gap-1 text-[10px] text-ink-500"><Icon className="h-3.5 w-3.5 shrink-0 text-accent-600" />{label}</p><p className="mt-2 break-words font-display text-xl font-bold text-ink-900">{value}</p><p className="mt-1 text-[9px] text-ink-500">{sub}</p></div>
 }
