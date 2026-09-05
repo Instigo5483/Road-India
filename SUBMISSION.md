@@ -6,9 +6,9 @@ Road India turns road complaints into a visible journey from evidence to resolut
 
 Citizens can report potholes, waterlogging, damaged roads, missing footpaths, or unfinished infrastructure through one mobile-first flow. They select multiple issues, attach photos, and pin the exact location. OpenAI-assisted triage analyzes the description and first photo to suggest severity, a responsible department, and a concise review summary.
 
-Instead of leaving citizens with an opaque complaint number, Road India provides searchable public feeds, live progress tracking, and a resolved-report archive. Nearby-report suggestions and community support help reduce duplicate complaints. When administrators mark a report resolved, its author can rate the work and confirm or dispute the outcome—making closure more accountable.
+Instead of leaving citizens with an opaque complaint number, Road India provides searchable public feeds, live progress tracking, and a resolved-report archive. Nearby-report suggestions and community support help reduce duplicate complaints. The admin resolution workflow collects an after-repair photo, notes, and sign-off before marking a report resolved. Its author can then rate the work and confirm or dispute the outcome—making closure more accountable.
 
-Public analytics show reporting trends, resolution performance, issue distribution, and geographic concentration. English/Hindi support and mobile bottom navigation make the experience accessible on a phone. Settings provide public-name preferences, optional local drafts, data export, and feedback.
+Public analytics show reporting trends, resolution performance, issue distribution, and geographic concentration. Public and admin analytics share interactive density maps and report pins with resolution comparisons and worldwide navigation. English/Hindi support and mobile bottom navigation make the experience accessible on a phone. Settings provide public-name preferences, optional local drafts, data export, and feedback.
 
 Built with React, Vite, Tailwind CSS, Firebase, and Vercel server functions, Road India connects citizen evidence, administrative review, and public transparency in one browser-based experience.
 
@@ -43,7 +43,7 @@ Use prepared test records for completed statuses rather than implying an actual 
 1. Explain React/Vite/Tailwind for a responsive browser interface.
 2. Show that Firebase-backed pages share the same reports and live status updates.
 3. Explain the server-side OpenAI text/photo triage and its fallback.
-4. Show public analytics and admin review as the accountability loop.
+4. Show the shared analytics map's Heatmap/Pins/Both controls and admin resolution evidence as the accountability loop.
 5. Clearly distinguish the functioning workflow from mock identity, prototype authorization, and absent municipal integration.
 
 ## What the project implements
@@ -53,11 +53,11 @@ Use prepared test records for completed statuses rather than implying an actual 
 | Reporting | One combined road/infrastructure flow with multi-select issues, photos and location |
 | Discovery | Public search/filtering, support counts and nearby-report suggestions |
 | Tracking | Submitted → In Review → In Progress → Resolved; report IDs and map details |
-| Accountability | Author editing before work starts in the UI; one resolution rating and confirmation/dispute |
+| Accountability | Admin resolution photo, notes and sign-off; author editing before work starts in the UI; one resolution rating and confirmation/dispute |
 | Resolved archive | Public completed records, filters and average resolution time |
-| Analytics | Time-based metrics, interactive charts, density/comparison maps, location rankings, CSV/GeoJSON export |
+| Analytics | Public time-based metrics, interactive charts, rankings and CSV/GeoJSON export; shared public/admin density maps with Pins/Both modes, resolution comparisons, worldwide navigation and clickable report details |
 | Settings | Read-only identity, public display preferences, optional device drafts/history, compression, JSON export, rating and help |
-| Administration | Direct-URL sign-in, report search/filtering, status changes and analytics |
+| Administration | Direct-URL sign-in without a role selector; shared dashboard/analytics navigation; report search/filtering; non-final status dropdown; resolution-proof form with tab-local drafts and automatic Resolved status on successful submission |
 | Accessibility | Mobile-first layouts, English/Hindi, keyboard-operable public-name selector |
 
 ## How AI is used
@@ -74,7 +74,9 @@ The department is a suggestion for human review, not a confirmed handoff to a go
 
 **Simulated identity:** arbitrary test IDs and OTPs are accepted. No UIDAI/DigiLocker verification occurs. The supplied ID is processed and saved as a profile identifier; never use real identity data. Stable cross-browser test-account lookup requires the server credential and login endpoint. DigiLocker's generated test ID is browser-local.
 
-**Prototype administrator authorization:** a shared client-visible passcode is displayed on the admin sign-in page. Removing its link from citizen login does not secure it. Firestore rules still permit broad authenticated operations; a production deployment needs server-enforced roles.
+**Prototype administrator authorization:** a shared client-visible passcode is displayed on the admin sign-in page. Removing its link from citizen login does not secure it. Firestore rules still permit broad authenticated operations; a production deployment needs server-enforced roles. The resolution-proof requirement is enforced by the admin UI workflow, not every possible database mutation. Evidence is public and photos are not automatically geo-verified; earlier resolved records may have no proof.
+
+**Map scope:** Heatmap uses aggregated quarter-degree circles, not a continuous heat surface. Comparison colors represent unresolved versus resolved counts per area: red, green, or yellow for a tie. The public map follows its selected reporting period; the admin map includes all reports supplied to admin analytics. Both start over India but allow worldwide navigation, load tiles as needed, and exclude records without valid coordinates.
 
 **Local-only features:** drafts and opted-in location history remain on the device, are not encrypted, and do not submit automatically. Cache clearing covers those records, not browser-managed map tiles. The experience rating is saved to the user's profile; it is not a separate support-ticket system.
 
@@ -97,10 +99,11 @@ These are design goals and implemented capabilities, not measured claims about o
 ## Before final submission
 
 - [ ] Push the intended code and verify the public deployment.
-- [ ] Deploy the current `firestore.rules`, including author-owned public-presentation updates.
+- [ ] Deploy the current `firestore.rules`, including author-owned public-presentation updates and resolution-proof writes.
 - [ ] Verify `FIREBASE_SERVICE_ACCOUNT` and `OPENAI_API_KEY` in the server environment.
 - [ ] Check public URLs in a fresh browser and at mobile width.
-- [ ] Test repeat login, report submission, admin status update, resolution review, and preference saving.
+- [ ] Test repeat login, report submission, admin status update, proof submission with automatic resolution, citizen review, and preference saving.
+- [ ] Test both analytics maps: Heatmap/Pins/Both, Reports/Resolved/comparison, worldwide navigation, reset, and pin details.
 - [ ] Use fictional records and avoid exposing credentials or sensitive identity/photo data in recordings.
 - [ ] Attach a publicly accessible video no longer than two minutes.
 - [ ] Paste the project summary above into the form.

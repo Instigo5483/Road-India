@@ -24,6 +24,33 @@ Citizens can select multiple issues, attach photos, pin the location, and follow
 - **Languages:** English and Hindi.
 - **Admin access:** visit `/admin` directly. Signed-out administrators are redirected to `/admin/login`. The public citizen login does not offer an admin role selector.
 
+### Interactive maps
+
+View Data (`/data`) and Admin Analytics (`/admin/analytics`) share the same map component and mobile-friendly controls:
+
+- **Heatmap / Pins / Both:** switch between aggregated density circles, individual report markers, or their combination. Tap a pin to open report details.
+- **Reports / Resolved / Reports vs resolved:** view all supplied reports, resolved reports only, or compare unresolved and resolved counts within each area. Red means more unresolved reports, green means more resolved reports, and yellow means equal counts.
+- **Worldwide navigation:** pan and zoom beyond India without regional boundaries. The initial view and **Reset view** center on India.
+- **Data scope:** the public map follows View Data's selected time range; the admin map uses all reports available to the admin analytics page.
+- **Rendering:** nearby reports are grouped into quarter-degree density cells, circles use canvas rendering, and individual pins are limited to the current viewport. Map tiles load as needed; the entire world is not downloaded upfront.
+
+The Heatmap option is an aggregated circle-density visualization, not a continuous heat surface. Records without valid coordinates are excluded from the map, so map totals can differ from other metrics.
+
+### Administration and resolution proof
+
+Report Management and Analytics share the admin navigation, including a desktop sidebar. Admin login has no citizen-role selector. Analytics includes report totals, average resolution time, category/status breakdowns, recent reporting activity, top locations, and the interactive map above.
+
+The status dropdown offers **Submitted**, **In Review**, and **In Progress**. To close a report through the admin UI, use **Resolve report** and submit:
+
+- One after-repair photo.
+- An inspection officer/display name and resolution notes.
+- An optional contractor/work-order reference.
+- Confirmation that the evidence describes the completed work.
+
+Successful submission saves the proof, resolution timestamp, and Resolved status together. Evidence appears in report details; older resolved records may have no proof. **Save Draft** stores an unfinished resolution form in the current tab's session storage, not across devices. Photos are not automatically geo-verified, and public evidence must not include private identity information.
+
+This proof requirement is an admin-UI workflow, not comprehensive server-enforced authorization; see the security limitations below.
+
 ### Settings
 
 The mobile Settings page includes:
@@ -95,7 +122,7 @@ The same test ID resolves to the same local mock account. With Firebase, stable 
 
 Open [the admin URL](https://road-india.vercel.app/admin), or `/admin` locally. The default evaluation passcode is `roadindia-admin`, unless overridden by `VITE_ADMIN_PASSCODE`.
 
-The admin sign-in page displays the configured evaluation passcode. Hiding its link from citizen login is a navigation choice, **not a security control**. The dashboard supports report search/filtering, status changes, details/maps, and analytics at `/admin/analytics`.
+The admin sign-in page displays the configured evaluation passcode. Hiding its link from citizen login is a navigation choice, **not a security control**. The dashboard supports report search/filtering, non-final status changes, resolution-proof submission, details/maps, and analytics at `/admin/analytics`.
 
 ## Firebase and environment setup
 
@@ -141,7 +168,7 @@ OpenAI usage can incur charges. Hosting/database quotas and provider terms also 
 1. Import the repository into Vercel.
 2. Use the Vite build command `npm run build` and output directory `dist`.
 3. Add the Firebase Web variables and server-only credentials above.
-4. Deploy the matching Firestore rules separately.
+4. Deploy the matching Firestore rules separately, including public-presentation updates and resolution-proof writes.
 5. Deploy/redeploy the website after changing build-time environment variables.
 6. Test direct navigation to `/reports`, `/resolved`, `/data`, and `/admin`.
 
@@ -187,6 +214,11 @@ scripts/              Seeding and database maintenance utilities
 - [ ] Details show the right pin and update as status changes.
 - [ ] Authors can edit eligible reports and leave one resolution review.
 - [ ] Analytics and archive counts match the selected database/time range.
+- [ ] Both analytics maps support Heatmap/Pins/Both, all three data modes, worldwide panning/zooming, reset, and pin details on mobile and desktop.
+- [ ] Comparison colors match unresolved versus resolved counts; missing coordinates show an appropriate empty state when no mappable reports remain.
+- [ ] Admin navigation remains available on Analytics; neither login page shows a role switcher.
+- [ ] Resolved is absent from the status dropdown; incomplete proof cannot submit, while valid proof saves and updates the archive/details.
+- [ ] Resolution drafts restore in the same tab, and oversized evidence or permission failures show an error without falsely reporting success.
 - [ ] Preferences persist; public names update after successful saving.
 - [ ] Opt-in drafts restore and clear after submission; location history remains opt-in.
 - [ ] JSON/CSV/GeoJSON downloads contain the expected records.
