@@ -12,7 +12,6 @@ import {
   IconChevronLeft,
   IconLockCloud,
   IconShieldCheck,
-  IconUser,
 } from '../components/Icons'
 
 export default function AdminLogin() {
@@ -69,17 +68,7 @@ export default function AdminLogin() {
         </div>
 
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-ink-200 bg-white p-4 shadow-card sm:p-5">
-          <p className="mb-2 text-sm font-bold text-ink-900">{t('auth.role.select')}</p>
-          <div className="grid grid-cols-2 rounded-lg bg-ink-100 p-1">
-            <button type="button" onClick={() => navigate('/login')} className="flex h-10 items-center justify-center gap-2 rounded-md text-sm font-semibold text-ink-500 transition-colors hover:text-ink-900">
-              <IconUser className="h-4 w-4" /> {t('auth.role.user.label')}
-            </button>
-            <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-md bg-white text-sm font-semibold text-brand-800 shadow-sm">
-              <IconLockCloud className="h-4 w-4" /> {t('auth.role.admin.label')}
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
               <span className="mb-1.5 block text-sm font-semibold text-ink-800">{t('admin.login.passcodeLabel')}</span>
               <div className="relative">
