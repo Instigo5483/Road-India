@@ -22,6 +22,13 @@ test('local login preserves identity and report changes persist without Firebase
     assert.equal((await mockBackend.listReports()).find(r=>r.id===report.id).upvotes,1)
     await mockBackend.updateReportStatus(report.id,{status:'resolved',resolvedAt:new Date().toISOString()})
     assert.equal(JSON.parse(storage.get('road_india_reports')).find(r=>r.id===report.id).status,'resolved')
+    await mockBackend.reactToResolution(report.id, again.uid, 'true')
+    assert.equal(JSON.parse(storage.get('road_india_reports')).find(r=>r.id===report.id).resolutionReactions[again.uid], 'true')
+    await mockBackend.reactToResolution(report.id, again.uid, 'false')
+    assert.equal((await mockBackend.listReports()).find(r=>r.id===report.id).resolutionReactions[again.uid], 'false')
+    await mockBackend.reactToResolution(report.id, again.uid, 'false')
+    assert.deepEqual((await mockBackend.listReports()).find(r=>r.id===report.id).resolutionReactions, {})
+    await assert.rejects(mockBackend.reactToResolution(report.id, 'another-user', 'true'))
     globalThis.window.localStorage.setItem = () => {throw new Error('Storage denied')}
     await mockBackend.signOut()
     assert.equal(mockBackend.getSession(),null)

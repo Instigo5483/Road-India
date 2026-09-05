@@ -18,6 +18,7 @@ import ReportFeedbackForm from './ReportFeedbackForm'
 import ReportEditForm from './ReportEditForm'
 import FeedbackBadge from './FeedbackBadge'
 import ResolutionProof from './ResolutionProof'
+import ResolutionReactions from './ResolutionReactions'
 import CategoryIcon from './CategoryIcon'
 import { IconMapPin, IconThumbsUp, IconX, IconEdit } from './Icons'
 
@@ -238,6 +239,7 @@ export default function ReportDetailModal({
           )}
 
           <ResolutionProof proof={report.resolutionProof} />
+          <ResolutionReactions report={report} />
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-4 text-xs text-ink-400">
             <div>
               <p className="font-mono">

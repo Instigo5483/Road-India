@@ -3,6 +3,7 @@
 // Used only when Firebase is not configured; contexts select the backend.
 
 import { upvotePatch } from './reportValidation.js'
+import { reactionPatch } from './resolutionReactions.js'
 import { seedReports } from '../data/seedReports.js'
 
 const STORAGE_KEYS = {
@@ -143,5 +144,13 @@ export const mockBackend = {
     writeStore(STORAGE_KEYS.reports, reports)
     notify()
     return reports.find((r) => r.id === reportId)
+  },
+
+  async reactToResolution(reportId, uid, reaction) {
+    if (!session || session.uid !== uid) throw new Error('Sign in first')
+    const patch = reactionPatch(reports.find(r => r.id === reportId), uid, reaction)
+    reports = reports.map(r => r.id === reportId ? { ...r, ...patch } : r)
+    writeStore(STORAGE_KEYS.reports, reports)
+    notify()
   },
 }

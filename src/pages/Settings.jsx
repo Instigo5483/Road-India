@@ -71,7 +71,7 @@ export default function Settings() {
     downloadJson('road-india-my-data.json', {
       exportedAt: new Date().toISOString(),
       account: { name: user.name, maskedId: maskAadhaarId(user.digilockerId), preferredLanguage: user.preferredLanguage, preferences: user.preferences, createdAt: user.createdAt },
-      reports: myReports.map(report => { const copy = { ...report }; delete copy.upvotedBy; delete copy.createdBy; return copy }),
+      reports: myReports.map(report => { const copy = { ...report }; delete copy.upvotedBy; delete copy.createdBy; delete copy.resolutionReactions; return copy }),
       draft: readLocal(draftKey(user.uid)), locationHistory: readLocal(historyKey(user.uid), []),
     })
   }

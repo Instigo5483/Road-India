@@ -5,6 +5,7 @@ import { getTypesLabel, reportTypeIds } from '../data/categoryTypes'
 import { formatDuration, timeAgo, toDate } from '../lib/time'
 import { StarRatingDisplay } from './StarRating'
 import ReportDetailModal from './LazyReportDetailModal'
+import ResolutionReactions from './ResolutionReactions'
 import { IconArrowRight, IconCheckCircle, IconClock, IconMapPin, IconSparkle } from './Icons'
 
 export default function ResolvedReportCard({ report, index = 0 }) {
@@ -28,14 +29,6 @@ export default function ResolvedReportCard({ report, index = 0 }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.3 }}
         onClick={openDetails}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            openDetails()
-          }
-        }}
-        role="button"
-        tabIndex={0}
         className="group overflow-hidden rounded-2xl bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
       >
         <div className="flex items-start justify-between gap-3">
@@ -71,6 +64,8 @@ export default function ResolvedReportCard({ report, index = 0 }) {
             ))}
           </div>
         )}
+
+        <ResolutionReactions report={report} />
 
         {report.aiTriage && (
           <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-ink-50 px-3 py-2 text-xs text-ink-600">

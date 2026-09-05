@@ -16,6 +16,7 @@ import { triageReport } from '../lib/triage'
 import { useAuth } from './useAppContext'
 import { publicName, DEFAULT_PREFERENCES } from '../lib/preferences'
 import { prepareResolution } from '../lib/resolution'
+import { reactionPatch } from '../lib/resolutionReactions'
 
 import { assertEditable, upvotePatch, validateContent, validateFeedback } from '../lib/reportValidation'
 import { normalizeCategoryId } from '../data/categoryTypes'
@@ -198,6 +199,16 @@ export function ReportsProvider({ children }) {
     })
   }, [reports])
 
+  const reactToResolution = useCallback(async (reportId, reaction) => {
+    if (!user) throw new Error('Sign in first')
+    if (!isFirebaseConfigured) return mockBackend.reactToResolution(reportId, user.uid, reaction)
+    const ref = doc(db, 'reports', reportId)
+    await runTransaction(db, async transaction => {
+      const snap = await transaction.get(ref)
+      transaction.update(ref, reactionPatch(snap.exists() ? snap.data() : null, user.uid, reaction))
+    })
+  }, [user])
+
   const value = useMemo(
     () => ({
       reports,
@@ -209,6 +220,7 @@ export function ReportsProvider({ children }) {
       updateReport,
       submitReportFeedback,
       resolveWithProof,
+      reactToResolution,
     }),
     [
       reports,
@@ -220,6 +232,7 @@ export function ReportsProvider({ children }) {
       updateReport,
       submitReportFeedback,
       resolveWithProof,
+      reactToResolution,
     ]
   )
 

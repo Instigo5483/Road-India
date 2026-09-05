@@ -38,6 +38,8 @@ The Heatmap option is an aggregated circle-density visualization, not a continuo
 
 ### Administration and resolution proof
 
+Resolved archive cards and shared report details include a **True / False** community resolution check. Signed-in citizens can add, switch, or remove one reaction per account; everyone can see counts. Transactions preserve other voters' choices, and rules restrict updates to the caller's reaction on a resolved report. Reactions are opinions, not verified evidence, and never change status or replace the author's review. Reaction UID mappings are stored in publicly readable report documents (not anonymous ballots) and are omitted from the Settings JSON export. Deploy the updated rules with this feature before hosted testing.
+
 Report Management and Analytics share the admin navigation, including a desktop sidebar. Admin login has no citizen-role selector. Analytics includes report totals, average resolution time, category/status breakdowns, recent reporting activity, top locations, and the interactive map above.
 
 The status dropdown offers **Submitted**, **In Review**, and **In Progress** for open reports; closed reports cannot be reopened through it. To close a report through the admin UI, use **Resolve report** and submit:
