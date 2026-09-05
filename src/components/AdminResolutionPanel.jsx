@@ -26,12 +26,20 @@ export default function AdminResolutionPanel({ report, onClose, onDetails }) {
   }
   async function submit(event) {
     event.preventDefault()
+    if (busy) return
     setBusy(true); setError('')
     try {
       await resolveWithProof(report.id, { photoUrls: photos.map(p => p.src), officer: officer.trim(), workOrder: workOrder.trim(), notes: notes.trim(), certified })
       try { sessionStorage.removeItem(key) } catch { /* Saved proof is already in the database. */ }
       showToast(say('Proof saved. Report marked resolved.', 'प्रमाण सहेजा गया। रिपोर्ट हल चिह्नित हुई।'))
-    } catch (e) { setError(say('Could not resolve report. Check photo size, connection and database permissions. ', 'रिपोर्ट हल नहीं हुई। फ़ोटो आकार, कनेक्शन और डेटाबेस अनुमति जाँचें। ') + (e.code || '')) }
+    } catch (e) {
+      const code = String(e.code || '').replace(/^firestore\//, '')
+      if (code === 'permission-denied') {
+        setError(say('Firebase denied this save. Save your draft, sign in to Admin again, and retry. If it still fails, the deployed Firestore rules must allow resolution proof. Changing the photo will not fix a permissions error.', 'Firebase ने सहेजने की अनुमति नहीं दी। ड्राफ्ट सहेजें, Admin में फिर साइन इन करें और पुनः प्रयास करें। फिर भी समस्या हो तो प्रकाशित Firestore नियमों में समाधान प्रमाण की अनुमति जाँचें। फ़ोटो बदलने से अनुमति की त्रुटि ठीक नहीं होगी।'))
+      } else {
+        setError(say('Could not resolve report. Your form is unchanged; check the connection and evidence size, then retry. ', 'रिपोर्ट हल नहीं हुई। फ़ॉर्म सुरक्षित है; कनेक्शन और प्रमाण का आकार जाँचकर पुनः प्रयास करें। ') + code)
+      }
+    }
     finally { setBusy(false) }
   }
   return <section className="overflow-hidden rounded-2xl bg-white shadow-card-hover">

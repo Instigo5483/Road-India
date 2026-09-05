@@ -17,7 +17,7 @@ import {
 
 export default function AdminLogin() {
   const { loginAdmin } = useAdminAuth()
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname ?? '/admin'
@@ -34,6 +34,10 @@ export default function AdminLogin() {
       const authenticated = await loginAdmin(passcode)
       if (authenticated) navigate(from, { replace: true })
       else setError(t('admin.login.error'))
+    } catch {
+      setError(lang === 'hi'
+        ? 'डेटाबेस साइन-इन नहीं हो सका। कनेक्शन और Firebase Authentication कॉन्फ़िगरेशन जाँचें, फिर पुनः प्रयास करें।'
+        : 'Could not sign in to the database. Check your connection and Firebase Authentication configuration, then retry.')
     } finally {
       setBusy(false)
     }
