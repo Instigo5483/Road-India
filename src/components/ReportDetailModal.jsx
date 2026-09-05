@@ -37,12 +37,13 @@ export default function ReportDetailModal({
   onUpvote,
   upvoted,
   showUpvote = true,
+  initialEditing = false,
 }) {
   const { t, lang } = useLanguage()
   const { user } = useAuth()
   const { submitReportFeedback, updateReport } = useReports()
   const { showToast } = useToast()
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(() => initialEditing && user?.uid === report.createdBy && EDITABLE_STATUSES.includes(report.status))
 
   // Only the citizen who filed this report can rate it, and only once
   // it's resolved and they haven't already left feedback -- see
