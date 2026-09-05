@@ -179,17 +179,7 @@ export default function Login() {
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-ink-200 bg-white p-4 shadow-card sm:p-5">
           {screen === 'auth' ? (
             <>
-              <p className="mb-2 text-sm font-bold text-ink-900">{t('auth.role.select')}</p>
               <div className="grid grid-cols-2 rounded-lg bg-ink-100 p-1">
-                <button type="button" className="flex h-10 items-center justify-center gap-2 rounded-md bg-white text-sm font-semibold text-accent-800 shadow-sm">
-                  <IconUser className="h-4 w-4" /> {t('auth.role.user.label')}
-                </button>
-                <button type="button" onClick={() => navigate('/admin/login')} className="flex h-10 items-center justify-center gap-2 rounded-md text-sm font-semibold text-ink-500 transition-colors hover:text-ink-900">
-                  <IconLockCloud className="h-4 w-4" /> {t('auth.role.admin.label')}
-                </button>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 rounded-lg bg-ink-100 p-1">
                 <button type="button" onClick={() => selectMethod('aadhaar')} className={`min-h-11 rounded-md px-2 text-xs font-semibold transition-all ${method === 'aadhaar' ? 'bg-white text-accent-800 shadow-sm' : 'text-ink-500'}`}>
                   {t('auth.method.aadhaar.label')} + OTP
                 </button>
