@@ -1,4 +1,8 @@
 export default {
+  'settings.publicBadge': 'Citizen account',
+  'settings.draftFailed': 'Could not save the draft on this device. Storage may be full.',
+  'settings.submitFailed': 'Could not submit the report. Please check your connection and try again.',
+  'settings.photoFailed': 'Photo could not be added. Choose a smaller image or enable photo compression in Settings.',
   'dashboard.mobile.tracker': "Resolution Progress Tracker",
   'dashboard.mobile.review': "Your citizen review",
   'dashboard.mobile.verify': "Verify resolution & rate",

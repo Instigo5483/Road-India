@@ -11,7 +11,9 @@ import {
   setDoc,
   onSnapshot,
   serverTimestamp,
+  getDocs, collection, query, where, writeBatch,
 } from 'firebase/firestore'
+import { DEFAULT_PREFERENCES, publicName } from '../lib/preferences'
 import { isFirebaseConfigured, auth, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { fetchLoginToken } from '../lib/authToken'
@@ -24,9 +26,8 @@ const AuthContext = createContext(null)
  *   { user, loading, completeLogin(profile), logout() }
  *
  * `user` shape: { uid, digilockerId, name, preferredLanguage, createdAt }
- * `user` is null when logged out. There's deliberately no profile-update
- * method: name comes from the simulated Aadhaar/DigiLocker verification
- * (see Login.jsx) and isn't user-editable (see Settings.jsx).
+ * `user` is null when logged out. savePreferences updates display/privacy
+ * preferences only; the simulated account name remains read-only.
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() =>
@@ -70,6 +71,25 @@ export function AuthProvider({ children }) {
       user,
       loading,
       isMockBackend: !isFirebaseConfigured,
+
+      async savePreferences(settings, preferredLanguage) {
+        if (!user) throw new Error('Sign in first')
+        const preferences = { ...DEFAULT_PREFERENCES, ...settings }
+        const publicFields = {
+          createdByName: publicName(user.name, preferences.visibility),
+          showCitizenBadge: preferences.showBadge,
+          showCivicRank: preferences.showRank,
+        }
+        if (!isFirebaseConfigured) return mockBackend.savePreferences(preferences, preferredLanguage, publicFields)
+        // Only the caller's report presentation fields are changed; identity stays private in users.
+        const own = await getDocs(query(collection(db, 'reports'), where('createdBy', '==', user.uid)))
+        for (let i = 0; i < own.docs.length; i += 400) {
+          const batch = writeBatch(db)
+          own.docs.slice(i, i + 400).forEach(report => batch.update(report.ref, publicFields))
+          await batch.commit()
+        }
+        await setDoc(doc(db, 'users', user.uid), { preferences, preferredLanguage }, { merge: true })
+      },
 
       async completeLogin({ digilockerId, name, preferredLanguage }) {
         if (!isFirebaseConfigured) {

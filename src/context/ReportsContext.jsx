@@ -16,6 +16,7 @@ import { isFirebaseConfigured, db } from '../lib/firebase'
 import { mockBackend } from '../lib/mockBackend'
 import { triageReport } from '../lib/triage'
 import { useAuth } from './AuthContext'
+import { publicName, DEFAULT_PREFERENCES } from '../lib/preferences'
 
 const ReportsContext = createContext(null)
 
@@ -63,7 +64,9 @@ export function ReportsProvider({ children }) {
         photoUrls: photoUrls ?? [],
         location,
         createdBy: user.uid,
-        createdByName: user.name,
+        createdByName: publicName(user.name, user.preferences?.visibility),
+        showCitizenBadge: user.preferences?.showBadge ?? DEFAULT_PREFERENCES.showBadge,
+        showCivicRank: user.preferences?.showRank ?? DEFAULT_PREFERENCES.showRank,
         status: 'submitted',
         upvotes: 0,
         upvotedBy: [],

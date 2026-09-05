@@ -10,6 +10,7 @@ import {
   getTypesLabel,
 } from '../data/categoryTypes'
 import { timeAgo, formatTimestamp } from '../lib/time'
+import { computeCivicPoints } from '../lib/civicPoints'
 import StatusBadge from './StatusBadge'
 import AiTriageCard from './AiTriageCard'
 import ReportLocationMap from './ReportLocationMap'
@@ -41,7 +42,7 @@ export default function ReportDetailModal({
 }) {
   const { t, lang } = useLanguage()
   const { user } = useAuth()
-  const { submitReportFeedback, updateReport } = useReports()
+  const { submitReportFeedback, updateReport, reports } = useReports()
   const { showToast } = useToast()
   const [editing, setEditing] = useState(() => initialEditing && user?.uid === report.createdBy && EDITABLE_STATUSES.includes(report.status))
 
@@ -216,6 +217,8 @@ export default function ReportDetailModal({
               {report.createdByName && (
                 <p>{t('admin.reporter', { name: report.createdByName })}</p>
               )}
+              {report.showCitizenBadge && <p className="mt-1 text-brand-700">{t('settings.publicBadge')}</p>}
+              {report.showCivicRank && <p>{t('dashboard.mobile.points', { count: computeCivicPoints(reports.filter(r => r.createdBy === report.createdBy)) })}</p>}
               <p>
                 {formatTimestamp(report.createdAt)} ·{' '}
                 {timeAgo(report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}

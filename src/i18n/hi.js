@@ -1,4 +1,8 @@
 export default {
+  'settings.publicBadge': 'नागरिक खाता',
+  'settings.draftFailed': 'इस डिवाइस पर ड्राफ्ट सहेजा नहीं गया। स्टोरेज भर गया हो सकता है।',
+  'settings.submitFailed': 'रिपोर्ट जमा नहीं हुई। कनेक्शन जाँचकर फिर प्रयास करें।',
+  'settings.photoFailed': 'फ़ोटो नहीं जोड़ी जा सकी। छोटी फ़ोटो चुनें या सेटिंग्स में संपीड़न चालू करें।',
   'dashboard.mobile.tracker': "समाधान प्रगति ट्रैकर",
   'dashboard.mobile.review': "आपकी प्रतिक्रिया",
   'dashboard.mobile.verify': "समाधान की पुष्टि और रेटिंग दें",

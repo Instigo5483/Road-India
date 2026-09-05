@@ -88,6 +88,17 @@ export const mockBackend = {
     notify()
   },
 
+  async savePreferences(preferences, preferredLanguage, publicFields) {
+    if (!session) throw new Error('Sign in first')
+    session = { ...session, preferences, preferredLanguage }
+    users = users.map(u => u.uid === session.uid ? session : u)
+    reports = reports.map(r => r.createdBy === session.uid ? { ...r, ...publicFields } : r)
+    writeStore(STORAGE_KEYS.users, users)
+    writeStore(STORAGE_KEYS.session, session)
+    writeStore(STORAGE_KEYS.reports, reports)
+    notify()
+  },
+
   async listReports() {
     return reports
   },

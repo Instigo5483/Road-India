@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
+import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { IconCamera, IconX } from './Icons'
 
 const MAX_PHOTOS = 3
@@ -30,7 +32,16 @@ function compressImage(file) {
         canvas.width = width
         canvas.height = height
         canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY))
+        let src = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+        // Three inline photos plus report fields must fit Firestore's document limit.
+        for (let i = 0; src.length > 240000 && i < 6; i++) {
+          canvas.width = Math.round(canvas.width * 0.75)
+          canvas.height = Math.round(canvas.height * 0.75)
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+          src = canvas.toDataURL('image/jpeg', 0.65)
+        }
+        if (src.length > 240000) { reject(new Error('Image too large')); return }
+        resolve(src)
       }
       img.src = reader.result
     }
@@ -49,19 +60,20 @@ function readAsDataUrl(file) {
 
 export default function PhotoUpload({ photos, onChange }) {
   const { t } = useLanguage()
+  const { user } = useAuth()
+  const { showToast } = useToast()
   const inputRef = useRef(null)
 
   function handleFiles(fileList) {
     const files = Array.from(fileList).slice(0, MAX_PHOTOS - photos.length)
     files.forEach(async (file) => {
-      // Falls back to the uncompressed file if compression fails for any
-      // reason (e.g. a format the canvas can't decode) -- a bigger photo
-      // is still better than silently dropping it.
-      const src = await compressImage(file).catch(() => readAsDataUrl(file))
-      onChange((prev) => [
-        ...prev,
-        { id: `${Date.now()}-${Math.random()}`, src },
-      ])
+      // Reject unsupported/oversized images visibly rather than allowing a
+      // payload that Firestore cannot store.
+      try {
+        const src = user?.preferences?.compressPhotos === false ? await readAsDataUrl(file) : await compressImage(file)
+        if (src.length > 240000) throw new Error('Image too large')
+        onChange((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, src }].slice(0, MAX_PHOTOS))
+      } catch { showToast(t('settings.photoFailed'), 'error') }
     })
   }
 

@@ -27,6 +27,12 @@ service cloud.firestore {
                     && request.resource.data.upvotes == 0;
 
       allow update: if request.auth != null && (
+        (resource.data.createdBy == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['createdByName', 'showCitizenBadge', 'showCivicRank']) &&
+          request.resource.data.createdByName is string &&
+          request.resource.data.showCitizenBadge is bool &&
+          request.resource.data.showCivicRank is bool) ||
         // Report author can edit their own report's fields, but not status.
         (resource.data.createdBy == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys()

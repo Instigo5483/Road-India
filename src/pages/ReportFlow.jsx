@@ -15,6 +15,8 @@ import { useToast } from '../context/ToastContext'
 import { getCategory, normalizeCategoryId } from '../data/categoryTypes'
 import { formatTimestamp } from '../lib/time'
 import { distanceKm } from '../lib/geo'
+import { useAuth } from '../context/AuthContext'
+import { draftKey, historyKey, readLocal } from '../lib/preferences'
 import {
   IconChevronLeft,
   IconAlertCircle,
@@ -45,20 +47,31 @@ export default function ReportFlow() {
   const { t } = useLanguage()
   const { reports, createReport, toggleUpvote } = useReports()
   const { showToast } = useToast()
+  const { user } = useAuth()
+  const [draft] = useState(() => user?.preferences?.offlineDrafts ? readLocal(draftKey(user.uid), {}) : {})
 
   const category = getCategory(categoryId)
 
   const [step, setStep] = useState(STEP.DETAILS)
-  const [types, setTypes] = useState([])
-  const [description, setDescription] = useState('')
-  const [photos, setPhotos] = useState([])
-  const [location, setLocation] = useState(null)
+  const [types, setTypes] = useState(draft.types || [])
+  const [description, setDescription] = useState(draft.description || '')
+  const [photos, setPhotos] = useState(draft.photos || [])
+  const [location, setLocation] = useState(draft.location || null)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [now, setNow] = useState(() => new Date())
   const [submittedReport, setSubmittedReport] = useState(null)
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const [upvotedIds, setUpvotedIds] = useState([])
+
+  useEffect(() => {
+    if (!user?.preferences?.offlineDrafts || step === STEP.SUCCESS) return
+    const timer = setTimeout(() => {
+      try { localStorage.setItem(draftKey(user.uid), JSON.stringify({ types, description, photos, location })) }
+      catch { showToast(t('settings.draftFailed'), 'error') }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [user?.uid, user?.preferences?.offlineDrafts, types, description, photos, location, step, showToast, t])
 
   // Anything of the same category within NEARBY_RADIUS_KM that isn't
   // already resolved -- surfaced so the citizen can support an existing
@@ -161,6 +174,15 @@ export default function ReportFlow() {
       }
       setSubmittedReport(report)
       setStep(STEP.SUCCESS)
+      try {
+        localStorage.removeItem(draftKey(user.uid))
+        if (user.preferences?.geoHistory) {
+          const history = readLocal(historyKey(user.uid), [])
+          localStorage.setItem(historyKey(user.uid), JSON.stringify([{ ...location, at: new Date().toISOString() }, ...history].slice(0, 20)))
+        }
+      } catch { /* The report was saved; local history is optional. */ }
+    } catch {
+      showToast(t('settings.submitFailed'), 'error')
     } finally {
       setSubmitting(false)
     }
