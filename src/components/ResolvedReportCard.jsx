@@ -1,46 +1,21 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
-import { getCategory, getTypesLabel, reportTypeIds } from '../data/categoryTypes'
+import { getTypesLabel, reportTypeIds } from '../data/categoryTypes'
 import { formatDuration, timeAgo, toDate } from '../lib/time'
-import CategoryIcon from './CategoryIcon'
-import FeedbackBadge from './FeedbackBadge'
+import { StarRatingDisplay } from './StarRating'
 import ReportDetailModal from './ReportDetailModal'
-import StatusBadge from './StatusBadge'
-import {
-  IconArrowRight,
-  IconCheckCircle,
-  IconClock,
-  IconMapPin,
-  IconSparkle,
-  IconStar,
-} from './Icons'
+import { IconArrowRight, IconCheckCircle, IconClock, IconMapPin, IconSparkle } from './Icons'
 
-const CATEGORY_STYLE = {
-  problem: {
-    spine: 'border-l-accent-500',
-    chip: 'bg-accent-50 text-accent-700',
-    proof: 'border-accent-100 bg-accent-50/50',
-  },
-  corruption: {
-    spine: 'border-l-brand-600',
-    chip: 'bg-brand-50 text-brand-700',
-    proof: 'border-brand-100 bg-brand-50/50',
-  },
-}
-
-/** Archive-specific report presentation based on the Stitch resolved-case
- * layout. It deliberately keeps the existing shared detail modal, so the
- * redesign cannot lose photos, AI triage, feedback, or the exact map pin. */
 export default function ResolvedReportCard({ report, index = 0 }) {
   const { t, lang } = useLanguage()
   const [detailOpen, setDetailOpen] = useState(false)
-  const category = getCategory(report.category)
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
-  const style = CATEGORY_STYLE[report.category] ?? CATEGORY_STYLE.problem
   const resolutionMs = report.resolvedAt
     ? toDate(report.resolvedAt).getTime() - toDate(report.createdAt).getTime()
     : null
+  const photos = (report.photoUrls ?? []).filter(Boolean).slice(0, 2)
+  const feedback = report.citizenFeedback
 
   function openDetails() {
     setDetailOpen(true)
@@ -61,114 +36,76 @@ export default function ResolvedReportCard({ report, index = 0 }) {
         }}
         role="button"
         tabIndex={0}
-        className={`group overflow-hidden rounded-xl border border-l-4 border-ink-200 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover ${style.spine}`}
+        className="group overflow-hidden rounded-2xl bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover sm:p-5"
       >
-        <div className="grid lg:grid-cols-[minmax(0,1fr)_13rem]">
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`rounded px-2.5 py-1 text-xs font-bold ${style.chip}`}>
-                {category ? t(category.labelKey) : report.category}
-                {typeLabel ? ` · ${typeLabel}` : ''}
-              </span>
-              <StatusBadge status={report.status} />
-              <span className="font-mono text-[11px] font-semibold text-ink-400">
-                {t('admin.reportId', { id: report.id })}
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-start gap-3">
-              <CategoryIcon category={report.category} className="h-11 w-11 shrink-0" />
-              <div className="min-w-0">
-                <h2 className="font-display text-lg font-bold leading-snug text-ink-900 sm:text-xl">
-                  {typeLabel || report.type}
-                </h2>
-                <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-600">
-                  {report.description}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-ink-500">
-              <span className="inline-flex items-center gap-1.5">
-                <IconMapPin className="h-3.5 w-3.5 text-brand-600" />
-                {report.location?.address ?? t('report.step2.coordinates')}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <IconClock className="h-3.5 w-3.5" />
-                {timeAgo(report.resolvedAt ?? report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}
-              </span>
-              {resolutionMs != null && resolutionMs >= 0 && (
-                <span className="font-semibold text-success-700">
-                  {t('reports.resolvedIn', { duration: formatDuration(resolutionMs) })}
-                </span>
-              )}
-            </div>
-
-            <div className={`mt-5 rounded-lg border p-3.5 ${style.proof}`}>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2 text-xs font-semibold text-ink-700">
-                  <IconCheckCircle className="h-4 w-4 text-success-600" />
-                  {t('resolved.recordVerified')}
-                </div>
-                {report.aiTriage?.department && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-700">
-                    <IconSparkle className="h-3.5 w-3.5" />
-                    {t('report.aiTriage.routedTo', {
-                      department: report.aiTriage.department,
-                    })}
-                  </span>
-                )}
-              </div>
-              {report.citizenFeedback && (
-                <div className="mt-2">
-                  <FeedbackBadge feedback={report.citizenFeedback} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <aside className="flex flex-col justify-between border-t border-ink-100 bg-ink-50 p-5 lg:border-l lg:border-t-0">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-ink-400">
-                {t('resolved.citizenReview')}
-              </p>
-              {typeof report.citizenFeedback?.rating === 'number' ? (
-                <>
-                  <div className="mt-3 flex items-end gap-1.5">
-                    <IconStar className="mb-1 h-5 w-5 fill-accent-500 text-accent-500" />
-                    <span className="font-display text-3xl font-bold text-ink-900">
-                      {report.citizenFeedback.rating.toFixed(1)}
-                    </span>
-                    <span className="mb-1 text-xs text-ink-400">/ 5</span>
-                  </div>
-                  {report.citizenFeedback.review && (
-                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-ink-500">
-                      “{report.citizenFeedback.review}”
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="mt-3 text-sm font-medium text-ink-500">
-                  {t('resolved.awaitingReview')}
-                </p>
-              )}
-            </div>
-
-            <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-brand-700">
-              {t('resolved.viewDetails')}
-              <IconArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-success-50 px-2.5 py-1 text-[11px] font-bold text-success-700">
+              <IconCheckCircle className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{typeLabel || t('category.issue.label')} · {t('status.resolved')}</span>
             </span>
-          </aside>
+            {resolutionMs != null && resolutionMs >= 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-ink-100 px-2 py-1 text-[11px] font-medium text-ink-500">
+                <IconClock className="h-3 w-3" />
+                {t('reports.resolvedIn', { duration: formatDuration(resolutionMs) })}
+              </span>
+            )}
+          </div>
+          <span className="shrink-0 font-mono text-[11px] font-bold text-brand-700">#{report.id}</span>
         </div>
+
+        <h2 className="mt-3 font-display text-lg font-bold leading-snug text-ink-900 sm:text-xl">{report.description}</h2>
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-ink-500">
+          <IconMapPin className="h-4 w-4 shrink-0 text-accent-600" />
+          <span className="truncate">{report.location?.address ?? report.location?.city ?? t('report.step2.coordinates')}</span>
+          <span className="shrink-0">· {timeAgo(report.resolvedAt ?? report.createdAt, lang === 'hi' ? 'hi-IN' : 'en-IN')}</span>
+        </div>
+
+        {photos.length > 0 && (
+          <div className={`mt-4 grid overflow-hidden rounded-xl bg-ink-100 ${photos.length > 1 ? 'grid-cols-2 gap-1' : ''}`}>
+            {photos.map((photo, photoIndex) => (
+              <div key={`${photo.slice(0, 32)}-${photoIndex}`} className="relative h-36 sm:h-44">
+                <img src={photo} alt="" className="h-full w-full object-cover" />
+                <span className="absolute left-2 top-2 rounded bg-ink-900/80 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">{t('resolved.evidence')}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {report.aiTriage && (
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-ink-50 px-3 py-2 text-xs text-ink-600">
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <IconSparkle className="h-4 w-4 shrink-0 text-brand-700" />
+              <span className="truncate"><strong className="text-ink-800">{t('resolved.aiReviewed')}:</strong> {report.aiTriage.department}</span>
+            </span>
+            <IconCheckCircle className="h-4 w-4 shrink-0 text-success-600" />
+          </div>
+        )}
+
+        <div className="mt-3 rounded-xl bg-ink-50 p-3">
+          {feedback ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <StarRatingDisplay rating={feedback.rating} className="h-4 w-4" />
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${feedback.confirmedResolved ? 'bg-success-100 text-success-700' : 'bg-warning-50 text-warning-700'}`}>
+                  <IconCheckCircle className="h-3 w-3" />
+                  {feedback.confirmedResolved ? t('feedback.badge.confirmed') : t('feedback.badge.disputed')}
+                </span>
+              </div>
+              {feedback.review && <p className="mt-2 text-sm leading-relaxed text-ink-700">“{feedback.review}”</p>}
+            </>
+          ) : (
+            <p className="text-xs font-medium text-ink-500">{t('resolved.awaitingReview')}</p>
+          )}
+        </div>
+
+        <button type="button" onClick={(event) => { event.stopPropagation(); openDetails() }} className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-ink-100 text-sm font-bold text-ink-800 transition-colors hover:bg-ink-200">
+          {t('resolved.viewDetails')}
+          <IconArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </button>
       </motion.article>
 
-      {detailOpen && (
-        <ReportDetailModal
-          report={report}
-          onClose={() => setDetailOpen(false)}
-          showUpvote={false}
-        />
-      )}
+      {detailOpen && <ReportDetailModal report={report} onClose={() => setDetailOpen(false)} showUpvote={false} />}
     </>
   )
 }

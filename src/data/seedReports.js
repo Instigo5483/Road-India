@@ -93,6 +93,7 @@ export const seedReports = [
     createdBy: 'seed-user-4',
     createdByName: 'Rimjhim D.',
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
+    resolvedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
   },
   {
     id: 'seed-5',
