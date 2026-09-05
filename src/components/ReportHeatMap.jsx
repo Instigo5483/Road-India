@@ -8,8 +8,9 @@ import { hasValidLocation } from '../lib/reportValidation'
 
 const pinIcon = createPinIcon()
 
-const HEAT_COLOR = '#dc2626'
-const RESOLVED_COLOR = '#16a34a'
+// Lighter tints keep the base map visible while opacity still conveys density.
+const HEAT_COLOR = '#fca5a5'
+const RESOLVED_COLOR = '#86efac'
 
 function ResizeMap() {
   const map = useMap()
