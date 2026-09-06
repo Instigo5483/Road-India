@@ -88,14 +88,19 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
           const compared = mode === 'compare'
           const resolvedDominates = cell.resolved > unresolved
           const balanced = compared && cell.resolved === unresolved
-          const color = balanced
-            ? '#ca8a04'
-            : mode === 'resolved' || (compared && resolvedDominates)
-              ? RESOLVED_COLOR
-              : HEAT_COLOR
           const lead = compared
             ? Math.abs(cell.resolved - unresolved) / Math.max(cell.count, 1)
             : 1
+          // Compare with white-mixed pastel ramps, not darker opacity shades.
+          const tintIndex = lead < 0.34 ? 0 : lead < 0.67 ? 1 : 2
+          const comparisonColor = balanced ? '#fef3c7' : resolvedDominates
+            ? ['#dcfce7', '#bbf7d0', '#86efac'][tintIndex]
+            : ['#fee2e2', '#fecaca', '#fca5a5'][tintIndex]
+          const color = compared
+            ? comparisonColor
+            : mode === 'resolved'
+              ? RESOLVED_COLOR
+              : HEAT_COLOR
           const tooltip = compared
             ? comparisonLabel
               .replace('{reports}', unresolved)
@@ -111,7 +116,7 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
                 color,
                 fillColor: color,
                 fillOpacity: compared
-                  ? 0.2 + lead * 0.45
+                  ? 0.7
                   : Math.min(0.18 + cell.count * 0.11, 0.65),
                 weight: 1,
               }}
