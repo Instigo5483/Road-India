@@ -91,12 +91,11 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
           const lead = compared
             ? Math.abs(cell.resolved - unresolved) / Math.max(cell.count, 1)
             : 1
-          // Keep even a 100% lead pale; a single open report must not become
-          // saturated red. Mostly opaque fills reduce muddy blending with tiles.
+          // Compare with white-mixed pastel ramps, not darker opacity shades.
           const tintIndex = lead < 0.34 ? 0 : lead < 0.67 ? 1 : 2
-          const comparisonColor = balanced ? '#fff9e6' : resolvedDominates
-            ? ['#f0fff4', '#e5ffed', '#d6ffe3'][tintIndex]
-            : ['#fff5f5', '#ffecec', '#ffdddd'][tintIndex]
+          const comparisonColor = balanced ? '#fef3c7' : resolvedDominates
+            ? ['#dcfce7', '#bbf7d0', '#86efac'][tintIndex]
+            : ['#fee2e2', '#fecaca', '#fca5a5'][tintIndex]
           const color = compared
             ? comparisonColor
             : mode === 'resolved'
@@ -117,9 +116,9 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
                 color,
                 fillColor: color,
                 fillOpacity: compared
-                  ? 0.88
+                  ? 0.7
                   : Math.min(0.18 + cell.count * 0.11, 0.65),
-                weight: compared ? 0 : 1,
+                weight: 1,
               }}
             >
               <Tooltip>{tooltip}</Tooltip>
