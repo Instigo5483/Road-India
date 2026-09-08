@@ -53,7 +53,7 @@ function TrendChart({ points, lang, t }) {
   </div>
 }
 
-function CategoryDonut({ data, t }) {
+function CategoryDonut({ data, reportCount, t }) {
   const [activeId, setActiveId] = useState(null)
   const total = Math.max(data.reduce((sum, item) => sum + item.count, 0), 1)
   let current = 0
@@ -97,7 +97,7 @@ function CategoryDonut({ data, t }) {
         <title>{t('data.category.title')}</title>
         {slices.map((slice) => <path key={slice.id} d={slicePath(slice.start, slice.end)} fill={slice.color} onClick={() => setActiveId(slice.id)} onMouseEnter={() => setActiveId(slice.id)} onFocus={() => setActiveId(slice.id)} onBlur={() => setActiveId(null)} tabIndex={0} aria-label={`${slice.label}: ${slice.count}`} style={{ cursor: 'pointer', transformOrigin: '80px 80px', transform: activeId === slice.id ? 'scale(1.08)' : 'scale(1)', opacity: activeId && activeId !== slice.id ? 0.35 : 1, transition: 'transform 180ms ease, opacity 180ms ease' }} />)}
         <circle cx="80" cy="80" r="39" fill="white" />
-        <text x="80" y={centerLabelLines.length > 1 ? '70' : '75'} textAnchor="middle" className="fill-ink-900 text-[22px] font-bold">{activeItem?.count ?? data.reduce((sum, item) => sum + item.count, 0)}</text>
+        <text x="80" y={centerLabelLines.length > 1 ? '70' : '75'} textAnchor="middle" className="fill-ink-900 text-[22px] font-bold">{activeItem?.count ?? reportCount}</text>
         {centerLabelLines.map((line, index) => <text key={`${line}-${index}`} x="80" y={centerLabelLines.length > 1 ? 91 + index * 10 : 99} textAnchor="middle" className="fill-ink-500 text-[8px] font-medium">{line}</text>)}
       </svg>
       <div className="w-full space-y-3">
@@ -204,7 +204,10 @@ export default function ViewData() {
       </section>
       <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
         <SectionTitle eyebrow={t('data.mobile.classification')} title={t('data.mobile.breakdown')} />
-        {categoryData.length ? <CategoryDonut key={rangeId} data={categoryData} t={t} /> : <p className="py-8 text-center text-sm text-ink-500">{t('data.noData')}</p>}
+        {categoryData.length ? <>
+          <CategoryDonut key={rangeId} data={categoryData} reportCount={scopedReports.length} t={t} />
+          <p className="mt-4 text-xs leading-relaxed text-ink-500">{t('data.category.overlapNote')}</p>
+        </> : <p className="py-8 text-center text-sm text-ink-500">{t('data.noData')}</p>}
       </section>
       <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
         <SectionTitle eyebrow={t('data.mobile.ranking')} title={t('data.mobile.leaderboard')} />

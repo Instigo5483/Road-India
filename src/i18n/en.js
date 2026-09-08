@@ -118,6 +118,7 @@ export default {
   'data.trend.filed': 'Filed',
   'data.trend.resolved': 'Resolved',
   'data.category.title': 'Reported by issue type',
+  'data.category.overlapNote': 'Each report is counted once in the total, including resolved reports. A report can include multiple issue types, so category counts may add up to more than the total. Circle segments show the share of issue-type selections.',
   'landing.how.title': 'How it works',
   'landing.how.step1.title': 'Select the problems',
   'landing.how.step1.body': 'Choose every road issue visible at the location.',
