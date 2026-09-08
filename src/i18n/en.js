@@ -55,7 +55,7 @@ export default {
   'data.map.pinResolved': 'Resolved',
   'data.map.pinUnresolved': 'Unresolved',
   'data.map.streetPins': 'At street level, red pins mark unresolved reports and green pins mark resolved reports. Tap a pin for details.',
-  'data.map.region': 'Explore the world by dragging or zooming the map. Tap a pin to open report details.',
+  'data.map.region': 'Explore India by dragging or zooming the map. Dragging is limited to India’s outer bounds with an approximate 100 km margin. Tap a pin to open report details.',
   'settings.publicBadge': 'Citizen account',
   'settings.draftFailed': 'Could not save the draft on this device. Storage may be full.',
   'settings.submitFailed': 'Could not submit the report. Please check your connection and try again.',

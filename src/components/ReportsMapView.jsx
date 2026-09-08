@@ -5,6 +5,8 @@ import { INDIA_CENTER, DEFAULT_ZOOM } from '../lib/geo'
 import ReportDetailModal from './LazyReportDetailModal'
 
 import { hasValidLocation } from '../lib/reportValidation'
+import IndiaMapBounds from './IndiaMapBounds'
+import { INDIA_PAN_BOUNDS } from '../lib/indiaMapBounds'
 
 const pinIcon = createPinIcon()
 
@@ -28,10 +30,15 @@ export default function ReportsMapView({ reports, user, onUpvote }) {
       <MapContainer
         center={center}
         zoom={zoom}
+        maxBounds={INDIA_PAN_BOUNDS}
+        maxBoundsViscosity={1}
+        inertia={false}
         scrollWheelZoom
         className="h-[28rem] w-full sm:h-[32rem]"
       >
+        <IndiaMapBounds />
         <TileLayer
+          noWrap
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />

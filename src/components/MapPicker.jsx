@@ -13,6 +13,8 @@ import { createPinIcon } from '../lib/mapPin'
 import { IconLocate, IconLoader } from './Icons'
 
 import { hasValidLocation } from '../lib/reportValidation'
+import IndiaMapBounds from './IndiaMapBounds'
+import { INDIA_PAN_BOUNDS } from '../lib/indiaMapBounds'
 
 const pinIcon = createPinIcon()
 
@@ -87,12 +89,16 @@ export default function MapPicker({ value, onChange }) {
       <MapContainer
         center={center}
         zoom={zoom}
-        worldCopyJump
+        maxBounds={INDIA_PAN_BOUNDS}
+        maxBoundsViscosity={1}
+        inertia={false}
         scrollWheelZoom
         className="h-72 w-full sm:h-96"
         ref={mapRef}
       >
+        <IndiaMapBounds />
         <TileLayer
+          noWrap
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />

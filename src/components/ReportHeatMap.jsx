@@ -10,6 +10,8 @@ import { loadBoundaryAsset } from '../lib/boundaryAssets'
 import { guardPinsDuringZoom } from '../lib/pinZoomVisibility'
 import indiaStates from '../data/indiaStates.json'
 import { createIndiaStateIndex, prepareIndiaStateMap } from '../lib/indiaStateMap'
+import IndiaMapBounds from './IndiaMapBounds'
+import { INDIA_PAN_BOUNDS } from '../lib/indiaMapBounds'
 
 const pinIcon = createPinIcon()
 const unresolvedPinIcon = createReportPinIcon(false)
@@ -172,15 +174,19 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
         center={[22, 82]}
         zoom={4}
         minZoom={1}
-        worldCopyJump
+        maxBounds={INDIA_PAN_BOUNDS}
+        maxBoundsViscosity={1}
+        inertia={false}
         maxZoom={18}
         preferCanvas
         markerZoomAnimation={false}
         scrollWheelZoom
         className="h-80 w-full sm:h-96"
       >
+        <IndiaMapBounds />
         <ResizeMap />
         <TileLayer
+          noWrap
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           keepBuffer={1}
