@@ -25,6 +25,9 @@ function inRing(lng, lat, ring) {
   let inside = false
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i], [xj, yj] = ring[j]
+    // Include shared edges; the caller deterministically picks one feature.
+    const cross = (lng - xi) * (yj - yi) - (lat - yi) * (xj - xi)
+    if (Math.abs(cross) < 1e-12 && lng >= Math.min(xi, xj) && lng <= Math.max(xi, xj) && lat >= Math.min(yi, yj) && lat <= Math.max(yi, yj)) return true
     if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside
   }
   return inside
@@ -50,7 +53,7 @@ export function prepareIndiaStateMap(reports, index) {
     const state = byCode.get(feature.properties.code)
     state.count++
     if (report.status === 'resolved') state.resolved++
-    // Use the same canonical membership when the state splits into city circles.
+    // Preserve canonical state names for callers using this state snapshot.
     return { ...report, location: { ...report.location, country: 'India', state: feature.properties.name } }
   })
   for (const state of states) if (state.count) state.rate = state.resolved / state.count * 100

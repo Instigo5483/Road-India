@@ -24,3 +24,18 @@ export function createPinIcon() {
     iconAnchor: [19, 44],
   })
 }
+
+// Compact, static report pins keep street names visible at close zoom.
+export function createReportPinIcon(resolved) {
+  const color = resolved ? '#16a34a' : '#dc2626'
+  return L.divIcon({
+    className: 'road-india-report-pin',
+    html: `<svg width="26" height="32" viewBox="0 0 24 30" fill="none" aria-hidden="true">
+      <path d="M12 29S1 17.7 1 10.5A11 11 0 1 1 23 10.5C23 17.7 12 29 12 29Z" fill="${color}" stroke="white" stroke-width="1.2"/>
+      ${resolved ? '<path d="m7.5 10.5 3 3 6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' : '<circle cx="12" cy="10.5" r="3.5" fill="white"/>'}
+    </svg>`,
+    iconSize: [26, 32],
+    iconAnchor: [13, 31],
+    tooltipAnchor: [0, -26],
+  })
+}

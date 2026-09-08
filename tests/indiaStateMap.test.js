@@ -2,7 +2,6 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { createIndiaStateIndex, prepareIndiaStateMap, stateContainsLocation } from '../src/lib/indiaStateMap.js'
-import { buildHeatmapHierarchy, heatmapGroupsAtZoom } from '../src/lib/heatmapGroups.js'
 import { resolutionColor } from '../src/lib/resolutionColor.js'
 
 const boundaries = JSON.parse(fs.readFileSync(new URL('../src/data/indiaStates.json', import.meta.url), 'utf8'))
@@ -64,16 +63,12 @@ test('coordinates resolve missing state fields without assigning foreign reports
   for (const [code, lat, lng] of places) assert.ok(stateContainsLocation(boundaries.features.find(f => f.properties.code === code), { lat, lng }), code)
 })
 
-test('whole-state shading and city-circle totals agree and update when date-filtered data changes', () => {
+test('whole-state totals update when date-filtered data changes', () => {
   const rows = [report('a', ' West Bengal ', 'resolved'), report('b', 'IN-WB'), report('c', 'West Bengal', 'submitted', 'Cooch Behar')]
   const result = prepareIndiaStateMap(rows, index)
   const state = result.states.find(item => item.count)
   assert.equal(state.count, 3)
   assert.equal(state.resolved, 1)
-  const cities = heatmapGroupsAtZoom(buildHeatmapHierarchy(result.reports), 6)
-  assert.equal(cities.length, 2)
-  assert.equal(cities.reduce((sum, city) => sum + city.count, 0), state.count)
-  assert.equal(cities.reduce((sum, city) => sum + city.resolved, 0), state.resolved)
   const filtered = prepareIndiaStateMap(rows.slice(0, 1), index).states.find(item => item.count)
   assert.equal(filtered.rate, 100)
   assert.equal(filtered.count, 1)
