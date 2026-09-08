@@ -6,6 +6,7 @@ import { HomeMapPlaceholder, HomeSecondaryPlaceholder } from '../components/Home
 import HomeSectionBoundary from '../components/HomeSectionBoundary'
 import { useHomeLoadOrder } from '../lib/useHomeLoadOrder'
 import LanguageSelector from '../components/LanguageSelector'
+import LanguagePreferenceDialog from '../components/LanguagePreferenceDialog'
 import Logo from '../components/Logo'
 
 import { useAuth, useLanguage } from '../context/useAppContext'
@@ -26,7 +27,7 @@ const navigation = [
 
 export default function Home() {
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { t, hasLanguagePreference } = useLanguage()
   const navigate = useNavigate()
   const { stage, mapReady } = useHomeLoadOrder()
 
@@ -38,6 +39,7 @@ export default function Home() {
 
   return (
     <div className="home-stitch">
+      {!hasLanguagePreference && <LanguagePreferenceDialog />}
       <header className="home-header">
         <div className="home-header-inner">
           <NavLink to="/home" className="home-brand">

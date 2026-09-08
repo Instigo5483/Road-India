@@ -3,11 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/useAppContext'
 import { useLanguage } from '../context/useAppContext'
-import { LANGUAGES } from '../data/languages'
 import { generateRandomName } from '../lib/randomName'
 import Button from '../components/Button'
 import Logo from '../components/Logo'
-import LanguageSelector from '../components/LanguageSelector'
 import {
   IconAlertCircle,
   IconArrowRight,
@@ -47,7 +45,7 @@ function getMockDigiLockerId() {
 
 export default function Login() {
   const { completeLogin, logout } = useAuth()
-  const { t, lang, setLang } = useLanguage()
+  const { t, lang } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const requestedPath = location.state?.from?.pathname
@@ -60,7 +58,6 @@ export default function Login() {
   const [screen, setScreen] = useState('auth')
   const [verifiedId, setVerifiedId] = useState('')
   const [accountName, setAccountName] = useState('')
-  const [preferredLanguage, setPreferredLanguage] = useState(lang)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -92,7 +89,6 @@ export default function Login() {
       })
       setVerifiedId(id)
       setAccountName(account.name)
-      setPreferredLanguage(account.preferredLanguage || lang)
       setScreen('profile')
     } catch {
       setError(t('auth.error.loginFailed'))
@@ -122,9 +118,8 @@ export default function Login() {
       await completeLogin({
         digilockerId: verifiedId,
         name: accountName,
-        preferredLanguage,
+        preferredLanguage: lang,
       })
-      setLang(preferredLanguage)
       navigate(from, { replace: true })
     } catch {
       setError(t('auth.error.loginFailed'))
@@ -153,7 +148,6 @@ export default function Login() {
             <span className="font-display text-lg font-bold tracking-tight text-brand-900">{t('common.appName')}</span>
           </button>
           <div className="flex items-center gap-2">
-            <LanguageSelector variant="neutral" />
             <span className="grid h-8 w-8 place-items-center rounded-full bg-accent-700 text-white">
               <IconUser className="h-4 w-4" />
             </span>
@@ -280,13 +274,6 @@ export default function Login() {
                   <p className="min-w-0 truncate text-sm font-bold text-ink-900">{accountName}</p>
                 </div>
               </div>
-              <Field label={t('auth.profile.language.label')}>
-                <select value={preferredLanguage} onChange={(event) => setPreferredLanguage(event.target.value)} className="input-field h-12">
-                  {LANGUAGES.map((language) => (
-                    <option key={language.code} value={language.code}>{language.nativeLabel}</option>
-                  ))}
-                </select>
-              </Field>
               <ErrorText message={error} />
               <Button type="submit" className="w-full" loading={busy} icon={<IconArrowRight className="h-4 w-4" />}>
                 {t('auth.profile.finish')}
