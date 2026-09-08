@@ -7,6 +7,7 @@ import { useLanguage } from '../context/useAppContext'
 import { resolutionColor } from '../lib/resolutionColor'
 import { DISTRICT_ZOOM, MUNICIPAL_ZOOM, WARD_ZOOM, PIN_ZOOM, uniqueLocatedReports, aggregateBoundaries, boundaryLayersAtZoom, fallbackReports, intersectsBounds } from '../lib/administrativeMap'
 import { loadBoundaryAsset } from '../lib/boundaryAssets'
+import { guardPinsDuringZoom } from '../lib/pinZoomVisibility'
 import indiaStates from '../data/indiaStates.json'
 import { createIndiaStateIndex, prepareIndiaStateMap } from '../lib/indiaStateMap'
 
@@ -26,6 +27,7 @@ const RESOLVED_COLOR = '#86efac'
 function ResizeMap() {
   const map = useMap()
   const { t } = useLanguage()
+  useEffect(() => guardPinsDuringZoom(map), [map])
   useEffect(() => {
     const resize = () => {
       map.invalidateSize()
@@ -146,7 +148,7 @@ function GroupedHeatLayer({ reports, mode, label, comparisonLabel, showFallbackP
     .map(([name, data]) => [name, { ...aggregateBoundaries(reports, data.features), remainder: data.remainder }])), [reports, assets])
   const regions = boundaryLayersAtZoom({ zoom, states: stateData.states, districts: districts?.regions, cities: cities?.regions,
     municipalData: assets.municipalities, wards }).filter(region => intersectsBounds(region.feature.bbox, bounds))
-  const pins = fallbackReports({ reports, zoom, districts, cities, wards })
+  const pins = zoom < PIN_ZOOM && loading ? [] : fallbackReports({ reports, zoom, districts, cities, wards })
   return <>
     {zoom < PIN_ZOOM && <BoundaryHeatShapes regions={regions} mode={mode} label={label} comparisonLabel={comparisonLabel} mapWidth={mapWidth} zoom={zoom} />}
     {showFallbackPins && <VisiblePins reports={pins} onSelect={onSelect} />}
@@ -173,6 +175,7 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
         worldCopyJump
         maxZoom={18}
         preferCanvas
+        markerZoomAnimation={false}
         scrollWheelZoom
         className="h-80 w-full sm:h-96"
       >
