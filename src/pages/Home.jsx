@@ -5,6 +5,7 @@ import { IconCamera } from '../components/Icons'
 import { HomeMapPlaceholder, HomeSecondaryPlaceholder } from '../components/HomePlaceholders'
 import HomeSectionBoundary from '../components/HomeSectionBoundary'
 import { useHomeLoadOrder } from '../lib/useHomeLoadOrder'
+import { useMobileNavViewport } from '../lib/useMobileNavViewport'
 import LanguageSelector from '../components/LanguageSelector'
 import LanguagePreferenceDialog from '../components/LanguagePreferenceDialog'
 import Logo from '../components/Logo'
@@ -30,6 +31,7 @@ export default function Home() {
   const { t, hasLanguagePreference } = useLanguage()
   const navigate = useNavigate()
   const { stage, mapReady } = useHomeLoadOrder()
+  const mobileNavRef = useMobileNavViewport()
 
   function reportIssue() {
     const path = '/report/issue'
@@ -78,7 +80,7 @@ export default function Home() {
         </HomeSectionBoundary>
       </main>
 
-      <nav className="home-bottom-nav" aria-label={t('nav.home')}><div>{navigation.map(item => <NavLink key={item.to} to={item.to}><Symbol name={item.icon} /><span>{t(item.label)}</span></NavLink>)}</div></nav>
+      <nav ref={mobileNavRef} className="home-bottom-nav" aria-label={t('nav.mobile')}><div>{navigation.map(item => <NavLink key={item.to} to={item.to}><Symbol name={item.icon} /><span>{t(item.label)}</span></NavLink>)}</div></nav>
     </div>
   )
 }

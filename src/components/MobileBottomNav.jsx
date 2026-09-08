@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useLanguage } from '../context/useAppContext'
+import { useMobileNavViewport } from '../lib/useMobileNavViewport'
 import {
   IconHome,
   IconAlertCircle,
@@ -19,9 +20,11 @@ const ITEMS = [
 export default function MobileBottomNav() {
   const { t } = useLanguage()
   const location = useLocation()
+  const mobileNavRef = useMobileNavViewport()
 
   return (
     <nav
+      ref={mobileNavRef}
       aria-label={t('nav.mobile')}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-100 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:hidden"
     >
