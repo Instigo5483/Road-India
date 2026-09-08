@@ -8,6 +8,8 @@ import { indiaOverviewBounds, fitIndiaOverview } from '../lib/indiaOverview'
 import { uniqueLocatedReports } from '../lib/administrativeMap'
 import { normalizeCategoryId } from '../data/categoryTypes'
 import { resolutionColor } from '../lib/resolutionColor'
+import { afterHomePaint } from '../lib/homeLoadOrder'
+import { HomeMapAttribution } from './HomeMapFrame'
 
 const stateIndex = createIndiaStateIndex(indiaStates)
 const bounds = indiaOverviewBounds(indiaStates.features)
@@ -32,13 +34,18 @@ function FitOverview() {
   return null
 }
 
-export default function HomeIndiaMap({ reports }) {
+export default function HomeIndiaMap({ reports, loading = false, loadError = false, onReady }) {
   const { t, lang } = useLanguage()
   const [selectedCode, setSelectedCode] = useState(null)
+  const [tilesReady, setTilesReady] = useState(false)
+  useEffect(() => {
+    if (!tilesReady && !loadError) return
+    return afterHomePaint(() => onReady?.())
+  }, [tilesReady, loadError, onReady])
   const { states, unmatched } = useMemo(() => prepareIndiaStateMap(
-    uniqueLocatedReports(reports.filter(report => normalizeCategoryId(report.category) === 'issue')), stateIndex,
-  ), [reports])
-  const detailsFor = ({ count, resolved, rate }) => count ? t('data.heat.comparisonTooltip', {
+    uniqueLocatedReports(loading || loadError ? [] : reports.filter(report => normalizeCategoryId(report.category) === 'issue')), stateIndex,
+  ), [reports, loading, loadError])
+  const detailsFor = ({ count, resolved, rate }) => loading || loadError ? t(loadError ? 'home.stitch.unavailable' : 'common.loading') : count ? t('data.heat.comparisonTooltip', {
     rate: (rate < 50 ? Math.min(rate, 49.99) : rate).toLocaleString(lang, { maximumFractionDigits: 2 }),
     total: count.toLocaleString(lang), resolved: resolved.toLocaleString(lang),
   }) : t('home.map.noReports')
@@ -52,6 +59,7 @@ export default function HomeIndiaMap({ reports }) {
       className="home-india-map" aria-label={t('home.map.label')}>
       <FitOverview />
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        eventHandlers={{ load: () => setTilesReady(true) }}
         noWrap keepBuffer={1} updateWhenIdle />
       {states.map(state => {
         const { feature, count, rate } = state
@@ -61,9 +69,8 @@ export default function HomeIndiaMap({ reports }) {
           style={{ color, fillColor: color, fillOpacity: count ? 0.25 : 0, opacity: 0.5, weight: selectedCode === feature.properties.code ? 2 : 1 }} />
       })}
     </MapContainer>
-    <div className="home-map-attribution">
-      <a href="https://leafletjs.com/">Leaflet</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://www.geoboundaries.org/">geoBoundaries</a> / <a href="https://github.com/datameet/maps">DataMeet</a> (<a href="https://creativecommons.org/licenses/by/2.5/in/">CC BY 2.5 IN</a>)
-    </div>
+    <HomeMapAttribution />
+    {(loading || loadError) && <p className="home-map-status" role="status">{t(loadError ? 'home.stitch.unavailable' : 'common.loading')}</p>}
     {selected && <div className="home-map-selection" role="status">
       <div><strong>{selected.feature.properties.name}</strong><p>{detailsFor(selected)}</p></div>
       <button type="button" onClick={() => setSelectedCode(null)} aria-label={t('common.close')}>×</button>

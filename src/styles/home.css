@@ -41,6 +41,11 @@ html:has(.home-stitch)::-webkit-scrollbar { display: none; }
 .home-report-label strong { display: block; font: 700 18px/1.25 'Road Home Montserrat', sans-serif; letter-spacing: .025em; }
 .home-report-label small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.5; color: rgb(255 255 255 / 90%); }
 .home-add { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: rgb(255 255 255 / 20%); }
+.home-add > span { font: 400 24px/1 sans-serif; }
+.home-secondary-placeholder { padding: 0 16px; }
+.home-secondary-placeholder-impact, .home-secondary-placeholder-recent { border-radius: 12px; background: #f3f4f5; margin-bottom: 24px; }
+.home-secondary-placeholder-impact { height: 255px; }
+.home-secondary-placeholder-recent { height: 310px; }
 .home-map-card { display: block; width: 100%; border: 1px solid rgb(157 67 0 / 20%); border-radius: 12px; overflow: hidden; background: white; text-align: left; }
 .home-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; }
 .home-map-heading h2 { font-size: 14px; font-weight: 700; }
@@ -122,6 +127,7 @@ html:has(.home-stitch)::-webkit-scrollbar { display: none; }
 .home-bottom-nav a > span:last-child { margin-top: 2px; font-size: 11px; }
 .home-bottom-nav a.active { color: var(--home-primary); font-weight: 600; }
 @media (min-width: 1024px) {
+  .home-secondary-placeholder { padding: 0; }
   .home-india-map { height: 420px; }
   .home-content { padding: 100px 24px 40px; }
   .home-hero { padding: 0 0 32px; gap: 24px; }
