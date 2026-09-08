@@ -25,6 +25,7 @@ export default function ReportMapSection({ reports, initialMode = 'reported' }) 
         </div>
         <div className="relative z-0 mt-3"><ReportHeatMap reports={heatMode === 'resolved' ? resolvedReports : reports} mode={heatMode} displayMode={mapDisplay} label={t('data.heat.tooltip')} comparisonLabel={t('data.heat.comparisonTooltip')} /></div>
         <p className="mt-2 text-[11px] text-ink-500">{t('data.map.region')}</p>
+        {mapDisplay !== 'pins' && <p className="mt-2 text-[11px] leading-relaxed text-ink-500">{t('data.heat.groupingHint')}</p>}
         {mapDisplay !== 'pins' && (heatMode === 'compare' ? (
           <div className="mt-3 space-y-2 text-[11px] leading-relaxed text-ink-500">
             <p className="font-semibold text-ink-700">{t('data.heat.compare')}</p>
