@@ -25,7 +25,7 @@ html:has(.home-stitch)::-webkit-scrollbar { display: none; }
 .home-profile { display: grid; place-items: center; width: 32px; height: 32px; background: var(--home-primary); color: white; border-radius: 50%; }
 .home-profile .home-symbol { font-size: 18px; }
 .home-desktop-nav { display: none; }
-.home-content { max-width: 600px; margin: auto; padding: 64px 0 calc(96px + env(safe-area-inset-bottom, 0px)); }
+.home-content { max-width: 960px; margin: auto; padding: 64px 0 calc(96px + env(safe-area-inset-bottom, 0px)); }
 .home-hero { padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
 .home-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--home-primary); font-size: 12px; font-weight: 700; text-transform: uppercase; }
 .home-eyebrow .home-symbol { font-size: 18px; }
@@ -123,14 +123,15 @@ html:has(.home-stitch)::-webkit-scrollbar { display: none; }
 .home-bottom-nav a.active { color: var(--home-primary); font-weight: 600; }
 @media (min-width: 1024px) {
   .home-india-map { height: 420px; }
-  .home-content { display: grid; grid-template-columns: 1.05fr 1fr; align-items: start; column-gap: 32px; max-width: 1152px; padding: 100px 16px 40px; }
-  .home-hero { grid-column: 1; grid-row: 1 / 3; padding: 0; gap: 24px; }
+  .home-content { padding: 100px 24px 40px; }
+  .home-hero { padding: 0 0 32px; gap: 24px; }
   .home-intro h1 { font-size: 42px; }
   .home-subtitle { font-size: 17px; line-height: 1.6; margin-top: 12px; }
   .home-report-action { padding: 20px; }
   .home-report-label strong { font-size: 20px; }
-  .home-impact, .home-recent { grid-column: 2; margin: 0 0 24px; }
-  .home-emergency { grid-column: 1 / -1; padding: 0; margin-top: 8px; }
+  .home-impact, .home-recent { margin: 0 0 32px; }
+  .home-proof-photo { height: 160px; }
+  .home-emergency { padding: 0; }
   .home-emergency-actions a { max-width: none; min-width: 100px; }
   .home-desktop-nav { display: flex; align-items: center; gap: 24px; color: var(--home-secondary); font-size: 13px; }
   .home-desktop-nav a.active { color: var(--home-primary); font-weight: 700; }
