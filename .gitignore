@@ -14,5 +14,7 @@ npm-debug.log*
 firebase-debug.log
 firestore-debug.log
 scripts/serviceAccountKey.json
+scripts/*.local.json
+tmp/photo-review/
 .vercel
 .stitch-reference

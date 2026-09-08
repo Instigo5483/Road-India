@@ -12,6 +12,7 @@ import { useReports } from '../context/useAppContext'
 import { useLanguage } from '../context/useAppContext'
 import { CATEGORIES, normalizeCategoryId } from '../data/categoryTypes'
 import { toDate } from '../lib/time'
+import { useHomeMetrics } from '../lib/useHomeMetrics'
 import {
   IconArrowRight,
   IconCamera,
@@ -27,6 +28,7 @@ import heroHighway from '../assets/landing/hero-highway.jpg'
 const REPORT_CATEGORY = CATEGORIES[0]
 
 function Metric({ value, label, icon: Icon, tone = 'accent' }) {
+  const { t } = useLanguage()
   const toneClass =
     tone === 'success'
       ? 'bg-success-50 text-success-700'
@@ -39,7 +41,7 @@ function Metric({ value, label, icon: Icon, tone = 'accent' }) {
       <span className={`grid h-8 w-8 place-items-center rounded-lg ${toneClass}`}>
         <Icon className="h-4 w-4" />
       </span>
-      <p className="mt-3 font-display text-2xl font-bold leading-none text-ink-900">{value}</p>
+      <p aria-busy={value == null} aria-label={value == null ? t('common.loading') : undefined} className="mt-3 font-display text-2xl font-bold leading-none tabular-nums text-ink-900">{value ?? '—'}</p>
       <p className="mt-1 text-xs font-medium text-ink-500">{label}</p>
     </div>
   )
@@ -84,16 +86,9 @@ export default function Home() {
       .sort((a, b) => toDate(b.resolvedAt || b.createdAt) - toDate(a.resolvedAt || a.createdAt)),
     [supportedReports]
   )
-  const metrics = useMemo(() => {
-    const cities = new Set(supportedReports.map((report) => report.location?.city).filter(Boolean))
-    const rated = resolvedReports.filter((report) => report.citizenFeedback?.rating)
-    const satisfaction = rated.length
-      ? Math.round((rated.reduce((sum, report) => sum + report.citizenFeedback.rating, 0) / (rated.length * 5)) * 100)
-      : 0
-    return { filed: supportedReports.length, resolved: resolvedReports.length, satisfaction, cities: cities.size }
-  }, [supportedReports, resolvedReports])
+  const metrics = useHomeMetrics()
 
-  const activeCount = supportedReports.filter((report) => report.status !== 'resolved').length
+  const activeCount = metrics ? metrics.filed - metrics.resolved : '—'
   const desktopLinks = [
     { to: '/home', key: 'nav.home' },
     { to: '/reports', key: 'nav.reports' },
@@ -201,10 +196,10 @@ export default function Home() {
             <span className="text-[11px] text-ink-400">{t('resolved.liveData')}</span>
           </div>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            <Metric value={metrics.filed.toLocaleString()} label={t('data.totalReports')} icon={IconListChecks} />
-            <Metric value={metrics.resolved.toLocaleString()} label={t('data.resolvedReports')} icon={IconCheckCircle} tone="success" />
-            <Metric value={`${metrics.satisfaction}%`} label={t('resolved.stats.rating')} icon={IconShieldCheck} tone="brand" />
-            <Metric value={metrics.cities.toLocaleString()} label={t('landing.stats.cities')} icon={IconMapPin} tone="brand" />
+            <Metric value={metrics?.filed.toLocaleString()} label={t('data.totalReports')} icon={IconListChecks} />
+            <Metric value={metrics?.resolved.toLocaleString()} label={t('data.resolvedReports')} icon={IconCheckCircle} tone="success" />
+            <Metric value={metrics ? `${metrics.satisfaction}%` : null} label={t('resolved.stats.rating')} icon={IconShieldCheck} tone="brand" />
+            <Metric value={metrics?.cities.toLocaleString()} label={t('landing.stats.cities')} icon={IconMapPin} tone="brand" />
           </div>
         </section>
 
@@ -249,7 +244,7 @@ export default function Home() {
             </div>
             <div className="space-y-3">
               {resolvedReports.slice(0, 2).map((report, index) => (
-                <ReportCard key={report.id} report={report} index={index} showUpvote={Boolean(user)} upvoted={Boolean(user && (report.upvotedBy ?? []).includes(user.uid))} onUpvote={() => (user ? toggleUpvote(report.id) : navigate('/login'))} />
+                <ReportCard key={report.id} report={report} index={index} showPhoto showUpvote={Boolean(user)} upvoted={Boolean(user && (report.upvotedBy ?? []).includes(user.uid))} onUpvote={() => (user ? toggleUpvote(report.id) : navigate('/login'))} />
               ))}
             </div>
           </section>

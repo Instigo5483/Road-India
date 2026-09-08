@@ -196,7 +196,7 @@ export default function ViewData() {
         <Metric icon={IconCheckCircle} label={t('data.mobile.resolved')} value={resolvedReports.length} sub={`${rate}% ${t('data.mobile.fixRate')}`} />
         <Metric icon={IconClock} label={t('data.mobile.avg')} value={avg === null ? '—' : formatDuration(avg)} sub={t('data.mobile.turnaround')} />
       </div>
-      <ReportMapSection reports={scopedReports} />
+      <ReportMapSection reports={scopedReports} initialMode="compare" />
       <section className="mt-6 rounded-xl bg-white p-3 shadow-card sm:p-5">
         <SectionTitle eyebrow={t('data.mobile.velocity')} title={t('data.mobile.trend')} />
         <div className="mt-3 grid grid-cols-3 gap-1 rounded-lg bg-ink-100 p-1">{['daily','weekly','monthly'].map(value => <button key={value} type="button" aria-pressed={scale === value} onClick={() => setScale(value)} className={`min-h-9 rounded-md text-xs font-semibold ${scale === value ? 'bg-white text-ink-900 shadow-sm' : 'text-ink-500'}`}>{t('data.mobile.' + value)}</button>)}</div>

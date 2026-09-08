@@ -20,12 +20,15 @@ export default function ReportCard({
   onUpvote,
   upvoted = false,
   showUpvote = true,
+  showPhoto = false,
   index = 0,
 }) {
   const { t, lang } = useLanguage()
   const { showToast } = useToast()
   const typeLabel = getTypesLabel(t, report.category, reportTypeIds(report))
   const [detailOpen, setDetailOpen] = useState(false)
+  const [failedPhoto, setFailedPhoto] = useState(null)
+  const photo = showPhoto ? report.photoUrls?.find(Boolean) : null
 
   async function handleUpvoteClick(e) {
     e.stopPropagation()
@@ -45,6 +48,7 @@ export default function ReportCard({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           setDetailOpen(true)
@@ -52,9 +56,24 @@ export default function ReportCard({
       }}
       className="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-ink-200 bg-white p-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover sm:flex-row sm:items-start sm:gap-4 sm:p-5"
     >
-      <div className="shrink-0 overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-105">
+      {photo && photo !== failedPhoto ? (
+        <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-xl bg-ink-100 sm:h-32 sm:w-44">
+          <img
+            src={photo}
+            alt={t('home.unified.reportPhoto', { type: typeLabel || report.type })}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailedPhoto(photo)}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <span className="absolute bottom-2 left-2 rounded-md bg-ink-900/85 px-2 py-1 text-[10px] font-semibold text-white">{t('home.unified.originalPhoto')}</span>
+          {report.photoUrls.filter(Boolean).length > 1 && (
+            <span className="absolute right-2 top-2 rounded-md bg-ink-900/85 px-2 py-1 text-[10px] font-semibold text-white">{t('reports.photos', { count: report.photoUrls.filter(Boolean).length })}</span>
+          )}
+        </div>
+      ) : <div className="shrink-0 overflow-hidden rounded-xl transition-transform duration-300 group-hover:scale-105">
         <CategoryIcon category={report.category} className="h-11 w-11" />
-      </div>
+      </div>}
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

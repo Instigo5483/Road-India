@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useLanguage } from '../context/useAppContext'
 import { ReportHeatMap } from './LazyMaps'
+import { resolutionGradient } from '../lib/resolutionColor'
 
 /** Shared map and controls keep public and admin analytics consistent. */
-export default function ReportMapSection({ reports }) {
+export default function ReportMapSection({ reports, initialMode = 'reported' }) {
   const { t } = useLanguage()
-  const [heatMode, setHeatMode] = useState('reported')
+  const [heatMode, setHeatMode] = useState(initialMode)
   const [mapDisplay, setMapDisplay] = useState('heatmap')
   const resolvedReports = useMemo(() => reports.filter(report => report.status === 'resolved'), [reports])
 
@@ -24,7 +25,14 @@ export default function ReportMapSection({ reports }) {
         </div>
         <div className="relative z-0 mt-3"><ReportHeatMap reports={heatMode === 'resolved' ? resolvedReports : reports} mode={heatMode} displayMode={mapDisplay} label={t('data.heat.tooltip')} comparisonLabel={t('data.heat.comparisonTooltip')} /></div>
         <p className="mt-2 text-[11px] text-ink-500">{t('data.map.region')}</p>
-        <p className="mt-3 text-[11px] leading-relaxed text-ink-500">{t(heatMode === 'compare' ? 'data.mobile.compareLegend' : 'data.mobile.densityLegend')}</p>
+        {mapDisplay !== 'pins' && (heatMode === 'compare' ? (
+          <div className="mt-3 space-y-2 text-[11px] leading-relaxed text-ink-500">
+            <p className="font-semibold text-ink-700">{t('data.heat.compare')}</p>
+            <div aria-hidden="true" className="h-3 rounded-full" style={{ background: resolutionGradient, opacity: 0.25 }} />
+            <div aria-hidden="true" className="flex justify-between tabular-nums"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+            <p>{t('data.mobile.compareLegend')}</p>
+          </div>
+        ) : <p className="mt-3 text-[11px] leading-relaxed text-ink-500">{t('data.mobile.densityLegend')}</p>)}
       </section>
   )
 }
