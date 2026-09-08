@@ -53,8 +53,14 @@ function VisiblePins({ reports, onSelect, streetOnly = false }) {
     const streetLevel = zoom >= PIN_ZOOM
     const resolved = report.status === 'resolved'
     const status = t(resolved ? 'data.map.pinResolved' : 'data.map.pinUnresolved')
-    const title = `#${report.id}${streetLevel ? ` · ${status}` : ''}`
-    return <Marker key={report.id} position={[report.location.lat, report.location.lng]} icon={streetLevel ? resolved ? resolvedPinIcon : unresolvedPinIcon : pinIcon} title={title} alt={title} eventHandlers={{ click: () => onSelect(report.id) }}><Tooltip>{title} · {report.description}</Tooltip></Marker>
+    return <Marker key={report.id} position={[report.location.lat, report.location.lng]} icon={streetLevel ? resolved ? resolvedPinIcon : unresolvedPinIcon : pinIcon} alt={status} eventHandlers={{ click: () => onSelect(report.id) }}>
+      <Tooltip>
+        <div className="w-max max-w-[min(220px,40vw)] whitespace-normal break-words">
+          <strong>{status}</strong>
+          {report.description && <p className="line-clamp-3">{report.description}</p>}
+        </div>
+      </Tooltip>
+    </Marker>
   })
 }
 
