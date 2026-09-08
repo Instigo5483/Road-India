@@ -1,0 +1,148 @@
+html:has(.home-stitch) { scrollbar-width: none; }
+html:has(.home-stitch)::-webkit-scrollbar { display: none; }
+.home-stitch {
+  --home-primary: #9d4300;
+  --home-secondary: #555f6f;
+  min-height: 100dvh;
+  background: #f8f9fa;
+  color: #191c1d;
+  font-family: 'Road Home Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.home-stitch button, .home-stitch a { -webkit-tap-highlight-color: transparent; }
+.home-stitch button:focus-visible, .home-stitch a:focus-visible { outline: 3px solid #006398; outline-offset: 4px; }
+.home-symbol { font-family: 'Road Home Symbols'; font-weight: 400; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; flex-shrink: 0; }
+.home-header { position: fixed; inset: 0 0 auto; z-index: 50; background: rgb(255 255 255 / 85%); backdrop-filter: blur(20px); box-shadow: 0 1px 8px rgb(0 0 0 / 4%); }
+.home-header-inner { height: 64px; padding: 0 16px; max-width: 1152px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.home-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.home-logo { width: 32px; height: 32px; flex-shrink: 0; }
+.home-brand strong { display: block; color: var(--home-primary); font: 600 14px/20px 'Road Home Montserrat', sans-serif; text-transform: uppercase; }
+.home-brand small { display: block; color: var(--home-secondary); font-size: 10px; line-height: 14px; }
+.home-header-actions { display: flex; align-items: center; gap: 12px; }
+.home-language { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 8px; min-height: 32px; border-radius: 999px; background: #f3f4f5; color: var(--home-primary); font-size: 11px; font-weight: 600; }
+.home-language .home-symbol { font-size: 14px; }
+.home-profile { display: grid; place-items: center; width: 32px; height: 32px; background: var(--home-primary); color: white; border-radius: 50%; }
+.home-profile .home-symbol { font-size: 18px; }
+.home-desktop-nav { display: none; }
+.home-content { max-width: 600px; margin: auto; padding: 64px 0 calc(96px + env(safe-area-inset-bottom, 0px)); }
+.home-hero { padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.home-eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--home-primary); font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.home-eyebrow .home-symbol { font-size: 18px; }
+.home-intro h1 { font: 700 30px/1.25 'Road Home Montserrat', sans-serif; letter-spacing: -.025em; }
+.home-intro h1 span { color: var(--home-primary); text-decoration: underline; text-decoration-color: rgb(157 67 0 / 30%); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.home-subtitle { margin-top: 4px; color: var(--home-secondary); font-size: 15px; line-height: 1.375; }
+.home-report-action { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 78px; padding: 16px; border-radius: 12px; background: #f97316; color: white; text-align: left; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -2px rgb(0 0 0 / 10%); transition: transform .15s, background .15s; }
+.home-report-action:hover { background: #ed6810; }
+.home-report-action:active { transform: scale(.98); }
+.home-camera { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: rgb(255 255 255 / 20%); }
+.home-camera .home-symbol { font-size: 24px; }
+.home-report-label { flex: 1; min-width: 0; margin-right: -12px; }
+.home-report-label strong { display: block; font: 700 18px/1.25 'Road Home Montserrat', sans-serif; letter-spacing: .025em; }
+.home-report-label small { display: block; margin-top: 2px; font-size: 11px; line-height: 1.5; color: rgb(255 255 255 / 90%); }
+.home-add { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: rgb(255 255 255 / 20%); }
+.home-map-card { display: block; width: 100%; border: 1px solid rgb(157 67 0 / 20%); border-radius: 12px; overflow: hidden; background: white; text-align: left; }
+.home-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; }
+.home-map-heading h2 { font-size: 14px; font-weight: 700; }
+.home-map-heading span { font-size: 11px; color: var(--home-secondary); }
+.home-map-heading > a { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; color: var(--home-primary); font-size: 11px; font-weight: 600; min-height: 44px; }
+.home-map-heading .home-symbol { font-size: 14px; color: inherit; }
+.home-india-map { height: 360px; width: 100%; isolation: isolate; z-index: 0; background: #e5edf0; }
+.home-map-loading { display: grid; place-items: center; padding: 16px; text-align: center; font-size: 13px; color: var(--home-secondary); }
+.home-map-status { padding: 8px 12px; font-size: 11px; color: var(--home-secondary); }
+.home-map-attribution { padding: 4px 8px; background: #f3f4f5; color: var(--home-secondary); font: 10px/1.4 'Road Home Inter', sans-serif; }
+.home-map-attribution a { color: #006398; }
+.home-map-selection { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #f3f4f5; font-size: 12px; }
+.home-map-selection p { color: var(--home-secondary); }
+.home-map-selection button { min-width: 44px; min-height: 44px; font-size: 20px; }
+.home-resolution-legend { padding: 12px; font-size: 11px; color: var(--home-secondary); }
+.home-resolution-legend > strong { color: #191c1d; }
+.home-resolution-ramp { height: 8px; margin-top: 8px; border-radius: 999px; opacity: .45; }
+.home-resolution-ticks { display: flex; justify-content: space-between; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.home-resolution-legend p { margin-top: 6px; }
+.home-impact, .home-recent { margin: 0 16px 24px; }
+.home-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.home-section-heading h2 { display: flex; align-items: center; gap: 6px; font: 600 14px/20px 'Road Home Montserrat', sans-serif; text-transform: uppercase; letter-spacing: .05em; }
+.home-section-heading h2 .home-symbol { color: var(--home-primary); font-size: 18px; }
+.home-section-heading > span { font-size: 11px; color: var(--home-secondary); flex-shrink: 0; }
+.home-section-heading > a { display: flex; align-items: center; gap: 2px; color: var(--home-primary); font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.home-section-heading > a .home-symbol { font-size: 15px; }
+.home-metric-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.home-metric { min-height: 116px; padding: 14px; border-radius: 12px; background: #f3f4f5; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.home-metric-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; color: var(--home-primary); }
+.home-metric:nth-child(2) .home-metric-top { color: var(--home-secondary); }
+.home-chip { display: inline-block; width: fit-content; padding: 2px 8px; border-radius: 999px; font-size: 10px; line-height: 1.5; font-weight: 700; }
+.home-chip-warm { background: rgb(255 219 202 / 60%); color: var(--home-primary); }
+.home-chip-cool { background: #d6e0f3; color: var(--home-secondary); }
+.home-chip-blue { background: #cde5ff; color: #006398; }
+.home-metric > strong { display: block; font: 700 22px/1.35 'Road Home Montserrat', sans-serif; overflow-wrap: anywhere; }
+.home-metric > span { display: block; margin-top: 2px; font-size: 12px; color: var(--home-secondary); }
+.home-satisfaction { margin-top: 10px; padding: 14px; display: flex; align-items: center; gap: 10px; border-radius: 12px; background: #f3f4f5; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); }
+.home-satisfaction-icon { width: 40px; height: 40px; display: grid; place-items: center; flex-shrink: 0; border-radius: 50%; background: #cde5ff; color: #006398; }
+.home-satisfaction > div { flex: 1; min-width: 0; }
+.home-satisfaction strong { font: 700 20px/1.4 'Road Home Montserrat', sans-serif; }
+.home-satisfaction p { color: var(--home-secondary); font-size: 12px; }
+.home-satisfaction > .home-chip { flex-shrink: 0; font-size: 11px; }
+.home-trust-note { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 8px; font-size: 11px; color: var(--home-secondary); }
+.home-trust-note .home-symbol { font-size: 14px; color: var(--home-primary); }
+.home-proof-list { display: flex; flex-direction: column; gap: 12px; }
+.home-proof-card { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px; background: white; border: 1px solid rgb(157 67 0 / 20%); border-radius: 12px; box-shadow: 0 1px 2px rgb(0 0 0 / 5%); text-align: left; transition: box-shadow .15s; }
+.home-proof-card:hover { box-shadow: 0 4px 12px rgb(157 67 0 / 10%); }
+.home-proof-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.home-proof-title { min-width: 0; }
+.home-proof-title strong { display: flex; align-items: flex-start; gap: 6px; font: 600 14px/20px 'Road Home Montserrat', sans-serif; overflow-wrap: anywhere; }
+.home-proof-title .home-symbol { font-size: 16px; margin-top: 2px; color: var(--home-primary); }
+.home-proof-title > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 12px; color: var(--home-secondary); }
+.home-proof-heading > .home-chip { flex-shrink: 0; max-width: 42%; font-size: 11px; }
+.home-proof-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 4px; }
+.home-proof-photo { display: flex; align-items: center; justify-content: center; position: relative; height: 80px; overflow: hidden; border-radius: 8px; background: #edeeef; }
+.home-proof-photo img { width: 100%; height: 100%; object-fit: cover; }
+.home-proof-missing { display: flex; flex-direction: column; align-items: center; gap: 3px; padding-bottom: 14px; color: var(--home-secondary); font-size: 10px; }
+.home-photo-label { position: absolute; bottom: 4px; left: 4px; padding: 2px 6px; border-radius: 4px; background: rgb(46 49 50 / 80%); color: white; font-size: 9px; font-weight: 600; text-transform: uppercase; }
+.home-photo-label-after { background: var(--home-primary); }
+.home-proof-footer { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 4px; border-top: 1px solid #edeeef; font-size: 11px; }
+.home-proof-footer > span:first-child { display: flex; align-items: center; gap: 4px; color: var(--home-primary); }
+.home-proof-footer .home-symbol { font-size: 14px; }
+.home-rating { flex-shrink: 0; font-weight: 700; }
+.home-empty { padding: 24px 16px; border: 1px solid rgb(157 67 0 / 20%); border-radius: 12px; background: white; color: var(--home-secondary); text-align: center; font-size: 13px; }
+.home-emergency { padding: 0 16px 16px; }
+.home-emergency-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border-radius: 12px; background: #2e3132; color: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%); }
+.home-emergency-label { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.home-emergency-icon { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: #ba1a1a; }
+.home-emergency-icon .home-symbol { font-size: 18px; }
+.home-emergency-label strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.25; }
+.home-emergency-label small { display: block; margin-top: 2px; color: #d9dadb; font-size: 10px; }
+.home-emergency-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.home-emergency-actions a { display: flex; align-items: center; justify-content: center; max-width: 64px; min-height: 44px; padding: 6px 12px; border-radius: 8px; background: rgb(225 227 228 / 20%); font-size: 11px; font-weight: 600; }
+.home-emergency-actions a:last-child { background: #ba1a1a; }
+.home-bottom-nav { position: fixed; inset: auto 0 0; z-index: 40; background: rgb(255 255 255 / 90%); backdrop-filter: blur(20px); box-shadow: 0 -2px 12px rgb(0 0 0 / 6%); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.home-bottom-nav > div { display: flex; align-items: center; justify-content: space-around; height: 64px; max-width: 600px; padding: 0 4px; margin: auto; }
+.home-bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; height: 100%; min-width: 44px; color: var(--home-secondary); text-align: center; }
+.home-bottom-nav .home-symbol { font-size: 22px; }
+.home-bottom-nav a > span:last-child { margin-top: 2px; font-size: 11px; }
+.home-bottom-nav a.active { color: var(--home-primary); font-weight: 600; }
+@media (min-width: 1024px) {
+  .home-india-map { height: 420px; }
+  .home-content { display: grid; grid-template-columns: 1.05fr 1fr; align-items: start; column-gap: 32px; max-width: 1152px; padding: 100px 16px 40px; }
+  .home-hero { grid-column: 1; grid-row: 1 / 3; padding: 0; gap: 24px; }
+  .home-intro h1 { font-size: 42px; }
+  .home-subtitle { font-size: 17px; line-height: 1.6; margin-top: 12px; }
+  .home-report-action { padding: 20px; }
+  .home-report-label strong { font-size: 20px; }
+  .home-impact, .home-recent { grid-column: 2; margin: 0 0 24px; }
+  .home-emergency { grid-column: 1 / -1; padding: 0; margin-top: 8px; }
+  .home-emergency-actions a { max-width: none; min-width: 100px; }
+  .home-desktop-nav { display: flex; align-items: center; gap: 24px; color: var(--home-secondary); font-size: 13px; }
+  .home-desktop-nav a.active { color: var(--home-primary); font-weight: 700; }
+  .home-bottom-nav { display: none; }
+}
+@media (max-width: 359px) {
+  .home-report-action { gap: 8px; padding: 12px; }
+  .home-report-label strong { font-size: 16px; }
+  .home-camera { width: 32px; height: 32px; }
+  .home-section-heading h2 { font-size: 12px; }
+  .home-emergency-card { flex-wrap: wrap; }
+  .home-emergency-actions { width: 100%; }
+  .home-emergency-actions a { flex: 1; max-width: none; }
+  .home-satisfaction { flex-wrap: wrap; }
+}

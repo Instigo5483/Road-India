@@ -1,265 +1,182 @@
-import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import PageTransition from '../components/PageTransition'
-import MobileBottomNav from '../components/MobileBottomNav'
+import { useMemo, useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import LanguageSelector from '../components/LanguageSelector'
-import UserMenu from '../components/UserMenu'
-import ReportCard from '../components/ReportCard'
 import Logo from '../components/Logo'
-import { useAuth } from '../context/useAppContext'
-import { useReports } from '../context/useAppContext'
-import { useLanguage } from '../context/useAppContext'
-import { CATEGORIES, normalizeCategoryId } from '../data/categoryTypes'
-import { toDate } from '../lib/time'
+import ReportDetailModal from '../components/LazyReportDetailModal'
+import { useAuth, useReports, useLanguage } from '../context/useAppContext'
+import { getTypesLabel, reportTypeIds, normalizeCategoryId } from '../data/categoryTypes'
+import { averageResolution, resolutionDuration, toDate } from '../lib/time'
 import { useHomeMetrics } from '../lib/useHomeMetrics'
-import {
-  IconArrowRight,
-  IconCamera,
-  IconMapPin,
-  IconCheckCircle,
-  IconSparkle,
-  IconShieldCheck,
-  IconUser,
-  IconListChecks,
-} from '../components/Icons'
-import heroHighway from '../assets/landing/hero-highway.jpg'
+import { HomeIndiaMap } from '../components/LazyMaps'
+import { resolutionGradient } from '../lib/resolutionColor'
+import '../styles/home-fonts.css'
+import '../styles/home.css'
 
-const REPORT_CATEGORY = CATEGORIES[0]
+const navigation = [
+  { to: '/home', label: 'nav.mobile.home', icon: 'home' },
+  { to: '/reports', label: 'nav.mobile.ongoing', icon: 'warning' },
+  { to: '/resolved', label: 'nav.mobile.resolved', icon: 'task_alt' },
+  { to: '/data', label: 'nav.mobile.data', icon: 'bar_chart' },
+  { to: '/dashboard', label: 'nav.mobile.myReports', icon: 'folder_shared' },
+]
 
-function Metric({ value, label, icon: Icon, tone = 'accent' }) {
-  const { t } = useLanguage()
-  const toneClass =
-    tone === 'success'
-      ? 'bg-success-50 text-success-700'
-      : tone === 'brand'
-        ? 'bg-brand-50 text-brand-700'
-        : 'bg-accent-50 text-accent-700'
+function Symbol({ name, className = '' }) {
+  return <span aria-hidden="true" className={`home-symbol ${className}`}>{name}</span>
+}
 
+function ProofPhoto({ src, after, t }) {
+  const [failed, setFailed] = useState(false)
   return (
-    <div className="rounded-xl bg-ink-50 p-3.5 shadow-sm">
-      <span className={`grid h-8 w-8 place-items-center rounded-lg ${toneClass}`}>
-        <Icon className="h-4 w-4" />
-      </span>
-      <p aria-busy={value == null} aria-label={value == null ? t('common.loading') : undefined} className="mt-3 font-display text-2xl font-bold leading-none tabular-nums text-ink-900">{value ?? '—'}</p>
-      <p className="mt-1 text-xs font-medium text-ink-500">{label}</p>
-    </div>
+    <span className="home-proof-photo">
+      {src && !failed ? (
+        <img src={src} alt={t(after ? 'home.stitch.afterPhoto' : 'home.stitch.beforePhoto')} loading="lazy" decoding="async" onError={() => setFailed(true)} />
+      ) : (
+        <span className="home-proof-missing"><Symbol name="photo_camera" />{t('home.stitch.noPhoto')}</span>
+      )}
+      <span className={`home-photo-label ${after ? 'home-photo-label-after' : ''}`}>{t(after ? 'home.stitch.after' : 'home.stitch.before')}</span>
+    </span>
   )
 }
 
-function Step({ number, title, body, active }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold ${active ? 'bg-accent-600 text-white' : 'bg-white text-ink-700'}`}>
-        {number}
-      </span>
-      <div>
-        <h3 className="text-sm font-bold text-ink-900">{title}</h3>
-        <p className="mt-0.5 text-xs leading-relaxed text-ink-500">{body}</p>
-      </div>
-    </div>
-  )
-}
+function FixedReport({ report, onOpen }) {
+  const { t, lang } = useLanguage()
+  const duration = resolutionDuration(report)
+  const hours = duration === null ? null : (duration / 3600000).toLocaleString(lang, { maximumFractionDigits: 1 })
+  const rawRating = Number(report.citizenFeedback?.rating)
+  const rating = rawRating >= 1 && rawRating <= 5 ? rawRating : null
+  const types = reportTypeIds(report)
+  const title = report.location?.address || report.location?.city || getTypesLabel(t, report.category, types)
+  const beforePhoto = report.photoUrls?.find(Boolean)
+  const afterPhoto = report.resolutionProof?.photoUrls?.find(Boolean)
 
-function IssueIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
-      <path d="M12 3 2.8 20h18.4L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M12 9v5M12 17.2v.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <button type="button" className="home-proof-card" onClick={() => onOpen(report.id)}>
+      <span className="home-proof-heading">
+        <span className="home-proof-title">
+          <strong><Symbol name={types.some(type => ['waterlogging', 'broken_drainage'].includes(type)) ? 'water_damage' : 'construction'} />{title}</strong>
+          <span>{getTypesLabel(t, report.category, types) || report.description}</span>
+        </span>
+        <span className="home-chip home-chip-warm">{t(hours === null ? 'home.stitch.resolved' : 'home.stitch.fixedIn', { hours })}</span>
+      </span>
+      <span className="home-proof-photos">
+        <ProofPhoto key={`before-${beforePhoto}`} src={beforePhoto} t={t} />
+        <ProofPhoto key={`after-${afterPhoto}`} src={afterPhoto} after t={t} />
+      </span>
+      <span className="home-proof-footer">
+        <span><Symbol name="verified" />{t(rating ? 'home.stitch.citizenFeedback' : 'home.stitch.resolutionRecorded')}</span>
+        <span className="home-rating">{rating ? `${'★'.repeat(Math.round(rating))}${'☆'.repeat(5 - Math.round(rating))} ${rating.toFixed(1)}` : t('home.stitch.notRated')}</span>
+      </span>
+    </button>
   )
 }
 
 export default function Home() {
   const { user } = useAuth()
-  const { reports, toggleUpvote } = useReports()
-  const { t } = useLanguage()
+  const { reports, loading, loadError } = useReports()
+  const { t, lang } = useLanguage()
   const navigate = useNavigate()
-
-  const supportedReports = useMemo(
-    () => reports.filter((report) => normalizeCategoryId(report.category) === 'issue'),
-    [reports]
-  )
-  const resolvedReports = useMemo(
-    () => supportedReports
-      .filter((report) => report.status === 'resolved')
-      .sort((a, b) => toDate(b.resolvedAt || b.createdAt) - toDate(a.resolvedAt || a.createdAt)),
-    [supportedReports]
-  )
   const metrics = useHomeMetrics()
+  const [selectedId, setSelectedId] = useState(null)
+  const resolvedReports = useMemo(() => reports
+    .filter(report => normalizeCategoryId(report.category) === 'issue' && report.status === 'resolved')
+    .sort((a, b) => toDate(b.resolvedAt || b.createdAt) - toDate(a.resolvedAt || a.createdAt)), [reports])
+  const selectedReport = reports.find(report => report.id === selectedId)
+  const average = loading || loadError ? null : averageResolution(resolvedReports)
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  const todayCount = resolvedReports.filter(report => toDate(report.resolvedAt).getTime() >= todayStart).length
+  const activeCount = metrics ? Math.max(0, metrics.filed - metrics.resolved).toLocaleString(lang) : '—'
+  const hasRatings = resolvedReports.some(report => report.citizenFeedback?.rating > 0) || metrics?.satisfaction > 0
 
-  const activeCount = metrics ? metrics.filed - metrics.resolved : '—'
-  const desktopLinks = [
-    { to: '/home', key: 'nav.home' },
-    { to: '/reports', key: 'nav.reports' },
-    { to: '/resolved', key: 'nav.resolved' },
-    { to: '/data', key: 'nav.data' },
-    ...(user ? [{ to: '/dashboard', key: 'nav.dashboard' }] : []),
-  ]
-
-  function openReportFlow() {
+  function reportIssue() {
     const path = '/report/issue'
     if (user) navigate(path)
     else navigate('/login', { state: { from: { pathname: path } } })
   }
 
   return (
-    <div className="min-h-screen bg-ink-50 pb-20 lg:pb-0">
-      <header className="sticky top-0 z-30 border-b border-ink-100 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
-          <button type="button" onClick={() => navigate('/home')} className="flex min-w-0 items-center gap-2 text-left">
-            <Logo className="h-8 w-8 shrink-0" />
-            <div className="min-w-0">
-              <span className="block truncate text-sm font-extrabold uppercase tracking-tight text-brand-900">{t('common.appName')}</span>
-              <span className="block max-w-28 truncate text-[10px] leading-tight text-ink-400">{user ? user.name : t('nav.home')}</span>
-            </div>
-          </button>
-
-          <div className="hidden items-center gap-1 lg:flex">
-            {desktopLinks.map(({ to, key }) => (
-              <button
-                key={to}
-                type="button"
-                onClick={() => navigate(to)}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
-                  to === '/home'
-                    ? 'bg-accent-50 text-accent-700'
-                    : 'text-ink-500 hover:bg-ink-50 hover:text-ink-900'
-                }`}
-              >
-                {t(key)}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <LanguageSelector variant="neutral" />
-            {user ? <UserMenu /> : (
-              <button type="button" onClick={() => navigate('/login')} aria-label={t('landing.nav.login')} className="grid h-9 w-9 place-items-center rounded-full bg-brand-800 text-white shadow-sm">
-                <IconUser className="h-4 w-4" />
-              </button>
-            )}
+    <div className="home-stitch">
+      <header className="home-header">
+        <div className="home-header-inner">
+          <NavLink to="/home" className="home-brand">
+            <Logo className="home-logo" />
+            <span><strong>{t('common.appName')}</strong><small>{t('nav.home')}</small></span>
+          </NavLink>
+          <nav className="home-desktop-nav" aria-label={t('nav.home')}>
+            {navigation.map(item => <NavLink key={item.to} to={item.to}>{t(item.label)}</NavLink>)}
+          </nav>
+          <div className="home-header-actions">
+            <LanguageSelector compact />
+            <button type="button" className="home-profile" aria-label={t('home.stitch.profile')} onClick={() => navigate(user ? '/settings' : '/login')}><Symbol name="person" /></button>
           </div>
         </div>
       </header>
 
-      <PageTransition className="mx-auto max-w-6xl">
-        <section className="px-4 pb-5 pt-5 sm:px-6 sm:pt-10">
-          <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-12">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent-700">
-                <IconSparkle className="h-4 w-4" /> {t('landing.hero.eyebrow')}
-              </div>
-              <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-2 max-w-xl font-display text-3xl font-bold leading-tight tracking-tight text-ink-900 sm:text-5xl">
-                {t('landing.hero.title')}
-              </motion.h1>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-500 sm:text-base">{t('landing.hero.subtitle')}</p>
-
-              <button type="button" onClick={openReportFlow} className="mt-5 flex min-h-16 w-full items-center justify-between gap-3 rounded-xl bg-accent-600 px-4 py-3.5 text-white shadow-[0_10px_28px_-12px_rgba(234,88,12,0.65)] transition-transform active:scale-[0.98] lg:max-w-xl">
-                <span className="flex min-w-0 items-center gap-3 text-left">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/20"><IconCamera className="h-5 w-5" /></span>
-                  <span className="min-w-0">
-                    <span className="block text-base font-bold">{t('home.unified.cta')}</span>
-                    <span className="block truncate text-[11px] font-medium text-white/85">{t('home.unified.ctaHint')}</span>
-                  </span>
-                </span>
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/20"><IconArrowRight className="h-4 w-4" /></span>
-              </button>
-
-              <button type="button" onClick={() => navigate('/reports')} className="mx-auto mt-3 flex items-center gap-1.5 text-sm font-semibold text-ink-600 hover:text-accent-700 lg:mx-0">
-                <IconMapPin className="h-4 w-4" />
-                {t('home.unified.browse', { count: activeCount })}
-                <IconArrowRight className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            <div className="relative h-48 overflow-hidden rounded-xl bg-ink-900 shadow-card-hover sm:h-72 lg:h-96">
-              <img src={heroHighway} alt="" className="h-full w-full object-cover opacity-70" />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink-950 via-transparent to-transparent" />
-              <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 text-white">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-600"><IconShieldCheck className="h-4 w-4" /></span>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-bold">{t('home.unified.liveTitle')}</p>
-                    <p className="truncate text-[10px] text-white/70">{t('home.unified.liveSubtitle')}</p>
-                  </div>
-                </div>
-                <span className="shrink-0 rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold backdrop-blur">{t('home.unified.live')}</span>
-              </div>
-            </div>
+      <main className="home-content">
+        <section className="home-hero">
+          <div className="home-intro">
+            <p className="home-eyebrow"><Symbol name="verified" />{t('home.stitch.eyebrow')}</p>
+            <h1>{t('home.stitch.title')} <span>{t('home.stitch.speed')}</span></h1>
+            <p className="home-subtitle">{t('home.stitch.subtitle')}</p>
           </div>
-        </section>
-
-        <section className="px-4 pb-6 sm:px-6">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-800">{t('home.unified.impact')}</h2>
-            <span className="text-[11px] text-ink-400">{t('resolved.liveData')}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            <Metric value={metrics?.filed.toLocaleString()} label={t('data.totalReports')} icon={IconListChecks} />
-            <Metric value={metrics?.resolved.toLocaleString()} label={t('data.resolvedReports')} icon={IconCheckCircle} tone="success" />
-            <Metric value={metrics ? `${metrics.satisfaction}%` : null} label={t('resolved.stats.rating')} icon={IconShieldCheck} tone="brand" />
-            <Metric value={metrics?.cities.toLocaleString()} label={t('landing.stats.cities')} icon={IconMapPin} tone="brand" />
-          </div>
-        </section>
-
-        <section className="px-4 pb-6 sm:px-6">
-          <div className="mb-3">
-            <h2 className="font-display text-xl font-bold text-ink-900 sm:text-2xl">{t('home.unified.selectTitle')}</h2>
-            <p className="mt-1 text-xs leading-relaxed text-ink-500">{t('home.unified.selectSubtitle')}</p>
-          </div>
-          <button type="button" onClick={openReportFlow} className="w-full rounded-xl border border-ink-100 bg-white p-4 text-left shadow-card transition-transform active:scale-[0.99]">
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-100 text-accent-700"><IssueIcon /></span>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-ink-900">{t(REPORT_CATEGORY.labelKey)}</h3>
-                <p className="mt-0.5 text-xs text-ink-500">{t(REPORT_CATEGORY.taglineKey)}</p>
-              </div>
-              <IconArrowRight className="h-5 w-5 shrink-0 text-accent-600" />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {REPORT_CATEGORY.types.map((type) => (
-                <span key={type.id} className="rounded-full bg-ink-50 px-2.5 py-1 text-[11px] font-medium text-ink-600">{t(type.labelKey)}</span>
-              ))}
-            </div>
+          <button type="button" className="home-report-action" onClick={reportIssue}>
+            <span className="home-camera"><Symbol name="photo_camera" /></span>
+            <span className="home-report-label"><strong>{t('home.stitch.cta')}</strong><small>{t('home.stitch.ctaHint')}</small></span>
+            <span className="home-add"><Symbol name="add" /></span>
           </button>
-        </section>
-
-        <section className="px-4 pb-6 sm:px-6">
-          <div className="rounded-xl bg-ink-100 p-5">
-            <div className="mb-4 flex items-center gap-2"><IconSparkle className="h-5 w-5 text-accent-600" /><h2 className="text-xs font-bold uppercase tracking-wider text-ink-900">{t('landing.how.title')}</h2></div>
-            <div className="space-y-4">
-              <Step number="1" active title={t('landing.how.step1.title')} body={t('landing.how.step1.body')} />
-              <Step number="2" title={t('landing.how.step2.title')} body={t('landing.how.step2.body')} />
-              <Step number="3" title={t('landing.how.step3.title')} body={t('landing.how.step3.body')} />
+          <section className="home-map-card" aria-label={t('home.map.label')}>
+            <div className="home-map-heading">
+              <div><h2>{t('home.stitch.mapTitle')}</h2><span>{t('home.stitch.active', { count: activeCount })}</span></div>
+              <NavLink to="/data">{t('home.stitch.exploreMap')}<Symbol name="arrow_forward" /></NavLink>
             </div>
-          </div>
-        </section>
-
-        {resolvedReports.length > 0 && (
-          <section className="px-4 pb-6 sm:px-6">
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div><span className="text-[11px] font-bold uppercase tracking-wider text-success-600">{t('landing.recent.eyebrow')}</span><h2 className="mt-0.5 font-display text-xl font-bold text-ink-900">{t('landing.recent.title')}</h2></div>
-              <button type="button" onClick={() => navigate('/resolved')} className="text-xs font-semibold text-brand-700">{t('landing.recent.viewAll')}</button>
-            </div>
-            <div className="space-y-3">
-              {resolvedReports.slice(0, 2).map((report, index) => (
-                <ReportCard key={report.id} report={report} index={index} showPhoto showUpvote={Boolean(user)} upvoted={Boolean(user && (report.upvotedBy ?? []).includes(user.uid))} onUpvote={() => (user ? toggleUpvote(report.id) : navigate('/login'))} />
-              ))}
+            {loading || loadError ? <div className="home-india-map home-map-loading" role="status">{t(loadError ? 'home.stitch.unavailable' : 'common.loading')}</div> : <HomeIndiaMap reports={reports} />}
+            <div className="home-resolution-legend">
+              <strong>{t('data.heat.compare')}</strong>
+              <div className="home-resolution-ramp" aria-hidden="true" style={{ background: resolutionGradient }} />
+              <div className="home-resolution-ticks" aria-hidden="true"><span>0%</span><span>50%</span><span>100%</span></div>
+              <p>{t('home.map.legend')}</p>
+              <p>{t('home.map.dragHint')}</p>
             </div>
           </section>
-        )}
+        </section>
 
-        <section className="px-4 pb-8 sm:px-6">
-          <div className="rounded-xl bg-brand-50 p-4">
-            <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-700"><IconShieldCheck className="h-5 w-5" /></span>
-              <div><h2 className="text-sm font-bold text-ink-900">{t('home.unified.trustTitle')}</h2><p className="mt-0.5 text-xs text-ink-500">{t('home.unified.trustSubtitle')}</p></div>
+        <section className="home-impact">
+          <div className="home-section-heading"><h2><Symbol name="bar_chart" />{t('home.stitch.impact')}</h2><span>{t('home.stitch.liveTracker')}</span></div>
+          <div className="home-metric-grid">
+            <div className="home-metric">
+              <div className="home-metric-top"><Symbol name="task_alt" /><span className="home-chip home-chip-warm">{loading || loadError ? '—' : t('home.stitch.today', { count: todayCount.toLocaleString(lang) })}</span></div>
+              <strong aria-busy={!metrics}>{metrics?.resolved.toLocaleString(lang) ?? '—'}</strong><span>{t('home.stitch.resolvedFixed')}</span>
+            </div>
+            <div className="home-metric">
+              <div className="home-metric-top"><Symbol name="schedule" /><span className="home-chip home-chip-cool">{t('home.stitch.average')}</span></div>
+              <strong>{average === null ? '—' : t('home.stitch.hours', { hours: (average / 3600000).toLocaleString(lang, { maximumFractionDigits: 1 }) })}</strong><span>{t('home.stitch.fixTime')}</span>
             </div>
           </div>
+          <div className="home-satisfaction">
+            <span className="home-satisfaction-icon"><Symbol name="sentiment_very_satisfied" /></span>
+            <div><strong>{metrics && hasRatings ? `${metrics.satisfaction.toLocaleString(lang)}%` : '—'}</strong><p>{t('home.stitch.satisfaction')}</p></div>
+            <span className="home-chip home-chip-blue">{t(hasRatings ? 'home.stitch.rated' : 'home.stitch.notRated')}</span>
+          </div>
+          <p className="home-trust-note"><Symbol name="lock" />{t('home.stitch.trust')}</p>
         </section>
-      </PageTransition>
-      <MobileBottomNav />
+
+        <section className="home-recent">
+          <div className="home-section-heading"><h2><Symbol name="verified" />{t('home.stitch.recent')}</h2><NavLink to="/resolved">{t('landing.recent.viewAll')}<Symbol name="arrow_forward" /></NavLink></div>
+          <div className="home-proof-list">
+            {resolvedReports.slice(0, 2).map(report => <FixedReport key={report.id} report={report} onOpen={setSelectedId} />)}
+            {!resolvedReports.length && <p className="home-empty" role="status">{t(loading ? 'common.loading' : loadError ? 'home.stitch.unavailable' : 'home.stitch.noResolved')}</p>}
+          </div>
+        </section>
+
+        <section className="home-emergency">
+          <div className="home-emergency-card">
+            <div className="home-emergency-label"><span className="home-emergency-icon"><Symbol name="call" /></span><span><strong>{t('home.stitch.emergency')}</strong><small>{t('home.stitch.emergencyHint')}</small></span></div>
+            <div className="home-emergency-actions"><a href="tel:1033" aria-label={t('home.stitch.callHighway')}>NHAI 1033</a><a href="tel:112" aria-label={t('home.stitch.callEmergency')}>112 SOS</a></div>
+          </div>
+        </section>
+      </main>
+
+      <nav className="home-bottom-nav" aria-label={t('nav.home')}><div>{navigation.map(item => <NavLink key={item.to} to={item.to}><Symbol name={item.icon} /><span>{t(item.label)}</span></NavLink>)}</div></nav>
+      {selectedReport && <ReportDetailModal report={selectedReport} onClose={() => setSelectedId(null)} showUpvote={false} />}
     </div>
   )
 }

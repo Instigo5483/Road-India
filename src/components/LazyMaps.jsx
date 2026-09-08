@@ -5,6 +5,7 @@ const Picker = lazy(() => import('./MapPicker'))
 const Reports = lazy(() => import('./ReportsMapView'))
 const Location = lazy(() => import('./ReportLocationMap'))
 const HeatMap = lazy(() => import('./ReportHeatMap'))
+const HomeMap = lazy(() => import('./HomeIndiaMap'))
 
 function MapLoading({ children }) {
   const { t } = useLanguage()
@@ -14,3 +15,7 @@ export function MapPicker(props) { return <MapLoading><Picker {...props} /></Map
 export function ReportsMapView(props) { return <MapLoading><Reports {...props} /></MapLoading> }
 export function ReportLocationMap(props) { return <MapLoading><Location {...props} /></MapLoading> }
 export function ReportHeatMap(props) { return <MapLoading><HeatMap {...props} /></MapLoading> }
+export function HomeIndiaMap(props) {
+  const { t } = useLanguage()
+  return <Suspense fallback={<div className="home-india-map home-map-loading" role="status">{t('common.loading')}</div>}><HomeMap {...props} /></Suspense>
+}

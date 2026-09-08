@@ -1,0 +1,22 @@
+/* Self-hosted Stitch typography; licenses are in assets/landing. */
+@font-face {
+  font-family: 'Road Home Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(../assets/landing/home-inter.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Road Home Montserrat';
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url(../assets/landing/home-montserrat.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Road Home Symbols';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(../assets/landing/home-font-6.ttf) format('truetype');
+}

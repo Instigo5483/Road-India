@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../context/useAppContext'
 import { IconGlobe, IconCheck, IconChevronDown } from './Icons'
 
-export default function LanguageSelector({ variant = 'light' }) {
+export default function LanguageSelector({ variant = 'light', compact = false }) {
   const { lang, setLang, languages, t } = useLanguage()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -27,15 +27,16 @@ export default function LanguageSelector({ variant = 'light' }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium shadow-card transition-colors ${chipClass}`}
+        className={compact ? 'home-language' : `inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium shadow-card transition-colors ${chipClass}`}
+        aria-label={t('landing.chooseLanguage')}
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <IconGlobe className="h-4 w-4" />
-        <span>{current?.nativeLabel ?? 'English'}</span>
-        <IconChevronDown
+        {compact ? <span aria-hidden="true" className="home-symbol">translate</span> : <IconGlobe className="h-4 w-4" />}
+        <span>{compact ? lang.toUpperCase() : current?.nativeLabel ?? 'English'}</span>
+        {!compact && <IconChevronDown
           className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
-        />
+        />}
       </button>
 
       <AnimatePresence>
