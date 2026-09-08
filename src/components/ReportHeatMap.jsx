@@ -5,7 +5,7 @@ import ReportDetailModal from './LazyReportDetailModal'
 import { useLanguage } from '../context/useAppContext'
 
 import { resolutionColor } from '../lib/resolutionColor'
-import { DISTRICT_ZOOM, MUNICIPAL_ZOOM, WARD_ZOOM, PIN_ZOOM, uniqueLocatedReports, aggregateBoundaries, boundaryLayersAtZoom, fallbackReports, intersectsBounds } from '../lib/administrativeMap'
+import { DISTRICT_ZOOM, MUNICIPAL_ZOOM, WARD_ZOOM, PIN_ZOOM, uniqueLocatedReports, aggregateBoundaries, boundaryLayersAtZoom, heatmapReportsAtZoom, intersectsBounds } from '../lib/administrativeMap'
 import { loadBoundaryAsset } from '../lib/boundaryAssets'
 import { guardPinsDuringZoom } from '../lib/pinZoomVisibility'
 import indiaStates from '../data/indiaStates.json'
@@ -26,10 +26,10 @@ const osmAttribution = 'Hyderabad: OpenStreetMap (<a href="https://opendatacommo
 const HEAT_COLOR = '#fca5a5'
 const RESOLVED_COLOR = '#86efac'
 
-function ResizeMap() {
+function ResizeMap({ displayMode }) {
   const map = useMap()
   const { t } = useLanguage()
-  useEffect(() => guardPinsDuringZoom(map), [map])
+  useEffect(() => guardPinsDuringZoom(map, displayMode === 'heatmap' ? PIN_ZOOM : 0), [map, displayMode])
   useEffect(() => {
     const resize = () => {
       map.invalidateSize()
@@ -42,13 +42,14 @@ function ResizeMap() {
   return <button type="button" onClick={() => map.setView([22, 82], 4)} className="absolute right-3 top-3 z-[1000] min-h-10 rounded-lg border border-ink-200 bg-white px-3 text-xs font-semibold text-ink-700 shadow">{t('data.map.reset')}</button>
 }
 
-function VisiblePins({ reports, onSelect }) {
+function VisiblePins({ reports, onSelect, streetOnly = false }) {
   const map = useMap()
   const { t } = useLanguage()
   const [zoom, setZoom] = useState(() => map.getZoom())
   const [bounds, setBounds] = useState(() => map.getBounds())
   useMapEvents({ zoomend: () => setZoom(map.getZoom()), moveend: () => setBounds(map.getBounds()), resize: () => setBounds(map.getBounds()) })
-  return reports.filter(r => bounds.contains([r.location.lat, r.location.lng])).map(report => {
+  const visibleReports = streetOnly ? heatmapReportsAtZoom({ reports, zoom }) : reports
+  return visibleReports.filter(r => bounds.contains([r.location.lat, r.location.lng])).map(report => {
     const streetLevel = zoom >= PIN_ZOOM
     const resolved = report.status === 'resolved'
     const status = t(resolved ? 'data.map.pinResolved' : 'data.map.pinUnresolved')
@@ -135,7 +136,7 @@ const viewBounds = map => {
   return [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
 }
 
-function GroupedHeatLayer({ reports, mode, label, comparisonLabel, showFallbackPins, onSelect }) {
+function GroupedHeatLayer({ reports, mode, label, comparisonLabel }) {
   const { t } = useLanguage()
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
@@ -150,10 +151,8 @@ function GroupedHeatLayer({ reports, mode, label, comparisonLabel, showFallbackP
     .map(([name, data]) => [name, { ...aggregateBoundaries(reports, data.features), remainder: data.remainder }])), [reports, assets])
   const regions = boundaryLayersAtZoom({ zoom, states: stateData.states, districts: districts?.regions, cities: cities?.regions,
     municipalData: assets.municipalities, wards }).filter(region => intersectsBounds(region.feature.bbox, bounds))
-  const pins = zoom < PIN_ZOOM && loading ? [] : fallbackReports({ reports, zoom, districts, cities, wards })
   return <>
     {zoom < PIN_ZOOM && <BoundaryHeatShapes regions={regions} mode={mode} label={label} comparisonLabel={comparisonLabel} mapWidth={mapWidth} zoom={zoom} />}
-    {showFallbackPins && <VisiblePins reports={pins} onSelect={onSelect} />}
     {(loading || error || (zoom < DISTRICT_ZOOM && stateData.unmatched > 0)) && <div role="status" className="absolute bottom-12 left-3 right-3 z-[500] rounded bg-white/95 px-2 py-1 text-xs text-ink-600">
       {error ? <>{t('data.heat.loadError')} <button type="button" onClick={retry} className="min-h-10 px-2 font-semibold text-accent-700">{t('data.heat.retry')}</button></>
         : loading ? t('data.heat.loading') : t('data.heat.unmatchedStates', { count: stateData.unmatched })}
@@ -184,7 +183,7 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
         className="h-80 w-full sm:h-96"
       >
         <IndiaMapBounds />
-        <ResizeMap />
+        <ResizeMap displayMode={displayMode} />
         <TileLayer
           noWrap
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -192,8 +191,8 @@ export default function ReportHeatMap({ reports, mode, label, comparisonLabel, d
           keepBuffer={1}
           updateWhenIdle
         />
-        {displayMode !== 'pins' && <GroupedHeatLayer reports={locatedReports} mode={mode} label={label} comparisonLabel={comparisonLabel} showFallbackPins={displayMode === 'heatmap'} onSelect={setSelectedId} />}
-        {displayMode !== 'heatmap' && <VisiblePins reports={locatedReports} onSelect={setSelectedId} />}
+        {displayMode !== 'pins' && <GroupedHeatLayer reports={locatedReports} mode={mode} label={label} comparisonLabel={comparisonLabel} />}
+        <VisiblePins reports={locatedReports} onSelect={setSelectedId} streetOnly={displayMode === 'heatmap'} />
       </MapContainer>
     </div>
     {!locatedReports.length && <p role="status" className="mt-2 text-xs text-ink-500">{t('data.map.empty')}</p>}

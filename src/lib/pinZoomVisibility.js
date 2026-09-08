@@ -1,6 +1,6 @@
 // Hide the whole marker pane synchronously: React may not finish replacing
 // individual markers before Leaflet paints the next animation frame.
-export function guardPinsDuringZoom(map) {
+export function guardPinsDuringZoom(map, minimumZoom = 0) {
   const panes = ['markerPane', 'tooltipPane'].map(name => {
     const pane = map.getPane(name)
     return { pane, visibility: pane.style.visibility }
@@ -9,6 +9,13 @@ export function guardPinsDuringZoom(map) {
   let timer
   let zooming = false
 
+  const restore = () => {
+    for (const { pane, visibility } of panes) {
+      pane.style.visibility = pane === map.getPane('markerPane') && map.getZoom() < minimumZoom ? 'hidden' : visibility
+    }
+  }
+  restore()
+
   const hide = () => {
     clearTimeout(timer)
     for (const { pane } of panes) pane.style.visibility = 'hidden'
@@ -16,7 +23,7 @@ export function guardPinsDuringZoom(map) {
   const revealAfterSettling = () => {
     clearTimeout(timer)
     timer = setTimeout(() => {
-      if (!zooming) for (const { pane, visibility } of panes) pane.style.visibility = visibility
+      if (!zooming) restore()
     }, 180)
   }
   const onWheel = () => {

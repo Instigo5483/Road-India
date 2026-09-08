@@ -62,14 +62,7 @@ export function boundaryLayersAtZoom({ zoom, states, districts, cities, municipa
   return layers
 }
 
-export function fallbackReports({ reports, zoom, districts, cities, wards }) {
-  if (zoom >= PIN_ZOOM) return reports
-  if (zoom < DISTRICT_ZOOM) return []
-  return reports.filter(report => {
-    if (!districts?.membership.has(report.id)) return true
-    if (zoom < MUNICIPAL_ZOOM) return false
-    const cityCode = cities?.membership.get(report.id)
-    if (!cityCode) return true
-    return zoom >= WARD_ZOOM && !wards[cityCode]?.membership.has(report.id)
-  })
+export function heatmapReportsAtZoom({ reports, zoom }) {
+  // Missing finer boundaries retain their parent shading, never fallback pins.
+  return zoom >= PIN_ZOOM ? reports : []
 }

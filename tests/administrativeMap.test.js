@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
-import { aggregateBoundaries, boundaryLayersAtZoom, fallbackReports, uniqueLocatedReports } from '../src/lib/administrativeMap.js'
+import { aggregateBoundaries, boundaryLayersAtZoom, heatmapReportsAtZoom, uniqueLocatedReports } from '../src/lib/administrativeMap.js'
 import { stateContainsLocation } from '../src/lib/indiaStateMap.js'
 
 const data = name => JSON.parse(fs.readFileSync(new URL(`../public/map-boundaries/${name}.json`, import.meta.url), 'utf8'))
@@ -46,7 +46,7 @@ test('city replacement clips the district fill while retaining its whole-area st
   assert.deepEqual(boundaryLayersAtZoom({ ...options, zoom: 12, districts: null }).map(x => x.variant), ['state'])
 })
 
-test('wards replace only their municipality; missing and failed coverage retains parent plus pins', () => {
+test('wards replace only their municipality; reports in coverage gaps never become pins before street view', () => {
   const reports = [row('rural', 1), row('ward', 6), row('gap', 9), row('outside', 20)]
   const districts = aggregateBoundaries(reports, [square('district', 0, 10)])
   const cities = aggregateBoundaries(reports, [square('city', 5, 10, 'city')])
@@ -55,13 +55,13 @@ test('wards replace only their municipality; missing and failed coverage retains
   const layers = boundaryLayersAtZoom({ zoom: 12, states: [], districts: districts.regions, cities: cities.regions,
     municipalData: { districtMasks: { district: square('rural', 0, 5).geometry } }, wards })
   assert.deepEqual(layers.map(x => x.variant), ['district-remainder', 'ward', 'city-remainder'])
-  const pins = zoom => fallbackReports({ reports, zoom, districts, cities, wards }).map(x => x.id)
-  assert.deepEqual(pins(4), [])
-  assert.deepEqual(pins(6), ['outside'])
-  assert.deepEqual(pins(9), ['rural', 'outside'])
-  assert.deepEqual(pins(12), ['rural', 'gap', 'outside'])
+  const pins = zoom => heatmapReportsAtZoom({ reports, zoom }).map(x => x.id)
+  for (const zoom of [4, 6, 9, 12, 13, 13.99]) assert.deepEqual(pins(zoom), [])
+  assert.deepEqual(pins(14), reports.map(x => x.id))
   assert.deepEqual(pins(16), reports.map(x => x.id))
-  assert.deepEqual(fallbackReports({ reports, zoom: 12, districts, cities, wards: {} }).map(x => x.id), reports.map(x => x.id))
+  const missing = boundaryLayersAtZoom({ zoom: 12, states: districts.regions, districts: null })
+  assert.deepEqual(missing.map(x => x.variant), ['state'])
+  assert.deepEqual(pins(12), [])
 })
 
 test('street zoom hides every boundary, including fallback parents, and zooming out restores them', () => {
@@ -72,7 +72,7 @@ test('street zoom hides every boundary, including fallback parents, and zooming 
     assert.equal(boundaryLayersAtZoom({ ...options, zoom: 13 }).length, 1)
     for (const zoom of [14, 15, 16, 17, 18]) {
       assert.deepEqual(boundaryLayersAtZoom({ ...options, zoom }), [])
-      assert.deepEqual(fallbackReports({ reports, zoom }), reports)
+      assert.deepEqual(heatmapReportsAtZoom({ reports, zoom }), reports)
     }
     assert.equal(boundaryLayersAtZoom({ ...options, zoom: 13 }).length, 1)
   }
